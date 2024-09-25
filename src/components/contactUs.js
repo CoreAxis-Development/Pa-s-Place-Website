@@ -13,7 +13,7 @@ const ContactUs = () => {
         </p>
         <p>
           <FaPhone className={styles.icon} /> Phone:{' '}
-          <a href="tel:+27833097288">Pierre: 083 309 7288</a>
+          <a href="tel:+27834365056">Luke: 083 436 5056</a>
         </p>
       </div>
     </div>
