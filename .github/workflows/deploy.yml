@@ -1,0 +1,59 @@
+name: Deploy Pa's Place Website
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+
+      - name: Debug connection
+        run: |
+          echo "Testing SSH connection..."
+          ssh -v ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'echo "SSH connection successful"'
+
+      - name: Deploy to server
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          ssh $SSH_USER@$SSH_HOST << 'ENDSSH'
+            echo "Starting deployment for Pa's Place Website..."
+
+            # Navigate to the Pa's Place directory
+            cd /var/www/pasplace.co.za/Pa-s-Place-Website
+
+            # Pull the latest changes from the main branch
+            echo "Pulling the latest changes from main..."
+            git pull origin main
+
+            # Install dependencies and build the project
+            echo "Installing dependencies and building the project..."
+            npm install
+            npm run build
+
+            # Start or restart the application using PM2
+            echo "Restarting the application using PM2..."
+            pm2 restart pa-s-place || PORT=1955 pm2 start npm --name "pa-s-place" -- run start
+
+            # Save PM2 process list to ensure it starts on reboot
+            echo "Saving PM2 process list..."
+            pm2 save
+
+            # Reload Nginx to apply any new configurations
+            echo "Reloading Nginx..."
+            sudo systemctl reload nginx
+
+            echo "Deployment completed successfully!"
+          ENDSSH
