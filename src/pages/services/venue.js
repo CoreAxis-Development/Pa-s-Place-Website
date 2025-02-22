@@ -1,7 +1,7 @@
 import React from 'react';
 import Header from '@/components/Header';
 import { Calendar, Users, Heart, MapPin, Phone } from 'lucide-react';
-
+import Footer from '../../components/Footer';
 const VenuePage = () => {
     return (
         <>
@@ -150,6 +150,7 @@ const VenuePage = () => {
                     </div>
                 </div>
             </div>
+            <Footer />
         </>
     );
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import Header from '@/components/Header';
 import { Waves, Bike, Sun, Dumbbell, Users, Trees } from 'lucide-react';
-
+import Footer from '../../components/Footer';
 const Activities = () => {
     return (
         <>
@@ -147,6 +147,7 @@ const Activities = () => {
                     </p>
                 </div>
             </section>
+            <Footer />
         </>
     );
 };

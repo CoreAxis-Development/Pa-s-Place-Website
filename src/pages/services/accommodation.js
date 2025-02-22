@@ -1,7 +1,7 @@
 import React from 'react';
 import Header from '@/components/Header';
 import { Shield, Home, Moon, Sun, Coffee, Users } from 'lucide-react';
-
+import Footer from '../../components/Footer';
 const Accommodation = () => {
     return (
         <>
@@ -152,6 +152,7 @@ const Accommodation = () => {
                     </div>
                 </div>
             </section>
+            <Footer />
         </>
     );
 };
