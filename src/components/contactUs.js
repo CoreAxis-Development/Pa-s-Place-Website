@@ -9,11 +9,11 @@ const ContactUs = () => {
         <h1>Contact Us</h1>
         <p>
           <FaEnvelope className={styles.icon} /> Email:{' '}
-          <a href="mailto:info@pasplace.co.za">info@pasplace.co.za</a>
+          <a href="mailto:lukebriangilmore@outlook.com">lukebriangilmore@outlook.com</a>
         </p>
         <p>
           <FaPhone className={styles.icon} /> Phone:{' '}
-          <a href="tel:+27834365056">Luke: 083 436 5056</a>
+          <a href="tel:+27734365056">Luke: 073 436 5056</a>
         </p>
       </div>
     </div>
