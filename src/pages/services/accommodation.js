@@ -1,6 +1,6 @@
 import React from 'react';
 import Header from '@/components/Header';
-import { Shield, Home, Moon, Sun, Coffee, Users } from 'lucide-react';
+import { Calendar, Users, Heart, MapPin, Phone, Banknote, Home } from 'lucide-react';
 import Footer from '../../components/Footer';
 const Accommodation = () => {
     return (
@@ -88,6 +88,41 @@ const Accommodation = () => {
                                 <li>• Laundry facilities</li>
                                 <li>• First aid supplies</li>
                             </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Pricing Section */}
+            <section className="py-16 bg-white">
+                <div className="max-w-7xl mx-auto px-4">
+                    <h2 className="text-3xl font-bold text-center mb-12">Accommodation Pricing</h2>
+                    <div className="max-w-2xl mx-auto">
+                        <div
+                            className="relative rounded-xl overflow-hidden shadow-xl"
+                            style={{
+                                backgroundImage: "url('https://source.unsplash.com/1600x900/?beach,bedroom')",
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                            }}
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-t from-blue-900/90 to-blue-700/70" />
+                            <div className="relative p-8 text-center text-white h-full flex flex-col justify-between">
+                                <div>
+                                    <div className="flex justify-center mb-4">
+                                        <Home className="h-16 w-16" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold mb-6">Accommodation</h3>
+                                    <div className="text-5xl font-bold mb-2">R200<span className="text-xl font-normal">/person/night</span></div>
+                                    <ul className="text-lg space-y-2 mb-6">
+                                        <li>Minimum 4 people (R850)</li>
+                                        <li>Comfortable bedding</li>
+                                        <li>Modern facilities</li>
+                                        <li>Secure premises</li>
+                                    </ul>
+                                </div>
+                                <Banknote className="h-8 w-8 mx-auto opacity-70" />
+                            </div>
                         </div>
                     </div>
                 </div>

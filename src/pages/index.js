@@ -8,6 +8,7 @@ import Carousel from '../components/Carousel';
 import ProfileCardComponent from '../components/ProfileCardComponent';
 import Hero from '../components/Hero';
 import Footer from '../components/Footer';
+import Pricing from '../components/Pricing';
 import Testimonials from '../components/Testimonials';
 import HomeAboutUs from '../components/HomeAboutUs';
 function HomePage({ carouselImages }) {
@@ -36,6 +37,7 @@ function HomePage({ carouselImages }) {
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black to-transparent z-10"></div>
         <Carousel images={carouselImages} keyPoints={keyPoints} />
       </div>
+        <Pricing />
       <Testimonials />
       <Footer />
     </div>
