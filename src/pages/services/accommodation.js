@@ -1,7 +1,8 @@
 import React from 'react';
 import Header from '@/components/Header';
-import { Calendar, Users, Heart, MapPin, Phone, Banknote, Home } from 'lucide-react';
+import { Shield, Home, Coffee, Banknote, Sun, Moon, Users } from 'lucide-react';
 import Footer from '../../components/Footer';
+
 const Accommodation = () => {
     return (
         <>
