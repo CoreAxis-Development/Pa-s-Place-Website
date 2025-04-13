@@ -9,9 +9,10 @@ export default function Home() {
         <div className={styles.container}>
             <Head>
                 <title>Pa's Place - Coming Soon</title>
-                <meta name="description" content="Pa's Place - A pocket of peace in Kelso, Pennington" />
+                <meta name="description" content="Pa's Place - A haven for youth in Kelso, Pennington" />
                 <link rel="icon" href="/favicon.ico" />
                 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             </Head>
 
             <main className={styles.main}>
@@ -28,7 +29,7 @@ export default function Home() {
                         transition={{ duration: 0.8, type: "spring" }}
                     >
                         <h1 className={styles.title}>Pa's Place</h1>
-                        <p className={styles.subtitle}>A pocket of peace in Kelso, Pennington</p>
+                        <p className={styles.subtitle}>A haven for youth in Kelso, Pennington</p>
                     </motion.div>
 
                     <motion.div
@@ -39,7 +40,7 @@ export default function Home() {
                     >
                         <h2 className={styles.comingSoon}>Website Under Development</h2>
                         <p className={styles.description}>
-                            We're working on something special to showcase our pocket of peace. Our full website will be launching soon!
+                            We're working on something special to showcase our youth haven. Our full website will be launching soon!
                         </p>
 
                         <div className={styles.features}>
@@ -59,14 +60,20 @@ export default function Home() {
 
                         <div className={styles.contactInfo}>
                             <h3>Contact Us</h3>
-                            <p>
-                                <FaEnvelope className={styles.icon} /> Email:{' '}
-                                <a href="mailto:lukebriangilmore@outlook.com">lukebriangilmore@outlook.com</a>
-                            </p>
-                            <p>
-                                <FaPhone className={styles.icon} /> Phone:{' '}
-                                <a href="tel:+27734365056">Luke: 073 436 5056</a>
-                            </p>
+                            <div className={styles.contactRow}>
+                                <p>
+                                    <FaEnvelope className={styles.icon} />
+                                    <span>Email: </span>
+                                    <a href="mailto:lukebriangilmore@outlook.com">lukebriangilmore@outlook.com</a>
+                                </p>
+                            </div>
+                            <div className={styles.contactRow}>
+                                <p>
+                                    <FaPhone className={styles.icon} />
+                                    <span>Phone: </span>
+                                    <a href="tel:+27734365056">Luke: 073 436 5056</a>
+                                </p>
+                            </div>
                         </div>
                     </motion.div>
                 </motion.div>
