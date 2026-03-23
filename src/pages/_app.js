@@ -1,15 +1,13 @@
-import Head from 'next/head';
-import '../styles/tailwind.css'; // or '../styles/custom.css'
+import "@/styles/globals.css";
+import UnderConstruction from "@/components/UnderConstruction";
 
-function MyApp({ Component, pageProps }) {
-  return (
-      <>
-        <Head>
-          <link rel="icon" href="/favicon.ico" />
-        </Head>
-        <Component {...pageProps} />
-      </>
-  );
+const isUnderConstruction =
+  process.env.NEXT_PUBLIC_UNDER_CONSTRUCTION === "true";
+
+export default function App({ Component, pageProps }) {
+  if (isUnderConstruction) {
+    return <UnderConstruction />;
+  }
+
+  return <Component {...pageProps} />;
 }
-
-export default MyApp;
