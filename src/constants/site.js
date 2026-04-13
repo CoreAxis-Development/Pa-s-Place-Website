@@ -8,7 +8,7 @@ export const SITE = {
 
 export const CONTACT = {
   email: "info@pasplace.co.za",
-  phone: "083 436 5056",
+  phone: "7 436 5056",
   phoneLink: "+27834365056",
   person: "Luke",
   address: {

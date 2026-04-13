@@ -87,7 +87,7 @@ const Footer = () => {
               className="text-white mb-2 cursor-pointer"
               onClick={() => copyToClipboard('083 309 7288')}
             >
-              Phone: Luke: 083 436 5056
+              Phone: Luke: 087 436 5056
             </p>
           </div>
           <div className={`flex mt-4 ${styles.footerSocialLinks}`}>
