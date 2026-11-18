@@ -1,94 +1,164 @@
 ---
 import { Image } from 'astro:assets';
 import logo from '../assets/brand/pas-place-logo.png';
-import TornEdge from './story/TornEdge.astro';
-import Stars from './story/Stars.astro';
-import { getSettings } from '../lib/cms';
+import Sunrise from './ui/Sunrise.astro';
+import { getSite } from '../server/services/content';
 
-const settings = await getSettings();
+const { settings, whatsappUrl } = await getSite();
+const { contact, organisation, social } = settings;
 const year = new Date().getFullYear();
+
+const columns = [
+  {
+    title: 'Visit',
+    links: [
+      { label: 'Book a stay', href: '/book-a-stay' },
+      { label: 'Venue hire', href: '/venue-hire' },
+      { label: 'Gallery', href: '/gallery' },
+    ],
+  },
+  {
+    title: 'About',
+    links: [
+      { label: 'Our story', href: '/our-story' },
+      { label: 'What we do', href: '/what-we-do' },
+      { label: 'Get involved', href: '/get-involved' },
+      { label: 'Contact', href: '/contact' },
+    ],
+  },
+];
 ---
 
-<footer class="relative">
-  <TornEdge fill="var(--color-night-950)" seed={41} />
-  <div class="relative overflow-hidden bg-night-950 text-cream-100">
-    <Stars class="absolute inset-x-0 top-0 h-72 w-full opacity-80" count={34} seed={19} />
+<footer class="on-dark relative overflow-hidden bg-canopy-900 text-on-dark">
+  <Sunrise class="pointer-events-none absolute -right-36 -top-36 h-[360px] w-[360px]" />
+  <div class="container-page relative pb-8 pt-16">
+    <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_0.8fr_0.8fr_1.3fr]">
+      <div>
+        <div class="flex items-center gap-3">
+          <Image src={logo} alt="" widths={[112, 168]} sizes="56px" class="h-14 w-14 object-contain" />
+          <span class="wordmark text-2xl">Pa&rsquo;s Place</span>
+        </div>
+        <p class="mt-5 max-w-xs text-[0.9375rem] text-on-dark-muted">
+          A family holiday garden and party venue in Pennington. Every stay helps give a child their first holiday by
+          the sea.
+        </p>
+      </div>
 
-    <div class="relative mx-auto max-w-6xl px-5 pt-16">
-      <div class="grid gap-12 pb-12 sm:grid-cols-2 md:grid-cols-[1.4fr_0.8fr_1fr_1fr]">
-        <div>
-          <div class="flex items-center gap-4">
-            <Image src={logo} alt="Pa's Place — dove and sunburst logo" widths={[128, 192]} sizes="72px" class="h-18 w-18 object-contain" />
-            <div>
-              <span class="font-display text-2xl font-bold text-moon">Pa&rsquo;s Place</span>
-              <span class="hand block text-lg text-marigold-300">est. Pennington, KwaZulu-Natal</span>
-            </div>
+      {
+        columns.map((col) => (
+          <div>
+            <h2 class="foot-title">{col.title}</h2>
+            <ul class="mt-4 space-y-2.5">
+              {col.links.map((l) => (
+                <li>
+                  <a class="foot-link" href={l.href}>
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
-          <p class="mt-5 max-w-sm text-cream-100/70">
-            A non-profit company giving coastal, fun-filled holidays to disadvantaged children —
-            and restful, affordable stays to the families who need them.
-          </p>
-          <p class="mt-5 font-display text-xl italic text-moon">
-            Every child deserves to see the sea.
-          </p>
-        </div>
+        ))
+      }
 
-        <div>
-          <h2 class="kicker text-marigold-400">The pages</h2>
-          <ul class="mt-4 space-y-2.5 text-cream-100/85">
-            <li><a class="underline-offset-4 hover:text-moon hover:underline" href="/book-a-stay">Book a stay</a></li>
-            <li><a class="underline-offset-4 hover:text-moon hover:underline" href="/venue-hire">Venue hire</a></li>
-            <li><a class="underline-offset-4 hover:text-moon hover:underline" href="/our-story">Our story</a></li>
-            <li><a class="underline-offset-4 hover:text-moon hover:underline" href="/what-we-do">What we do</a></li>
-            <li><a class="underline-offset-4 hover:text-moon hover:underline" href="/get-involved">Get involved</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h2 class="kicker text-marigold-400">Reach out</h2>
-          <ul class="mt-4 space-y-2.5 text-cream-100/85">
-            {settings.contact.person && <li>Ask for {settings.contact.person}</li>}
-            {
-              settings.contact.phone && (
-                <li>
-                  <a class="underline-offset-4 hover:text-moon hover:underline" href={`tel:${settings.contact.phoneLink || settings.contact.phone}`}>
-                    {settings.contact.phone}
-                  </a>
-                </li>
-              )
-            }
-            {
-              settings.contact.email && (
-                <li>
-                  <a class="underline-offset-4 hover:text-moon hover:underline" href={`mailto:${settings.contact.email}`}>
-                    {settings.contact.email}
-                  </a>
-                </li>
-              )
-            }
-          </ul>
-        </div>
-
-        <div>
-          <h2 class="kicker text-marigold-400">Find us</h2>
-          <p class="mt-4 whitespace-pre-line text-cream-100/85">{settings.contact.address}</p>
+      <div>
+        <h2 class="foot-title">Contact</h2>
+        <ul class="mt-4 space-y-2.5">
           {
-            settings.contact.mapUrl && (
-              <a class="mt-3 inline-block font-bold text-marigold-300 underline-offset-4 hover:underline" href={settings.contact.mapUrl} target="_blank" rel="noopener">
-                Open the map &rarr;
-              </a>
+            contact.phone && (
+              <li>
+                <a class="foot-link tnum" href={`tel:${contact.phoneLink || contact.phone}`}>
+                  {contact.phone}
+                </a>
+                {contact.person && <span class="text-on-dark-muted"> &middot; ask for {contact.person}</span>}
+              </li>
             )
           }
-        </div>
+          {
+            whatsappUrl && (
+              <li>
+                <a class="foot-link" href={whatsappUrl} rel="noopener">
+                  WhatsApp us
+                </a>
+              </li>
+            )
+          }
+          {
+            contact.email && (
+              <li>
+                <a class="foot-link" href={`mailto:${contact.email}`}>
+                  {contact.email}
+                </a>
+              </li>
+            )
+          }
+          {contact.address && <li class="whitespace-pre-line text-on-dark-muted">{contact.address}</li>}
+          {
+            contact.mapUrl && (
+              <li>
+                <a class="foot-link" href={contact.mapUrl} target="_blank" rel="noopener">
+                  Open the map
+                </a>
+              </li>
+            )
+          }
+          {
+            social.facebook && (
+              <li>
+                <a class="foot-link" href={social.facebook} target="_blank" rel="noopener">
+                  Facebook
+                </a>
+              </li>
+            )
+          }
+          {
+            social.instagram && (
+              <li>
+                <a class="foot-link" href={social.instagram} target="_blank" rel="noopener">
+                  Instagram
+                </a>
+              </li>
+            )
+          }
+        </ul>
       </div>
+    </div>
 
-      <div class="border-t border-night-800">
-        <div class="flex flex-wrap items-center justify-between gap-3 py-6 text-sm text-cream-100/50">
-          <p>&copy; {year} Pa&rsquo;s Place NPC. All rights reserved.</p>
-          <p class="hand text-lg text-cream-100/70">The End &mdash; well, not really. Every story needs its next reader.</p>
-          <p>Made with love on the South Coast.</p>
-        </div>
-      </div>
+    <div
+      class="mt-12 flex flex-wrap items-center justify-between gap-x-8 gap-y-2 border-t border-on-dark/15 pt-6 text-[0.8125rem] text-on-dark-muted"
+    >
+      <p>
+        &copy; {year}
+        {organisation.legalName}
+        {organisation.registration && <span> &middot; Reg. no. {organisation.registration}</span>}
+      </p>
+      <p class="flex gap-5">
+        <a class="hover:text-on-dark hover:underline" href="/privacy">Privacy</a>
+        <a class="hover:text-on-dark hover:underline" href="/admin">Staff sign-in</a>
+      </p>
     </div>
   </div>
 </footer>
+
+<style>
+  .wordmark {
+    font-family: var(--font-display);
+    font-variation-settings: 'SOFT' 50, 'WONK' 0;
+    font-weight: 600;
+  }
+  .foot-title {
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-on-dark-muted);
+  }
+  .foot-link {
+    color: var(--color-on-dark);
+    text-underline-offset: 3px;
+  }
+  .foot-link:hover {
+    text-decoration: underline;
+  }
+</style>

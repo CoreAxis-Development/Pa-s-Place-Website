@@ -3,9 +3,9 @@
 // next child's first sight of the sea.
 import Dove from '../Dove.astro';
 import Fireflies from '../Fireflies.astro';
-import { getSettings } from '../../../lib/cms';
+import { getSite } from '../../../server/services/content';
 
-const settings = await getSettings();
+const { settings } = await getSite();
 const sponsorMail = `mailto:${settings.contact.email}?subject=${encodeURIComponent("Sponsoring a child's holiday — Pa's Place")}`;
 ---
 
@@ -25,8 +25,8 @@ const sponsorMail = `mailto:${settings.contact.email}?subject=${encodeURICompone
       your gift to the next group.
     </p>
     <div class="reveal mt-9 flex flex-wrap justify-center gap-4">
-      <a href={sponsorMail} class="btn btn-marigold">Sponsor a holiday</a>
-      <a href="/get-involved" class="btn btn-paper">More ways to help</a>
+      <a href={sponsorMail} class="btn btn-primary">Sponsor a holiday</a>
+      <a href="/get-involved" class="btn btn-tertiary !bg-white">More ways to help</a>
     </div>
     <p class="reveal hand mt-6 text-xl text-bark-950/70">
       {settings.contact.phone && <>or phone {settings.contact.person ?? 'us'} on {settings.contact.phone}</>}

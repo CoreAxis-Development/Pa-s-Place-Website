@@ -1,0 +1,27 @@
+---
+// The one calm statement of the cause per guest page: the single dark band
+// besides the footer, with the corner sunrise.
+import Dove from '../story/Dove.astro';
+import Sunrise from '../ui/Sunrise.astro';
+
+interface Props {
+  title: string;
+  text: string;
+  /** show the sponsor call to action (on /get-involved and /what-we-do) */
+  sponsor?: boolean;
+}
+const { title, text, sponsor = false } = Astro.props;
+---
+
+<section class="on-dark relative overflow-hidden bg-canopy-900 py-20 text-on-dark" aria-label="Our cause">
+  <Sunrise class="pointer-events-none absolute -right-40 -top-40 h-[420px] w-[420px]" />
+  <div class="container-page relative text-center">
+    <Dove class="mx-auto h-14 w-14" />
+    <h2 class="t-h2 mx-auto mt-5 max-w-2xl !text-on-dark">{title}</h2>
+    <p class="t-lead mx-auto mt-4 max-w-2xl text-on-dark-muted">{text}</p>
+    <div class="mt-8 flex flex-wrap justify-center gap-4">
+      {sponsor && <a href="/contact?about=sponsor#enquiry" class="btn btn-primary">Sponsor a child&rsquo;s holiday</a>}
+      <a href="/our-story" class="btn btn-on-dark">Read our story</a>
+    </div>
+  </div>
+</section>

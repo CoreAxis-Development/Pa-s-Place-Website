@@ -1,0 +1,52 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import Pagination from '../../components/admin/Pagination.astro';
+import { pageParams } from '../../server/http/request';
+import { formatDateTime } from '../../server/lib/dates';
+import { listActivity } from '../../server/services/activity';
+
+const areas = [
+  { value: '', label: 'Everything' },
+  { value: 'booking', label: 'Bookings' },
+  { value: 'enquiry', label: 'Enquiries' },
+  { value: 'document', label: 'Page content' },
+  { value: 'media', label: 'Photos' },
+  { value: 'user', label: 'Staff and sign-ins' },
+  { value: 'block', label: 'Blocked dates' },
+  { value: 'system', label: 'System' },
+];
+const area = areas.find((a) => a.value === Astro.url.searchParams.get('area'))?.value ?? '';
+const { page, perPage, offset } = pageParams(Astro.url, 50);
+const { rows, total } = await listActivity({ entityType: area || undefined, limit: perPage, offset });
+
+const link = (r: (typeof rows)[number]) =>
+  r.entityId && r.entityType === 'booking' ? `/admin/bookings/${r.entityId}` : r.entityId && r.entityType === 'enquiry' ? `/admin/enquiries/${r.entityId}` : null;
+---
+
+<AdminLayout title="Activity" subtitle="A permanent record of who did what in this portal.">
+  <nav class="a-tabs mb-3" aria-label="Filter by area">
+    {areas.map((a) => <a class="a-tab" href={a.value ? `/admin/activity?area=${a.value}` : '/admin/activity'} aria-current={a.value === area ? 'true' : undefined}>{a.label}</a>)}
+  </nav>
+
+  <div class="a-table-wrap">
+    {
+      rows.length ? (
+        <table class="a-table">
+          <thead><tr><th>When</th><th>What happened</th><th>Who</th></tr></thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr>
+                <td class="nowrap a-muted">{formatDateTime(r.createdAt)}</td>
+                <td>{link(r) ? <a class="a-primary-cell !font-medium" href={link(r)}>{r.summary}</a> : <span class="text-ink">{r.summary}</span>}</td>
+                <td class="nowrap">{r.actorName ?? <span class="a-muted">Website or system</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <div class="a-empty"><p class="a-empty-title">Nothing recorded here yet</p></div>
+      )
+    }
+  </div>
+  <Pagination page={page} perPage={perPage} total={total} />
+</AdminLayout>

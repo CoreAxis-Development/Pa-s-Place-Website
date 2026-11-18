@@ -1,0 +1,95 @@
+---
+import Layout from '../layouts/Layout.astro';
+import EnquiryForm from '../components/sections/EnquiryForm.astro';
+import Icon from '../components/ui/Icon.astro';
+import { getSite } from '../server/services/content';
+
+const { settings, whatsappUrl } = await getSite();
+const { contact } = settings;
+---
+
+<Layout title="Contact" description="Contact Pa's Place in Kelso, Pennington: phone, WhatsApp, email and a message form.">
+  <section class="bg-page" aria-label="Contact">
+    <div class="container-page grid gap-12 pb-20 pt-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:pt-14">
+      <div>
+        <p class="eyebrow">Contact</p>
+        <h1 class="t-h1 mt-2">Talk to us</h1>
+        <p class="t-lead mt-4">
+          Questions about a stay, a party or sponsoring a child&rsquo;s holiday? {contact.person ? `Ask for ${contact.person}.` : ''} The phone is quickest.
+        </p>
+
+        <ul class="mt-8 space-y-5">
+          {
+            contact.phone && (
+              <li class="contact-row">
+                <Icon name="phone" />
+                <div>
+                  <p class="t-caption">Phone</p>
+                  <a class="link tnum text-lg" href={`tel:${contact.phoneLink || contact.phone}`}>{contact.phone}</a>
+                </div>
+              </li>
+            )
+          }
+          {
+            whatsappUrl && (
+              <li class="contact-row">
+                <Icon name="whatsapp" />
+                <div>
+                  <p class="t-caption">WhatsApp</p>
+                  <a class="link text-lg" href={whatsappUrl} rel="noopener">Send a WhatsApp</a>
+                </div>
+              </li>
+            )
+          }
+          {
+            contact.email && (
+              <li class="contact-row">
+                <Icon name="mail" />
+                <div>
+                  <p class="t-caption">Email</p>
+                  <a class="link text-lg" href={`mailto:${contact.email}`}>{contact.email}</a>
+                </div>
+              </li>
+            )
+          }
+          {
+            contact.address && (
+              <li class="contact-row">
+                <Icon name="pin" />
+                <div>
+                  <p class="t-caption">Address</p>
+                  <p class="whitespace-pre-line text-ink">{contact.address}</p>
+                  {contact.mapUrl && <a class="link mt-1 inline-block text-[0.9375rem]" href={contact.mapUrl} target="_blank" rel="noopener">Open the map</a>}
+                </div>
+              </li>
+            )
+          }
+        </ul>
+
+        <div class="mt-10 flex flex-wrap gap-3">
+          <a href="/book-a-stay" class="btn btn-primary">Book a stay</a>
+          <a href="/venue-hire" class="btn btn-tertiary">Hire the venue</a>
+        </div>
+      </div>
+
+      <EnquiryForm />
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .contact-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .contact-row > :global(svg) {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    padding: 9px;
+    border-radius: 10px;
+    background: var(--color-canopy-100);
+    color: var(--color-canopy-700);
+  }
+</style>

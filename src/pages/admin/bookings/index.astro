@@ -1,0 +1,99 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import Badge from '../../../components/admin/Badge.astro';
+import Pagination from '../../../components/admin/Pagination.astro';
+import { can } from '../../../server/auth/session';
+import type { BookingStatus } from '../../../server/db/schema';
+import { currentUser, pageParams } from '../../../server/http/request';
+import { formatDate } from '../../../server/lib/dates';
+import { formatRand } from '../../../server/lib/pricing';
+import { BOOKING_STATUSES, bookingStatusMeta, depositStatusMeta, listBookings } from '../../../server/services/bookings';
+import { listOptions } from '../../../server/services/content';
+
+const user = currentUser(Astro);
+const q = Astro.url.searchParams.get('q') ?? '';
+const statusParam = Astro.url.searchParams.get('status') ?? 'active';
+const optionParam = Astro.url.searchParams.get('option') ?? '';
+const status = statusParam === 'all' ? undefined : statusParam === 'active' ? 'active' : BOOKING_STATUSES.find((s) => s.value === statusParam)?.value;
+
+const { page, perPage, offset } = pageParams(Astro.url);
+const options = await listOptions();
+const { rows, total } = await listBookings({
+  status: status as BookingStatus | 'active' | undefined,
+  optionId: options.find((o) => o.id === optionParam)?.id,
+  q,
+  limit: perPage,
+  offset,
+  order: statusParam === 'confirmed' || statusParam === 'active' ? 'arrival' : 'newest',
+});
+
+const tabs = [{ value: 'active', label: 'Current' }, ...BOOKING_STATUSES.map((s) => ({ value: s.value, label: s.label })), { value: 'all', label: 'All' }];
+const tabLink = (v: string) => {
+  const p = new URLSearchParams();
+  if (v !== 'active') p.set('status', v);
+  if (q) p.set('q', q);
+  if (optionParam) p.set('option', optionParam);
+  const s = p.toString();
+  return `/admin/bookings${s ? `?${s}` : ''}`;
+};
+---
+
+<AdminLayout title="Bookings" subtitle="Requests from the website and bookings added by staff.">
+  <Fragment slot="actions">
+    <a href="/admin/calendar" class="btn btn-tertiary">Calendar</a>
+    {can(user, 'edit') && <a href="/admin/bookings/new" class="btn btn-primary">Add a booking</a>}
+  </Fragment>
+
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <nav class="a-tabs" aria-label="Filter by status">
+      {tabs.map((t) => <a class="a-tab" href={tabLink(t.value)} aria-current={statusParam === t.value ? 'true' : undefined}>{t.label}</a>)}
+    </nav>
+    <form method="get" class="flex flex-wrap items-center gap-2">
+      {statusParam !== 'active' && <input type="hidden" name="status" value={statusParam} />}
+      <select class="input !w-auto" name="option" aria-label="Booking option">
+        <option value="">All options</option>
+        {options.map((o) => <option value={o.id} selected={o.id === optionParam}>{o.name}</option>)}
+      </select>
+      <input class="input !w-56" type="search" name="q" value={q} placeholder="Search name, email, reference" aria-label="Search bookings" />
+      <button class="btn btn-tertiary" type="submit">Filter</button>
+    </form>
+  </div>
+
+  <div class="a-table-wrap">
+    {
+      rows.length ? (
+        <table class="a-table">
+          <thead>
+            <tr><th>Guest</th><th>Booking</th><th>Dates</th><th class="num">People</th><th class="num">Total</th><th>Status</th><th>Deposit</th></tr>
+          </thead>
+          <tbody>
+            {rows.map((b) => (
+              <tr class:list={[b.status === 'requested' && 'a-unread']}>
+                <td>
+                  <a class="a-primary-cell" href={`/admin/bookings/${b.id}`}>{b.guestName}</a>
+                  <div class="a-muted">{b.ref}</div>
+                </td>
+                <td class="nowrap">{b.option.name}</td>
+                <td class="nowrap">
+                  {formatDate(b.startDate)}
+                  {b.option.kind === 'stay' && <span class="a-muted"> to {formatDate(b.endDate)}</span>}
+                </td>
+                <td class="num">{b.people}</td>
+                <td class="num">{formatRand(b.total)}</td>
+                <td><Badge tone={bookingStatusMeta(b.status).tone} label={bookingStatusMeta(b.status).label} /></td>
+                <td>{['requested', 'confirmed', 'completed'].includes(b.status) ? <Badge tone={depositStatusMeta(b.depositStatus).tone} label={depositStatusMeta(b.depositStatus).label.replace('Deposit ', '')} /> : <span class="a-muted">n/a</span>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <div class="a-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.500" stroke-linecap="round"><rect x="3.500" y="5" width="17" height="15.500" rx="2"/><path d="M3.500 10h17M8 3v4M16 3v4"/></svg>
+          <p class="a-empty-title">{q || optionParam || statusParam !== 'active' ? 'No bookings match these filters' : 'No current bookings'}</p>
+          <p class="a-muted">{q || optionParam || statusParam !== 'active' ? 'Try a different status, option or search.' : 'New requests will appear here.'}</p>
+        </div>
+      )
+    }
+  </div>
+  <Pagination page={page} perPage={perPage} total={total} />
+</AdminLayout>

@@ -1,0 +1,201 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import Badge from '../../../components/admin/Badge.astro';
+import { can } from '../../../server/auth/session';
+import type { BookingStatus, DepositStatus } from '../../../server/db/schema';
+import { currentUser, deny, setFlash, str } from '../../../server/http/request';
+import { daysBetween, formatDate, formatDateTime, timeAgo } from '../../../server/lib/dates';
+import { formatRand } from '../../../server/lib/pricing';
+import { addNote, entityActivity, listNotes } from '../../../server/services/activity';
+import {
+  BOOKING_STATUSES,
+  BookingError,
+  DEPOSIT_STATUSES,
+  bookingStatusMeta,
+  depositStatusMeta,
+  getBooking,
+  nextStatuses,
+  setBookingStatus,
+  setDepositStatus,
+} from '../../../server/services/bookings';
+
+const user = currentUser(Astro);
+const id = Astro.params.id!;
+const here = `/admin/bookings/${id}`;
+const booking = await getBooking(id);
+if (!booking) {
+  setFlash(Astro, 'That booking no longer exists.', 'warning');
+  return Astro.redirect('/admin/bookings');
+}
+
+if (Astro.request.method === 'POST') {
+  const denied = deny(Astro, 'edit', here);
+  if (denied) return denied;
+  const form = await Astro.request.formData();
+  const action = str(form, '_action');
+  try {
+    if (action === 'status') {
+      const status = BOOKING_STATUSES.find((s) => s.value === str(form, 'status'))?.value as BookingStatus | undefined;
+      if (status) {
+        await setBookingStatus(id, status, user);
+        setFlash(Astro, `Booking ${booking.ref} is now ${bookingStatusMeta(status).label.toLowerCase()}.`);
+      }
+    } else if (action === 'deposit') {
+      const deposit = DEPOSIT_STATUSES.find((s) => s.value === str(form, 'depositStatus'))?.value as DepositStatus | undefined;
+      if (deposit) {
+        await setDepositStatus(id, deposit, user);
+        setFlash(Astro, 'Deposit status updated.');
+      }
+    } else if (action === 'note') {
+      const body = str(form, 'body').trim();
+      if (body) {
+        await addNote('booking', id, user.id, body);
+        setFlash(Astro, 'Note added.');
+      }
+    }
+  } catch (err) {
+    if (!(err instanceof BookingError)) throw err;
+    setFlash(Astro, err.message, 'danger');
+  }
+  return Astro.redirect(here);
+}
+
+const [notes, history] = await Promise.all([listNotes('booking', id), entityActivity('booking', id)]);
+const status = bookingStatusMeta(booking.status);
+const deposit = depositStatusMeta(booking.depositStatus);
+const isStay = booking.option.kind === 'stay';
+const nights = isStay ? daysBetween(booking.startDate, booking.endDate) : 0;
+const canEdit = can(user, 'edit');
+const moves = nextStatuses(booking.status);
+
+const moveLabels: Record<BookingStatus, { label: string; cls: string }> = {
+  confirmed: { label: 'Confirm booking', cls: 'btn-primary' },
+  declined: { label: 'Decline', cls: 'btn-danger-quiet' },
+  cancelled: { label: 'Cancel booking', cls: 'btn-danger-quiet' },
+  completed: { label: 'Mark as completed', cls: 'btn-primary' },
+  requested: { label: 'Re-open as a request', cls: 'btn-tertiary' },
+};
+const subject = encodeURIComponent(`Your booking at Pa's Place (${booking.ref})`);
+---
+
+<AdminLayout title={booking.guestName} subtitle={`${booking.option.name} · ${booking.ref}`}>
+  <a slot="breadcrumb" href="/admin/bookings" class="link">All bookings</a>
+  <Fragment slot="actions">
+    <Badge tone={status.tone} label={status.label} />
+    <Badge tone={deposit.tone} label={deposit.label} />
+  </Fragment>
+
+  <div class="grid gap-5 xl:grid-cols-[1.6fr_1fr]">
+    <div class="grid content-start gap-5">
+      <section class="a-card a-card-pad">
+        <h2 class="a-card-title">Booking</h2>
+        <dl class="a-dl mt-2">
+          <div><dt>Option</dt><dd>{booking.option.name}</dd></div>
+          {
+            isStay ? (
+              <>
+                <div><dt>Arrives</dt><dd>{formatDate(booking.startDate)}</dd></div>
+                <div><dt>Leaves</dt><dd>{formatDate(booking.endDate)} ({nights} night{nights === 1 ? '' : 's'})</dd></div>
+              </>
+            ) : (
+              <div><dt>Event day</dt><dd>{formatDate(booking.startDate)}</dd></div>
+            )
+          }
+          <div><dt>People</dt><dd>{booking.people}</dd></div>
+          <div><dt>Rate</dt><dd>{formatRand(booking.rate)} per person per {isStay ? 'night' : 'day'}</dd></div>
+          <div><dt>Total</dt><dd class="!font-bold">{formatRand(booking.total)}</dd></div>
+          <div><dt>Deposit</dt><dd>{formatRand(booking.deposit)} · {deposit.label.replace('Deposit ', '')}</dd></div>
+          <div><dt>Balance</dt><dd>{formatRand(booking.total - booking.deposit)} {isStay ? 'on arrival' : 'on the day'}</dd></div>
+          <div><dt>Came from</dt><dd class="capitalize">{booking.source} · {formatDateTime(booking.createdAt)}</dd></div>
+        </dl>
+        {booking.notes && (
+          <div class="mt-4 rounded-md bg-sunken p-3">
+            <p class="a-muted text-xs font-semibold">Guest&rsquo;s note</p>
+            <p class="mt-1 whitespace-pre-line text-ink">{booking.notes}</p>
+          </div>
+        )}
+      </section>
+
+      <section class="a-card a-card-pad">
+        <h2 class="a-card-title">Internal notes</h2>
+        {
+          canEdit && (
+            <form method="post" class="mt-3">
+              <input type="hidden" name="_action" value="note" />
+              <label class="sr-only" for="note-body">Add a note</label>
+              <textarea class="input" id="note-body" name="body" rows="3" maxlength="4000" placeholder="Deposit promised for Friday…" required></textarea>
+              <button class="btn btn-tertiary mt-2" type="submit">Add note</button>
+            </form>
+          )
+        }
+        <ul class="mt-4 space-y-3">
+          {notes.map((n) => (
+            <li class="rounded-md bg-sunken p-3">
+              <p class="whitespace-pre-line text-ink">{n.body}</p>
+              <p class="a-muted mt-1 text-xs">{n.authorName ?? 'Former staff member'} · {timeAgo(n.createdAt)}</p>
+            </li>
+          ))}
+          {notes.length === 0 && <li class="a-muted">No notes yet.</li>}
+        </ul>
+      </section>
+    </div>
+
+    <div class="grid content-start gap-5">
+      {
+        canEdit && (
+          <section class="a-card a-card-pad">
+            <h2 class="a-card-title">Next step</h2>
+            {
+              moves.length ? (
+                <div class="mt-3 flex flex-wrap gap-2">
+                  {moves.map((m) => (
+                    <form method="post">
+                      <input type="hidden" name="_action" value="status" />
+                      <input type="hidden" name="status" value={m} />
+                      <button class={`btn ${moveLabels[m].cls}`} type="submit">{moveLabels[m].label}</button>
+                    </form>
+                  ))}
+                </div>
+              ) : (
+                <p class="a-muted mt-2">This booking is completed. Nothing more to do.</p>
+              )
+            }
+            {booking.status === 'requested' && <p class="a-muted mt-3 text-xs">The dates are held while this is a request. Declining frees them.</p>}
+
+            <form method="post" class="mt-5 border-t border-line pt-4">
+              <input type="hidden" name="_action" value="deposit" />
+              <label class="label" for="depositStatus">Deposit of {formatRand(booking.deposit)}</label>
+              <div class="flex gap-2">
+                <select class="input" id="depositStatus" name="depositStatus">
+                  {DEPOSIT_STATUSES.map((d) => <option value={d.value} selected={d.value === booking.depositStatus}>{d.label.replace('Deposit ', '').replace(/^./, (c) => c.toUpperCase())}</option>)}
+                </select>
+                <button class="btn btn-tertiary" type="submit">Save</button>
+              </div>
+            </form>
+          </section>
+        )
+      }
+
+      <section class="a-card a-card-pad">
+        <h2 class="a-card-title">Guest</h2>
+        <dl class="a-dl mt-2">
+          <div><dt>Name</dt><dd>{booking.guestName}</dd></div>
+          <div><dt>Email</dt><dd><a class="link" href={`mailto:${booking.email}?subject=${subject}`}>{booking.email}</a></dd></div>
+          <div><dt>Phone</dt><dd>{booking.phone ? <a class="link" href={`tel:${booking.phone}`}>{booking.phone}</a> : <span class="a-muted">Not given</span>}</dd></div>
+        </dl>
+      </section>
+
+      <section class="a-card a-card-pad">
+        <h2 class="a-card-title">History</h2>
+        <ul class="a-timeline mt-3">
+          {history.map((h) => (
+            <li>
+              <p class="text-ink">{h.summary}</p>
+              <p class="a-muted text-xs">{formatDateTime(h.createdAt)}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  </div>
+</AdminLayout>

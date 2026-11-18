@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro';
+import RayMark from '../components/ui/RayMark.astro';
+---
+
+<Layout title="Page not found">
+  <section class="bg-page" aria-label="Page not found">
+    <div class="container-page py-24 text-center">
+      <RayMark class="mx-auto" />
+      <p class="eyebrow mt-4">Page not found</p>
+      <h1 class="t-h1 mt-2">We couldn&rsquo;t find that page</h1>
+      <p class="t-lead mx-auto mt-4 max-w-[46ch]">It may have moved, or the link may be out of date. These will get you where you are going.</p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a href="/" class="btn btn-tertiary">Home</a>
+        <a href="/book-a-stay" class="btn btn-primary">Book a stay</a>
+        <a href="/venue-hire" class="btn btn-secondary">Hire the venue</a>
+      </div>
+    </div>
+  </section>
+</Layout>

@@ -1,0 +1,106 @@
+---
+// One generated edit form for every single-instance document (site settings,
+// home page, booking page, venue page), driven by its field descriptors.
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import MediaPicker from '../../../../components/admin/MediaPicker.astro';
+import { can } from '../../../../server/auth/session';
+import { currentUser, deny, fieldErrors, setFlash } from '../../../../server/http/request';
+import { logActivity } from '../../../../server/services/activity';
+import { DOCUMENTS, formToDocument, getDocument, getPath, isDocumentKey, saveDocument, type DocumentDef } from '../../../../server/services/documents';
+import { listMedia } from '../../../../server/services/media';
+
+const user = currentUser(Astro);
+const key = Astro.params.doc ?? '';
+if (!isDocumentKey(key)) return Astro.redirect('/admin/content');
+const def: DocumentDef = DOCUMENTS[key];
+const here = `/admin/content/page/${key}`;
+
+let value: unknown = await getDocument(key);
+let errors: Record<string, string> = {};
+
+if (Astro.request.method === 'POST') {
+  const denied = deny(Astro, 'edit', here);
+  if (denied) return denied;
+  const submitted = formToDocument(def, await Astro.request.formData());
+  const parsed = def.schema.safeParse(submitted);
+  if (parsed.success) {
+    await saveDocument(key, parsed.data, user.id);
+    await logActivity({ actorId: user.id, action: 'content.updated', entityType: 'document', entityId: key, summary: `${user.name} updated “${def.title}”` });
+    setFlash(Astro, `${def.title} saved. The website is updated.`);
+    return Astro.redirect(here);
+  }
+  errors = fieldErrors(parsed.error);
+  value = submitted;
+}
+
+const needsMedia = def.groups.some((g) => g.fields.some((f) => f.type === 'image'));
+const media = needsMedia ? (await listMedia({ limit: 500 })).rows : [];
+const canEdit = can(user, 'edit');
+const text = (name: string) => {
+  const v = getPath(value, name);
+  return Array.isArray(v) ? v.join('\n') : v == null ? '' : String(v);
+};
+---
+
+<AdminLayout title={def.title} subtitle={def.description}>
+  <a slot="breadcrumb" href="/admin/content" class="link">Content</a>
+  <Fragment slot="actions">
+    <a class="btn btn-tertiary" href={def.preview} target="_blank" rel="noopener">View on the website</a>
+  </Fragment>
+
+  {Object.keys(errors).length > 0 && <p class="alert alert-danger mb-5" role="alert">Some fields need attention. Nothing has been saved yet.</p>}
+
+  <form method="post" class="max-w-4xl">
+    <fieldset disabled={!canEdit} class="grid gap-5">
+      {
+        def.groups.map((group) => (
+          <section class="a-card a-card-pad">
+            <h2 class="a-card-title">{group.title}</h2>
+            {group.description && <p class="a-muted">{group.description}</p>}
+            <div class="a-form-grid mt-4">
+              {group.fields.map((f) => {
+                const id = `f-${f.name.replace(/\./g, '-')}`;
+                const wide = f.type === 'textarea' || f.type === 'lines' || f.type === 'image' || f.type === 'checkbox';
+                const error = errors[f.name];
+                return (
+                  <div class:list={[wide && 'a-span-2']}>
+                    {f.type === 'image' ? (
+                      <MediaPicker name={f.name} label={f.label} value={(getPath(value, f.name) as string | null) ?? null} media={media} help={f.help} />
+                    ) : f.type === 'checkbox' ? (
+                      <label class="a-check">
+                        <input type="checkbox" name={f.name} checked={getPath(value, f.name) === true} />
+                        {f.label}
+                      </label>
+                    ) : (
+                      <>
+                        <label class="label" for={id}>{f.label}</label>
+                        {f.type === 'textarea' || f.type === 'lines' ? (
+                          <textarea class="input" id={id} name={f.name} rows={f.type === 'lines' ? 6 : 4} aria-invalid={error ? 'true' : undefined}>{text(f.name)}</textarea>
+                        ) : (
+                          <input class="input" id={id} name={f.name} type={f.type === 'number' ? 'number' : f.type} value={text(f.name)} aria-invalid={error ? 'true' : undefined} />
+                        )}
+                      </>
+                    )}
+                    {f.type !== 'image' && f.help && <p class="help">{f.help}</p>}
+                    {error && <p class="field-error">{error}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))
+      }
+    </fieldset>
+
+    {
+      canEdit ? (
+        <div class="a-actions">
+          <a href="/admin/content" class="btn btn-tertiary">Cancel</a>
+          <button class="btn btn-primary" type="submit">Save changes</button>
+        </div>
+      ) : (
+        <p class="alert alert-info mt-5">Your account can view content but not change it.</p>
+      )
+    }
+  </form>
+</AdminLayout>

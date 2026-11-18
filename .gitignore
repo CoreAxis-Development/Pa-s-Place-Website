@@ -29,3 +29,6 @@ pnpm-debug.log*
 
 # temporary reference documents
 *.pdf
+
+# local database and uploaded media
+data/

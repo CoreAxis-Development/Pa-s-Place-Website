@@ -1,0 +1,130 @@
+---
+// Staff-entered booking (a phone call or walk-in). Uses the same rules and
+// availability check as the website, so it can never double-book.
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { currentUser, deny, fieldErrors, setFlash, str } from '../../../server/http/request';
+import { todaySast } from '../../../server/lib/dates';
+import { formatRand } from '../../../server/lib/pricing';
+import { BookingError, bookingInput, createBooking } from '../../../server/services/bookings';
+import { listOptions } from '../../../server/services/content';
+
+const user = currentUser(Astro);
+const denied = deny(Astro, 'edit', '/admin/bookings');
+if (denied) return denied;
+
+const options = await listOptions();
+let errors: Record<string, string> = {};
+let problem = '';
+const v: Record<string, string> = {
+  option: Astro.url.searchParams.get('option') ?? options[0]?.slug ?? '',
+  startDate: Astro.url.searchParams.get('date') ?? '',
+  endDate: '',
+  people: '',
+  guestName: '',
+  email: '',
+  phone: '',
+  notes: '',
+  status: 'confirmed',
+};
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  for (const k of Object.keys(v)) v[k] = str(form, k);
+  const parsed = bookingInput.safeParse({ ...v, endDate: v.endDate || v.startDate });
+  if (!parsed.success) {
+    errors = fieldErrors(parsed.error);
+    problem = 'Please check the highlighted details.';
+  } else {
+    try {
+      const { booking } = await createBooking(parsed.data, {
+        source: 'admin',
+        status: v.status === 'requested' ? 'requested' : 'confirmed',
+        actor: user,
+        allowPast: true,
+      });
+      setFlash(Astro, `Booking ${booking.ref} added.`);
+      return Astro.redirect(`/admin/bookings/${booking.id}`);
+    } catch (err) {
+      if (!(err instanceof BookingError)) throw err;
+      problem = err.message;
+    }
+  }
+}
+---
+
+<AdminLayout title="Add a booking" subtitle="For bookings taken by phone or in person.">
+  <a slot="breadcrumb" href="/admin/bookings" class="link">All bookings</a>
+
+  {problem && <p class="alert alert-danger mb-5" role="alert">{problem}</p>}
+
+  <form method="post" class="max-w-4xl">
+    <section class="a-card a-card-pad">
+      <h2 class="a-card-title">The booking</h2>
+      <div class="a-form-grid mt-4">
+        <div class="a-span-2">
+          <label class="label" for="option">Booking option</label>
+          <select class="input" id="option" name="option">
+            {options.map((o) => (
+              <option value={o.slug} selected={o.slug === v.option}>
+                {o.name} · {formatRand(o.rate)} pp per {o.kind === 'venue' ? 'day' : 'night'} · {o.minPeople} to {o.maxPeople} people
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label class="label" for="startDate">Arrival, or event day</label>
+          <input class="input" id="startDate" name="startDate" type="date" value={v.startDate} required aria-invalid={errors.startDate ? 'true' : undefined} />
+          {errors.startDate && <p class="field-error">{errors.startDate}</p>}
+        </div>
+        <div>
+          <label class="label" for="endDate">Departure</label>
+          <input class="input" id="endDate" name="endDate" type="date" value={v.endDate} min={todaySast()} aria-invalid={errors.endDate ? 'true' : undefined} />
+          <p class="help">Leave empty for venue day hire.</p>
+          {errors.endDate && <p class="field-error">{errors.endDate}</p>}
+        </div>
+        <div>
+          <label class="label" for="people">People</label>
+          <input class="input" id="people" name="people" type="number" min="1" max="500" value={v.people} required aria-invalid={errors.people ? 'true' : undefined} />
+          {errors.people && <p class="field-error">{errors.people}</p>}
+        </div>
+        <div>
+          <label class="label" for="status">Save as</label>
+          <select class="input" id="status" name="status">
+            <option value="confirmed" selected={v.status === 'confirmed'}>Confirmed</option>
+            <option value="requested" selected={v.status === 'requested'}>Requested (still to confirm)</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="a-card a-card-pad mt-5">
+      <h2 class="a-card-title">The guest</h2>
+      <div class="a-form-grid mt-4">
+        <div class="a-span-2">
+          <label class="label" for="guestName">Full name</label>
+          <input class="input" id="guestName" name="guestName" value={v.guestName} required aria-invalid={errors.guestName ? 'true' : undefined} />
+          {errors.guestName && <p class="field-error">{errors.guestName}</p>}
+        </div>
+        <div>
+          <label class="label" for="email">Email</label>
+          <input class="input" id="email" name="email" type="email" value={v.email} required aria-invalid={errors.email ? 'true' : undefined} />
+          {errors.email && <p class="field-error">{errors.email}</p>}
+        </div>
+        <div>
+          <label class="label" for="phone">Phone</label>
+          <input class="input" id="phone" name="phone" type="tel" value={v.phone} required aria-invalid={errors.phone ? 'true' : undefined} />
+          {errors.phone && <p class="field-error">{errors.phone}</p>}
+        </div>
+        <div class="a-span-2">
+          <label class="label" for="notes">Notes from the guest (optional)</label>
+          <textarea class="input" id="notes" name="notes" rows="3" maxlength="2000">{v.notes}</textarea>
+        </div>
+      </div>
+    </section>
+
+    <div class="a-actions">
+      <a href="/admin/bookings" class="btn btn-tertiary">Cancel</a>
+      <button class="btn btn-primary" type="submit">Add booking</button>
+    </div>
+  </form>
+</AdminLayout>

@@ -1,0 +1,95 @@
+---
+import '@fontsource-variable/figtree';
+import '../../styles/global.css';
+import '../../styles/admin.css';
+import { Image } from 'astro:assets';
+import logo from '../../assets/brand/pas-place-logo.png';
+import { SESSION_COOKIE, authenticate, cookieOptions, createSession } from '../../server/auth/session';
+import { clientIp, safeNext, str } from '../../server/http/request';
+import { rateLimit } from '../../server/lib/rate-limit';
+import { logActivity } from '../../server/services/activity';
+import { userCount } from '../../server/services/users';
+
+const next = safeNext(Astro.url.searchParams.get('next'));
+if (Astro.locals.user) return Astro.redirect(next);
+
+let error = '';
+let email = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  email = str(form, 'email').trim();
+  const ip = clientIp(Astro);
+  const limited = rateLimit(`login:${ip}`, 10, 10 * 60_000);
+
+  if (!limited.ok) {
+    error = 'Too many sign-in attempts. Please wait a few minutes and try again.';
+  } else {
+    const result = await authenticate(email, str(form, 'password'));
+    if (result.ok) {
+      const token = await createSession(result.user.id, { ip, userAgent: Astro.request.headers.get('user-agent') ?? undefined });
+      Astro.cookies.set(SESSION_COOKIE, token, cookieOptions(Astro.url.protocol === 'https:'));
+      await logActivity({ actorId: result.user.id, action: 'user.signed-in', entityType: 'user', entityId: result.user.id, summary: `${result.user.name} signed in` });
+      return Astro.redirect(safeNext(str(form, 'next')));
+    }
+    // the same message for an unknown email and a wrong password
+    error =
+      result.reason === 'locked'
+        ? `This account is locked after too many wrong passwords. Try again in ${result.retryMinutes} minutes.`
+        : result.reason === 'inactive'
+          ? 'This account has been deactivated. Ask an administrator for access.'
+          : 'That email and password do not match an account.';
+  }
+}
+
+const noAccounts = (await userCount()) === 0;
+---
+
+<!doctype html>
+<html lang="en-ZA">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Sign in | Pa&rsquo;s Place admin</title>
+  </head>
+  <body class="admin">
+    <main class="a-auth">
+      <div class="a-auth-card">
+        <div class="flex items-center gap-3">
+          <span class="grid h-12 w-12 place-items-center rounded-full bg-canopy-900">
+            <Image src={logo} alt="" widths={[88, 132]} sizes="44px" class="h-11 w-11 object-contain" />
+          </span>
+          <div>
+            <h1 class="text-lg font-bold text-ink">Pa&rsquo;s Place</h1>
+            <p class="a-muted">Staff sign-in</p>
+          </div>
+        </div>
+
+        {error && <p class="alert alert-danger mt-5" role="alert">{error}</p>}
+        {
+          noAccounts && (
+            <p class="alert alert-warning mt-5">
+              No staff accounts exist yet. Set the ADMIN_EMAIL and ADMIN_PASSWORD environment variables and restart the server to create the owner account.
+            </p>
+          )
+        }
+
+        <form method="post" class="mt-6 grid gap-4">
+          <input type="hidden" name="next" value={next} />
+          <div>
+            <label class="label" for="email">Email</label>
+            <input class="input" id="email" name="email" type="email" autocomplete="username" value={email} required autofocus />
+          </div>
+          <div>
+            <label class="label" for="password">Password</label>
+            <input class="input" id="password" name="password" type="password" autocomplete="current-password" required />
+          </div>
+          <button class="btn btn-primary mt-1 w-full" type="submit">Sign in</button>
+        </form>
+        <p class="a-muted mt-5 text-xs">Forgotten your password? Ask an administrator to reset it.</p>
+      </div>
+    </main>
+  </body>
+</html>

@@ -1,57 +1,77 @@
-# Pa's Place Website (v2)
+# Pa's Place website
 
-Ground-up rebuild of the Pa's Place website on a lightweight stack:
+The public website and staff admin portal for Pa's Place NPC, Pennington, KwaZulu-Natal.
 
-- **[Astro 7](https://astro.build)** — static-first framework; public pages ship zero JavaScript. Runs as a small Node server (standalone adapter) on Railway.
-- **[Tailwind CSS v4](https://tailwindcss.com)** — styling.
-- **[Keystatic](https://keystatic.com)** — git-based CMS. Admin UI at `/keystatic` writes content (JSON/Markdown) and images into this repo.
+- **[Astro 7](https://astro.build)** on Node (standalone adapter). Every page is rendered on request from the database, so an edit in the admin portal is live at once.
+- **[Tailwind CSS v4](https://tailwindcss.com)**, with the brand tokens in [src/styles/global.css](src/styles/global.css).
+- **Postgres** through [Drizzle ORM](https://orm.drizzle.team). With no `DATABASE_URL` it runs embedded ([PGlite](https://pglite.dev)), so there is nothing to install.
+- **React** for one island only: the booking form.
 
-Design docs live in [docs/superpowers/specs/](docs/superpowers/specs/). The previous Next.js site is preserved in git history on `main` (pre-overhaul).
+Design documents are in [docs/superpowers/specs/](docs/superpowers/specs/). The brand identity ("The Garden by the Sea") is specified in [2026-11-17-brand-identity.md](docs/superpowers/specs/2026-11-17-brand-identity.md).
 
-## Development
+## Run it
 
 ```bash
 npm install
 npm run dev
 ```
 
-- Site: http://localhost:4321
-- CMS admin: http://localhost:4321/keystatic (local mode — edits write straight to your working copy; commit them like any other change)
+- Website: http://localhost:4321
+- Admin portal: http://localhost:4321/admin
 
-The CMS admin is protected by HTTP Basic Auth — default credentials `admin` / `rootpass`, overridable via `CMS_USER` / `CMS_PASSWORD` env vars. **Change these on the Railway service before going live.**
+On the first request the server creates the database, loads the photos in `seed/photos/` and the starter content, and creates a development owner account: `admin@pasplace.co.za` / `garden-by-the-sea`. You are asked to choose a new password at first sign-in. To start again from scratch, stop the server and run `npm run db:reset`.
 
-## Build & run
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server |
+| `npm test` | Unit and service tests (in-memory database) |
+| `npm run check` | Type-check |
+| `npm run build` / `npm start` | Production build and server |
+| `npm run db:generate` | Create a migration after changing `src/server/db/schema.ts` |
+| `npm run db:reset` | Delete the local database and uploaded photos |
 
-```bash
-npm run build
-node ./dist/server/entry.mjs
-```
+## The admin portal
 
-## Deployment (Railway)
+| Area | What staff can do |
+|---|---|
+| Dashboard | New enquiries, booking requests to answer, next arrivals, recent activity |
+| Enquiries | Inbox of contact-form messages: status, assignee, internal notes, search, CSV export |
+| Bookings | Requests from the website and bookings added by staff; confirm, decline, cancel, mark the deposit paid |
+| Calendar | Month view by booking option; block dates for maintenance or sponsored holidays |
+| Content | Site settings, page copy, booking options and rates, grounds features, gallery, FAQs |
+| Photos | Upload, describe and categorise photos; flag those that still need consent |
+| Staff | Accounts and roles (owner, admin, editor, viewer), password resets |
+| Activity | Audit trail of who did what |
 
-`railway.json` sets the build (`npm run build`) and start (`node ./dist/server/entry.mjs`) commands. Railway provides `PORT`; `HOST=0.0.0.0` is set in the start command.
+How bookings work: a guest picks dates against live availability and sends a request. The dates are held immediately. Staff confirm or decline, the guest pays the deposit by EFT, and staff mark it as received. **There is no online card payment**; put banking details in *Content → Site settings → How to pay the deposit*.
 
-### Enabling CMS editing on the live site
+Security: passwords are hashed with scrypt; sessions are server-side with httpOnly cookies; accounts lock after five wrong passwords; cross-site form posts are rejected; public forms are rate-limited and carry a honeypot; uploads are re-encoded and stripped of metadata.
 
-Keystatic runs in **local** storage mode by default (dev only). For staff to edit from the deployed site, switch to **GitHub** mode:
+## Deploying (Railway)
 
-1. Visit `/keystatic` on the deployed site (or run the Keystatic GitHub setup locally) and follow the flow to create a GitHub App for this repo.
-2. Set these variables on the Railway service:
-   - `KEYSTATIC_STORAGE=github`
-   - `KEYSTATIC_GITHUB_REPO_OWNER` / `KEYSTATIC_GITHUB_REPO_NAME`
-   - `KEYSTATIC_GITHUB_CLIENT_ID` / `KEYSTATIC_GITHUB_CLIENT_SECRET` / `KEYSTATIC_SECRET` (from the GitHub App)
-3. Staff sign in with GitHub accounts that have access to the repo. Published edits are commits, which trigger a Railway redeploy (~1–2 min to go live).
+`railway.json` builds with `npm run build` and starts `node ./dist/server/entry.mjs`.
+
+1. **Add a volume** to the service and set `DATA_DIR` to its mount path (for example `/data`). The database and uploaded photos live there. Without a volume they are lost on every deploy.
+2. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` (10 characters or more) for the first owner account.
+3. Optional: add Railway's Postgres and set `DATABASE_URL` to use it instead of the embedded database. Photos still need the volume.
+4. Optional: set the `SMTP_*` variables and `SITE_URL` to email staff and guests about new enquiries and bookings.
+
+See [.env.example](.env.example) for every variable. Run a single instance: rate limiting and the content cache are per process.
 
 ## Project structure
 
 ```
+seed/photos/          real photos, sorted by category, loaded on first run
+drizzle/              SQL migrations (applied automatically at start-up)
 src/
-  pages/        # routes
-  components/   # .astro components
-  layouts/
-  content/      # Keystatic-managed content (settings, page content)
-  assets/       # images (Astro-optimized at build)
-keystatic.config.ts   # CMS schema
-astro.config.mjs
-railway.json
+  pages/              public routes, /admin, /api, /media
+  components/         site sections, UI pieces, booking form, storybook scenes
+  layouts/            Layout (public) and AdminLayout
+  server/
+    db/               schema and database client
+    auth/             password hashing, sessions, roles
+    services/         content, media, enquiries, bookings, users, mail, audit trail
+    lib/              dates, pricing, ids, rate limiting
+  styles/             global.css (brand), admin.css, story.css (/our-story only)
+tests/
 ```

@@ -1,0 +1,91 @@
+---
+// The photo gallery. Category filters are plain links (?category=), so the
+// page is shareable and works without JavaScript.
+import Layout from '../layouts/Layout.astro';
+import Picture from '../components/ui/Picture.astro';
+import { getSite } from '../server/services/content';
+
+const site = await getSite();
+const selected = Astro.url.searchParams.get('category');
+const active = site.galleryCategories.find((c) => c.value === selected);
+const photos = active ? site.gallery.filter((g) => g.category === active.value) : site.gallery;
+---
+
+<Layout title="Gallery" description="Photos of Pa's Place in Pennington, KZN: the pool and waterslides, mini-golf, the lapa and the gardens.">
+  <section class="bg-page" aria-label="Gallery">
+    <div class="container-page pb-20 pt-10 lg:pt-14">
+      <p class="eyebrow">Gallery</p>
+      <h1 class="t-h1 mt-2">The garden, the pool and the lapa</h1>
+      <p class="t-lead mt-4 max-w-[60ch]">Real photos, taken by guests and by us. What you see is what you get.</p>
+
+      {
+        site.galleryCategories.length > 1 && (
+          <nav class="mt-8 flex flex-wrap gap-2" aria-label="Filter photos">
+            <a href="/gallery" class:list={['filter', !active && 'is-active']} aria-current={!active ? 'true' : undefined}>
+              All <span class="tnum">({site.gallery.length})</span>
+            </a>
+            {site.galleryCategories.map((c) => (
+              <a
+                href={`/gallery?category=${c.value}`}
+                class:list={['filter', active?.value === c.value && 'is-active']}
+                aria-current={active?.value === c.value ? 'true' : undefined}
+              >
+                {c.label} <span class="tnum">({c.count})</span>
+              </a>
+            ))}
+          </nav>
+        )
+      }
+
+      {
+        photos.length > 0 ? (
+          <ul class="mt-8 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
+            {photos.map((g) => (
+              <li>
+                <a href={g.image.srcset.split(', ').pop()?.split(' ')[0]} class="block" aria-label={`Open the full photo: ${g.image.alt}`}>
+                  <Picture image={g.image} sizes="(min-width: 1024px) 350px, 46vw" class="photo aspect-square" />
+                </a>
+                <p class="t-caption mt-2">{g.caption}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="mt-10">Photos are on their way. Please check back soon.</p>
+        )
+      }
+
+      <div class="mt-14 flex flex-wrap gap-3">
+        <a href="/book-a-stay" class="btn btn-primary">Book a stay</a>
+        <a href="/venue-hire" class="btn btn-secondary">Hire the venue</a>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid var(--color-line-strong);
+    background: #fff;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-ink-body);
+    transition:
+      background-color 120ms,
+      border-color 120ms;
+  }
+  .filter:hover {
+    border-color: var(--color-canopy-600);
+    background: var(--color-canopy-50);
+  }
+  .filter.is-active {
+    background: var(--color-canopy-600);
+    border-color: var(--color-canopy-600);
+    color: #fff;
+  }
+</style>

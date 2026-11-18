@@ -1,0 +1,134 @@
+---
+// Create, edit or delete one item of any collection. The id "new" creates.
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import MediaPicker from '../../../../components/admin/MediaPicker.astro';
+import { can } from '../../../../server/auth/session';
+import { currentUser, deny, fieldErrors, setFlash, str } from '../../../../server/http/request';
+import { logActivity } from '../../../../server/services/activity';
+import { COLLECTIONS, formValues } from '../../../../server/services/collections';
+import { listMedia } from '../../../../server/services/media';
+
+const user = currentUser(Astro);
+const def = COLLECTIONS[Astro.params.collection ?? ''];
+if (!def) return Astro.redirect('/admin/content');
+const base = `/admin/content/${def.key}`;
+const id = Astro.params.id!;
+const isNew = id === 'new';
+const here = `${base}/${id}`;
+
+const existing = isNew ? null : await def.get(id);
+if (!isNew && !existing) {
+  setFlash(Astro, `That ${def.singular} no longer exists.`, 'warning');
+  return Astro.redirect(base);
+}
+
+let values: Record<string, unknown> = existing ?? Object.fromEntries(def.fields.map((f) => [f.name, f.initial ?? (f.type === 'checkbox' ? false : '')]));
+let errors: Record<string, string> = {};
+const name = () => String(values.name ?? values.title ?? values.question ?? def.singular);
+
+if (Astro.request.method === 'POST') {
+  const denied = deny(Astro, 'edit', here);
+  if (denied) return denied;
+  const form = await Astro.request.formData();
+
+  if (str(form, '_action') === 'delete' && existing) {
+    const result = await def.remove(id);
+    if (!result.ok) {
+      setFlash(Astro, result.reason ?? 'That could not be deleted.', 'danger');
+      return Astro.redirect(here);
+    }
+    await logActivity({ actorId: user.id, action: 'content.deleted', entityType: def.key, entityId: id, summary: `${user.name} deleted the ${def.singular} “${name()}”` });
+    setFlash(Astro, `Deleted “${name()}”.`);
+    return Astro.redirect(base);
+  }
+
+  values = formValues(def, form);
+  const parsed = def.schema.safeParse(values);
+  if (parsed.success) {
+    const savedId = await def.save(isNew ? null : id, parsed.data as never);
+    await logActivity({
+      actorId: user.id,
+      action: isNew ? 'content.created' : 'content.updated',
+      entityType: def.key,
+      entityId: savedId,
+      summary: `${user.name} ${isNew ? 'added' : 'updated'} the ${def.singular} “${name()}”`,
+    });
+    setFlash(Astro, `Saved. The website is updated.`);
+    return Astro.redirect(base);
+  }
+  errors = fieldErrors(parsed.error);
+}
+
+const media = def.fields.some((f) => f.type === 'image') ? (await listMedia({ limit: 500 })).rows : [];
+const canEdit = can(user, 'edit');
+const text = (n: string) => (values[n] == null ? '' : String(values[n]));
+---
+
+<AdminLayout title={isNew ? `Add a ${def.singular}` : name()} subtitle={isNew ? undefined : `Edit this ${def.singular}.`}>
+  <a slot="breadcrumb" href={base} class="link">{def.title}</a>
+
+  {Object.keys(errors).length > 0 && <p class="alert alert-danger mb-5" role="alert">Some fields need attention. Nothing has been saved yet.</p>}
+
+  <form method="post" class="max-w-4xl">
+    <fieldset disabled={!canEdit} class="a-card a-card-pad">
+      <div class="a-form-grid">
+        {
+          def.fields.map((f) => {
+            const fid = `f-${f.name}`;
+            const error = errors[f.name];
+            const wide = f.wide || f.type === 'textarea' || f.type === 'image';
+            return (
+              <div class:list={[wide && 'a-span-2']}>
+                {f.type === 'image' ? (
+                  <MediaPicker name={f.name} label={f.label} value={(values[f.name] as string | null) || null} media={media} help={f.help} required={f.required} />
+                ) : f.type === 'checkbox' ? (
+                  <label class="a-check">
+                    <input type="checkbox" name={f.name} checked={values[f.name] === true} />
+                    {f.label}
+                  </label>
+                ) : (
+                  <>
+                    <label class="label" for={fid}>{f.label}</label>
+                    {f.type === 'textarea' ? (
+                      <textarea class="input" id={fid} name={f.name} rows="4" aria-invalid={error ? 'true' : undefined}>{text(f.name)}</textarea>
+                    ) : f.type === 'select' ? (
+                      <select class="input" id={fid} name={f.name}>
+                        {f.options?.map((o) => <option value={o.value} selected={o.value === text(f.name)}>{o.label}</option>)}
+                      </select>
+                    ) : (
+                      <input class="input" id={fid} name={f.name} type={f.type} value={text(f.name)} required={f.required} aria-invalid={error ? 'true' : undefined} />
+                    )}
+                  </>
+                )}
+                {f.type !== 'image' && f.help && <p class="help">{f.help}</p>}
+                {error && <p class="field-error">{error}</p>}
+              </div>
+            );
+          })
+        }
+      </div>
+    </fieldset>
+
+    {
+      canEdit && (
+        <div class="a-actions">
+          <a href={base} class="btn btn-tertiary">Cancel</a>
+          <button class="btn btn-primary" type="submit">{isNew ? `Add ${def.singular}` : 'Save changes'}</button>
+        </div>
+      )
+    }
+  </form>
+
+  {
+    canEdit && !isNew && (
+      <details class="a-card a-card-pad mt-5 max-w-4xl">
+        <summary class="cursor-pointer font-semibold text-danger">Delete this {def.singular}</summary>
+        <p class="mt-2">This removes “{name()}” from the website. It cannot be undone. To hide it for now, untick “Show on the website” instead.</p>
+        <form method="post" class="mt-3">
+          <input type="hidden" name="_action" value="delete" />
+          <button class="btn btn-danger" type="submit">Delete “{name()}”</button>
+        </form>
+      </details>
+    )
+  }
+</AdminLayout>

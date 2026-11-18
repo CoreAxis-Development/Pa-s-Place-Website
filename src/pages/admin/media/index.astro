@@ -1,0 +1,103 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import Pagination from '../../../components/admin/Pagination.astro';
+import { can } from '../../../server/auth/session';
+import { currentUser, deny, pageParams, setFlash, str } from '../../../server/http/request';
+import { logActivity } from '../../../server/services/activity';
+import { MAX_UPLOAD_BYTES, MEDIA_CATEGORIES, MediaError, categoryLabel, importImage, listMedia, thumbUrl } from '../../../server/services/media';
+
+const user = currentUser(Astro);
+const canEdit = can(user, 'edit');
+const category = MEDIA_CATEGORIES.find((c) => c.value === Astro.url.searchParams.get('category'))?.value;
+const q = Astro.url.searchParams.get('q') ?? '';
+
+if (Astro.request.method === 'POST') {
+  const denied = deny(Astro, 'edit', '/admin/media');
+  if (denied) return denied;
+  const form = await Astro.request.formData();
+  const files = form.getAll('files').filter((f): f is File => f instanceof File && f.size > 0);
+  const cat = MEDIA_CATEGORIES.find((c) => c.value === str(form, 'category'))?.value ?? 'general';
+
+  let added = 0;
+  let duplicates = 0;
+  const problems: string[] = [];
+  for (const file of files.slice(0, 20)) {
+    try {
+      if (file.size > MAX_UPLOAD_BYTES) throw new MediaError('is larger than 15 MB');
+      const { duplicate } = await importImage(Buffer.from(await file.arrayBuffer()), { filename: file.name, category: cat, uploadedBy: user.id });
+      if (duplicate) duplicates++;
+      else added++;
+    } catch (err) {
+      problems.push(`${file.name}: ${err instanceof MediaError ? err.message : 'could not be processed'}`);
+    }
+  }
+  if (added) await logActivity({ actorId: user.id, action: 'media.uploaded', entityType: 'media', summary: `${user.name} uploaded ${added} photo${added === 1 ? '' : 's'}` });
+
+  if (!files.length) setFlash(Astro, 'Choose at least one photo to upload.', 'warning');
+  else if (problems.length) setFlash(Astro, `${added} uploaded. Problems: ${problems.join('; ')}`, added ? 'warning' : 'danger');
+  else setFlash(Astro, `${added} photo${added === 1 ? '' : 's'} uploaded${duplicates ? `, ${duplicates} already in the library` : ''}. Add a description to each before using it.`);
+  return Astro.redirect('/admin/media');
+}
+
+const { page, perPage, offset } = pageParams(Astro.url, 48);
+const { rows, total } = await listMedia({ category, q, limit: perPage, offset });
+---
+
+<AdminLayout title="Photos" subtitle="The photo library. Upload here, then choose photos when editing a page.">
+  {
+    canEdit && (
+      <form method="post" enctype="multipart/form-data" class="a-card a-card-pad mb-5">
+        <h2 class="a-card-title">Upload photos</h2>
+        <p class="a-muted">JPEG, PNG or WebP, up to 15 MB each, 20 at a time. Location data is removed and web-sized copies are made automatically.</p>
+        <div class="mt-3 flex flex-wrap items-end gap-3">
+          <div class="min-w-64 flex-1">
+            <label class="label" for="files">Photos</label>
+            <input class="input !h-auto !py-1.5" id="files" name="files" type="file" accept="image/jpeg,image/png,image/webp" multiple required />
+          </div>
+          <div>
+            <label class="label" for="up-category">Category</label>
+            <select class="input" id="up-category" name="category">
+              {MEDIA_CATEGORIES.map((c) => <option value={c.value} selected={c.value === 'general'}>{c.label}</option>)}
+            </select>
+          </div>
+          <button class="btn btn-primary" type="submit">Upload</button>
+        </div>
+        <p class="help">Only upload photos of recognisable children when a parent or guardian has agreed in writing.</p>
+      </form>
+    )
+  }
+
+  <form method="get" class="mb-3 flex flex-wrap items-center gap-2">
+    <select class="input !w-auto" name="category" aria-label="Category">
+      <option value="">All categories</option>
+      {MEDIA_CATEGORIES.map((c) => <option value={c.value} selected={c.value === category}>{c.label}</option>)}
+    </select>
+    <input class="input !w-56" type="search" name="q" value={q} placeholder="Search descriptions" aria-label="Search photos" />
+    <button class="btn btn-tertiary" type="submit">Filter</button>
+  </form>
+
+  {
+    rows.length ? (
+      <ul class="a-media-grid">
+        {rows.map((m) => (
+          <li>
+            <a class="a-media-tile" href={`/admin/media/${m.id}`}>
+              <img src={thumbUrl(m)} alt={m.alt || m.filename} loading="lazy" style={`background:${m.color}`} />
+              <span class="block p-2.5">
+                <span class="block truncate font-semibold text-ink">{m.alt || <span class="text-warning">Needs a description</span>}</span>
+                <span class="a-muted block truncate text-xs">{categoryLabel(m.category)} · {m.width}×{m.height}</span>
+                {m.needsConsent && <span class="a-badge a-badge-warning mt-1.5">Consent needed</span>}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <div class="a-card a-empty">
+        <p class="a-empty-title">{q || category ? 'No photos match these filters' : 'No photos yet'}</p>
+        <p class="a-muted">{q || category ? 'Try a different category or search.' : 'Upload your first photos above.'}</p>
+      </div>
+    )
+  }
+  <Pagination page={page} perPage={perPage} total={total} />
+</AdminLayout>

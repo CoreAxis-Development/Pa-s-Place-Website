@@ -1,0 +1,41 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import Badge from '../../../components/admin/Badge.astro';
+import { ROLE_LABELS } from '../../../server/auth/session';
+import { deny } from '../../../server/http/request';
+import { formatDateTime } from '../../../server/lib/dates';
+import { listUsers } from '../../../server/services/users';
+
+const denied = deny(Astro, 'manage-users');
+if (denied) return denied;
+const users = await listUsers();
+---
+
+<AdminLayout title="Staff" subtitle="Who can sign in to this portal, and what they can do.">
+  <Fragment slot="actions">
+    <a class="btn btn-primary" href="/admin/users/new">Add a staff member</a>
+  </Fragment>
+
+  <div class="a-table-wrap">
+    <table class="a-table">
+      <thead>
+        <tr><th>Name</th><th>Role</th><th>Status</th><th class="num">Last signed in</th></tr>
+      </thead>
+      <tbody>
+        {users.map((u) => (
+          <tr>
+            <td>
+              <a class="a-primary-cell" href={`/admin/users/${u.id}`}>{u.name}</a>
+              <div class="a-muted">{u.email}</div>
+            </td>
+            <td>{ROLE_LABELS[u.role].label}<div class="a-muted">{ROLE_LABELS[u.role].summary}</div></td>
+            <td>
+              {!u.active ? <Badge tone="neutral" label="Deactivated" /> : u.lockedUntil && u.lockedUntil > new Date() ? <Badge tone="danger" label="Locked" /> : u.mustChangePassword ? <Badge tone="warning" label="Temporary password" /> : <Badge tone="success" label="Active" />}
+            </td>
+            <td class="num a-muted">{u.lastLoginAt ? formatDateTime(u.lastLoginAt) : 'Never'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>

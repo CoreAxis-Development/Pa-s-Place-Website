@@ -1,0 +1,57 @@
+---
+// Choose a photo from the media library. A group of radio buttons inside a
+// disclosure, so it needs no JavaScript and submits with the form.
+import type { Media } from '../../server/db/schema';
+import { thumbUrl } from '../../server/services/media';
+
+interface Props {
+  name: string;
+  label: string;
+  value: string | null;
+  media: Media[];
+  help?: string;
+  required?: boolean;
+}
+const { name, label, value, media, help, required = false } = Astro.props;
+const current = media.find((m) => m.id === value);
+---
+
+<div>
+  <span class="label">{label}</span>
+  <details class="rounded-md border border-line-strong bg-white">
+    <summary class="flex cursor-pointer items-center gap-3 p-2">
+      {
+        current ? (
+          <img src={thumbUrl(current)} alt="" class="h-14 w-20 rounded object-cover" />
+        ) : (
+          <span class="grid h-14 w-20 place-items-center rounded bg-sunken text-xs font-semibold text-ink-muted">None</span>
+        )
+      }
+      <span class="min-w-0 flex-1">
+        <span class="block truncate font-medium text-ink">{current ? current.alt || current.filename : 'No photo chosen'}</span>
+        <span class="a-muted block text-xs">Click to {current ? 'change' : 'choose'}</span>
+      </span>
+    </summary>
+    <div class="grid max-h-80 grid-cols-3 gap-2 overflow-y-auto border-t border-line p-2 sm:grid-cols-5">
+      {
+        !required && (
+          <label class="a-picker-option">
+            <input type="radio" name={name} value="" checked={!current} />
+            <span class="a-picker-none">No photo</span>
+          </label>
+        )
+      }
+      {
+        media.map((m) => (
+          <label class="a-picker-option" title={m.alt || m.filename}>
+            <input type="radio" name={name} value={m.id} checked={m.id === value} />
+            <img src={thumbUrl(m)} alt={m.alt || m.filename} loading="lazy" />
+            {m.needsConsent && <span class="absolute left-1 top-1 rounded bg-warning-bg px-1 text-[10px] font-bold text-warning">Consent?</span>}
+          </label>
+        ))
+      }
+    </div>
+  </details>
+  {help && <p class="help">{help}</p>}
+  {media.length === 0 && <p class="help">No photos yet. <a class="link" href="/admin/media">Upload some first</a>.</p>}
+</div>

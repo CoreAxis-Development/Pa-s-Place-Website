@@ -1,0 +1,22 @@
+---
+// The Rays: the logo's irregular round-capped strokes. A section marker —
+// at most one per section, four per page. Never animated.
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<svg
+  class:list={['block', className]}
+  width="40"
+  height="20"
+  viewBox="0 0 40 20"
+  fill="none"
+  stroke="#FF9900"
+  stroke-width="2.5"
+  stroke-linecap="round"
+  aria-hidden="true"
+>
+  <path d="M11.3 19 3.6 14.5M15 15.3l-3-5.2M20 14V3M25 15.3l3-5.2M28.7 19l7.8-4.5"></path>
+</svg>

@@ -1,0 +1,50 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { MIN_PASSWORD_LENGTH } from '../../server/auth/password';
+import { ROLE_LABELS, SESSION_COOKIE } from '../../server/auth/session';
+import { currentUser, setFlash, str } from '../../server/http/request';
+import { UserError, changeOwnPassword } from '../../server/services/users';
+
+const user = currentUser(Astro);
+let problem = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const next = str(form, 'next');
+  if (next !== str(form, 'confirm')) {
+    problem = 'The two new passwords do not match.';
+  } else {
+    try {
+      await changeOwnPassword(user.id, str(form, 'current'), next, Astro.cookies.get(SESSION_COOKIE)?.value);
+      setFlash(Astro, 'Password changed. Other devices have been signed out.');
+      return Astro.redirect('/admin');
+    } catch (err) {
+      if (!(err instanceof UserError)) throw err;
+      problem = err.message;
+    }
+  }
+}
+---
+
+<AdminLayout title="Your account" subtitle={`${user.email} · ${ROLE_LABELS[user.role].label}`}>
+  {user.mustChangePassword && <p class="alert alert-warning mb-5">You are using a temporary password. Choose your own before continuing.</p>}
+  {problem && <p class="alert alert-danger mb-5" role="alert">{problem}</p>}
+
+  <form method="post" class="a-card a-card-pad grid max-w-md gap-4">
+    <h2 class="a-card-title">Change password</h2>
+    <div>
+      <label class="label" for="current">Current password</label>
+      <input class="input" id="current" name="current" type="password" autocomplete="current-password" required />
+    </div>
+    <div>
+      <label class="label" for="next">New password</label>
+      <input class="input" id="next" name="next" type="password" autocomplete="new-password" minlength={MIN_PASSWORD_LENGTH} required />
+      <p class="help">At least {MIN_PASSWORD_LENGTH} characters. A few unrelated words work well.</p>
+    </div>
+    <div>
+      <label class="label" for="confirm">New password again</label>
+      <input class="input" id="confirm" name="confirm" type="password" autocomplete="new-password" minlength={MIN_PASSWORD_LENGTH} required />
+    </div>
+    <button class="btn btn-primary justify-self-start" type="submit">Change password</button>
+  </form>
+</AdminLayout>

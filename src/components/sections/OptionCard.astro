@@ -1,0 +1,30 @@
+---
+// A bookable option as a photo card. Stay and venue cards carry equal weight.
+import Picture from '../ui/Picture.astro';
+import type { PublicOption } from '../../server/services/content';
+
+interface Props {
+  option: PublicOption;
+}
+const { option } = Astro.props;
+const href = `${option.kind === 'venue' ? '/venue-hire' : '/book-a-stay'}?option=${option.slug}#book`;
+---
+
+<a href={href} class="card card-link flex flex-col overflow-hidden">
+  {
+    option.image ? (
+      <Picture image={option.image} sizes="(min-width: 1024px) 270px, (min-width: 640px) 45vw, 92vw" class="aspect-[4/3] w-full object-cover" />
+    ) : (
+      <span class="grid aspect-[4/3] w-full place-items-center bg-sunken text-sm font-semibold text-ink-muted">Photo coming soon</span>
+    )
+  }
+  <span class="flex flex-1 flex-col p-5">
+    <span class="t-h4">{option.name}</span>
+    <span class="mt-1 block flex-1 text-[0.9375rem]">{option.blurb}</span>
+    <span class="mt-4 flex flex-wrap items-center justify-between gap-2">
+      <span class="tag tag-price">{option.rateLabel}</span>
+      <span class="t-caption">{option.capacityLabel}</span>
+    </span>
+    <span class="link mt-4 text-[0.9375rem]">{option.kind === 'venue' ? 'Check a date' : 'Check availability'}</span>
+  </span>
+</a>

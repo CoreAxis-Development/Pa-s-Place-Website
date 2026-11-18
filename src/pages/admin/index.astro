@@ -1,0 +1,151 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import Badge from '../../components/admin/Badge.astro';
+import { currentUser } from '../../server/http/request';
+import { formatDate, timeAgo, todaySast } from '../../server/lib/dates';
+import { formatRand } from '../../server/lib/pricing';
+import { listActivity } from '../../server/services/activity';
+import { bookingStats, depositStatusMeta, listBookings } from '../../server/services/bookings';
+import { enquiryCounts, enquiryTypeLabel, listEnquiries } from '../../server/services/enquiries';
+import { mailConfigured } from '../../server/services/mail';
+
+const user = currentUser(Astro);
+const today = todaySast();
+const [stats, counts, requests, upcoming, newEnquiries, activity] = await Promise.all([
+  bookingStats(today),
+  enquiryCounts(),
+  listBookings({ status: 'requested', limit: 6 }),
+  listBookings({ status: 'confirmed', from: today, order: 'arrival', limit: 6 }),
+  listEnquiries({ status: 'new', limit: 6 }),
+  listActivity({ limit: 8 }),
+]);
+---
+
+<AdminLayout title={`Hello, ${user.name.split(' ')[0]}`} subtitle={formatDate(today, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}>
+  <Fragment slot="actions">
+    <a href="/admin/bookings/new" class="btn btn-primary">Add a booking</a>
+  </Fragment>
+
+  {!mailConfigured() && <p class="alert alert-info mb-5">Email notifications are off: new enquiries and bookings appear here only. Set the SMTP settings on the server to switch them on.</p>}
+
+  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <a class="a-kpi" href="/admin/enquiries?status=new">
+      <p class="a-kpi-label">New enquiries</p>
+      <p class="a-kpi-figure">{counts.new}</p>
+      <p class="a-kpi-note">{counts.open + counts.waiting} in progress</p>
+    </a>
+    <a class="a-kpi" href="/admin/bookings?status=requested">
+      <p class="a-kpi-label">Booking requests to answer</p>
+      <p class="a-kpi-figure">{stats.requested}</p>
+      <p class="a-kpi-note">Dates are held until you confirm or decline</p>
+    </a>
+    <a class="a-kpi" href="/admin/bookings?status=confirmed">
+      <p class="a-kpi-label">Arrivals in the next 30 days</p>
+      <p class="a-kpi-figure">{stats.upcoming}</p>
+      <p class="a-kpi-note">{stats.awaitingDeposit} awaiting a deposit</p>
+    </a>
+    <div class="a-kpi">
+      <p class="a-kpi-label">Confirmed bookings ahead</p>
+      <p class="a-kpi-figure">{formatRand(stats.confirmedValue)}</p>
+      <p class="a-kpi-note">Total value of upcoming confirmed bookings</p>
+    </div>
+  </div>
+
+  <div class="mt-5 grid gap-5 xl:grid-cols-2">
+    <section class="a-card">
+      <div class="a-card-head">
+        <h2 class="a-card-title">Booking requests</h2>
+        <a class="link" href="/admin/bookings?status=requested">View all</a>
+      </div>
+      {
+        requests.rows.length ? (
+          <table class="a-table">
+            <tbody>
+              {requests.rows.map((b) => (
+                <tr>
+                  <td>
+                    <a class="a-primary-cell" href={`/admin/bookings/${b.id}`}>{b.guestName}</a>
+                    <div class="a-muted">{b.option.name} · {b.people} people</div>
+                  </td>
+                  <td class="nowrap">{formatDate(b.startDate, { day: 'numeric', month: 'short' })}{b.option.kind === 'stay' && ` to ${formatDate(b.endDate, { day: 'numeric', month: 'short' })}`}</td>
+                  <td class="num">{formatRand(b.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div class="a-empty"><p class="a-empty-title">No new bookings</p><p class="a-muted">New requests will appear here.</p></div>
+        )
+      }
+    </section>
+
+    <section class="a-card">
+      <div class="a-card-head">
+        <h2 class="a-card-title">New enquiries</h2>
+        <a class="link" href="/admin/enquiries">View all</a>
+      </div>
+      {
+        newEnquiries.rows.length ? (
+          <table class="a-table">
+            <tbody>
+              {newEnquiries.rows.map((e) => (
+                <tr>
+                  <td>
+                    <a class="a-primary-cell" href={`/admin/enquiries/${e.id}`}>{e.name}</a>
+                    <div class="a-muted max-w-md truncate">{e.message}</div>
+                  </td>
+                  <td class="nowrap">{enquiryTypeLabel(e.type)}</td>
+                  <td class="num a-muted">{timeAgo(e.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div class="a-empty"><p class="a-empty-title">No new enquiries</p><p class="a-muted">Messages from the website will appear here.</p></div>
+        )
+      }
+    </section>
+
+    <section class="a-card">
+      <div class="a-card-head">
+        <h2 class="a-card-title">Next arrivals</h2>
+        <a class="link" href="/admin/calendar">Open the calendar</a>
+      </div>
+      {
+        upcoming.rows.length ? (
+          <table class="a-table">
+            <tbody>
+              {upcoming.rows.map((b) => (
+                <tr>
+                  <td class="nowrap">{formatDate(b.startDate, { weekday: 'short', day: 'numeric', month: 'short' })}</td>
+                  <td>
+                    <a class="a-primary-cell" href={`/admin/bookings/${b.id}`}>{b.guestName}</a>
+                    <div class="a-muted">{b.option.name} · {b.people} people</div>
+                  </td>
+                  <td><Badge tone={depositStatusMeta(b.depositStatus).tone} label={depositStatusMeta(b.depositStatus).label} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div class="a-empty"><p class="a-empty-title">No confirmed arrivals</p><p class="a-muted">Confirmed bookings will be listed here in date order.</p></div>
+        )
+      }
+    </section>
+
+    <section class="a-card">
+      <div class="a-card-head">
+        <h2 class="a-card-title">Recent activity</h2>
+        <a class="link" href="/admin/activity">View all</a>
+      </div>
+      <ul class="a-timeline a-card-pad">
+        {activity.rows.map((a) => (
+          <li>
+            <p class="text-ink">{a.summary}</p>
+            <p class="a-muted text-xs">{timeAgo(a.createdAt)}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </div>
+</AdminLayout>

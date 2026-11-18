@@ -1,0 +1,155 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import Badge from '../../../components/admin/Badge.astro';
+import { can } from '../../../server/auth/session';
+import type { EnquiryStatus } from '../../../server/db/schema';
+import { currentUser, deny, setFlash, str } from '../../../server/http/request';
+import { formatDateTime, timeAgo } from '../../../server/lib/dates';
+import { addNote, entityActivity, listNotes } from '../../../server/services/activity';
+import { ENQUIRY_STATUSES, deleteEnquiry, enquiryStatusMeta, enquiryTypeLabel, getEnquiry, updateEnquiry } from '../../../server/services/enquiries';
+import { listUsers } from '../../../server/services/users';
+
+const user = currentUser(Astro);
+const id = Astro.params.id!;
+const here = `/admin/enquiries/${id}`;
+let enquiry = await getEnquiry(id);
+if (!enquiry) {
+  setFlash(Astro, 'That enquiry no longer exists.', 'warning');
+  return Astro.redirect('/admin/enquiries');
+}
+
+if (Astro.request.method === 'POST') {
+  const denied = deny(Astro, 'edit', here);
+  if (denied) return denied;
+  const form = await Astro.request.formData();
+  const action = str(form, '_action');
+
+  if (action === 'update') {
+    const status = ENQUIRY_STATUSES.find((s) => s.value === str(form, 'status'))?.value as EnquiryStatus | undefined;
+    await updateEnquiry(id, { status, assigneeId: str(form, 'assigneeId') || null }, user);
+    setFlash(Astro, 'Enquiry updated.');
+  } else if (action === 'note') {
+    const body = str(form, 'body').trim();
+    if (body) {
+      await addNote('enquiry', id, user.id, body);
+      setFlash(Astro, 'Note added.');
+    }
+  } else if (action === 'delete') {
+    await deleteEnquiry(id, user);
+    setFlash(Astro, `Enquiry ${enquiry.ref} deleted.`);
+    return Astro.redirect('/admin/enquiries');
+  }
+  return Astro.redirect(here);
+}
+
+// opening a new enquiry is what moves it out of "new"
+if (enquiry.status === 'new' && can(user, 'edit')) {
+  enquiry = (await updateEnquiry(id, { status: 'open' }, user)) ?? enquiry;
+}
+
+const [notes, history, staff] = await Promise.all([listNotes('enquiry', id), entityActivity('enquiry', id), listUsers()]);
+const status = enquiryStatusMeta(enquiry.status);
+const canEdit = can(user, 'edit');
+const replySubject = encodeURIComponent(`Re: your message to Pa's Place (${enquiry.ref})`);
+---
+
+<AdminLayout title={enquiry.name} subtitle={`${enquiryTypeLabel(enquiry.type)} · ${enquiry.ref}`}>
+  <a slot="breadcrumb" href="/admin/enquiries" class="link">All enquiries</a>
+  <Fragment slot="actions">
+    <Badge tone={status.tone} label={status.label} />
+    <a class="btn btn-primary" href={`mailto:${enquiry.email}?subject=${replySubject}`}>Reply by email</a>
+  </Fragment>
+
+  <div class="grid gap-5 xl:grid-cols-[1.6fr_1fr]">
+    <div class="grid content-start gap-5">
+      <section class="a-card a-card-pad">
+        <h2 class="a-card-title">Message</h2>
+        <p class="mt-3 whitespace-pre-line text-[15px] leading-relaxed text-ink">{enquiry.message}</p>
+        <p class="a-muted mt-4 text-xs">Received {formatDateTime(enquiry.createdAt)}{enquiry.source && ` from ${enquiry.source}`}</p>
+      </section>
+
+      <section class="a-card a-card-pad">
+        <h2 class="a-card-title">Internal notes</h2>
+        <p class="a-muted">Only staff can see these.</p>
+        {
+          canEdit && (
+            <form method="post" class="mt-3">
+              <input type="hidden" name="_action" value="note" />
+              <label class="sr-only" for="note-body">Add a note</label>
+              <textarea class="input" id="note-body" name="body" rows="3" maxlength="4000" placeholder="Phoned back, left a message…" required></textarea>
+              <button class="btn btn-tertiary mt-2" type="submit">Add note</button>
+            </form>
+          )
+        }
+        <ul class="mt-4 space-y-3">
+          {notes.map((n) => (
+            <li class="rounded-md bg-sunken p-3">
+              <p class="whitespace-pre-line text-ink">{n.body}</p>
+              <p class="a-muted mt-1 text-xs">{n.authorName ?? 'Former staff member'} · {timeAgo(n.createdAt)}</p>
+            </li>
+          ))}
+          {notes.length === 0 && <li class="a-muted">No notes yet.</li>}
+        </ul>
+      </section>
+    </div>
+
+    <div class="grid content-start gap-5">
+      <section class="a-card a-card-pad">
+        <h2 class="a-card-title">Contact</h2>
+        <dl class="a-dl mt-2">
+          <div><dt>Name</dt><dd>{enquiry.name}</dd></div>
+          <div><dt>Email</dt><dd><a class="link" href={`mailto:${enquiry.email}`}>{enquiry.email}</a></dd></div>
+          <div><dt>Phone</dt><dd>{enquiry.phone ? <a class="link" href={`tel:${enquiry.phone}`}>{enquiry.phone}</a> : <span class="a-muted">Not given</span>}</dd></div>
+        </dl>
+      </section>
+
+      {
+        canEdit && (
+          <form method="post" class="a-card a-card-pad grid gap-4">
+            <input type="hidden" name="_action" value="update" />
+            <h2 class="a-card-title">Handling</h2>
+            <div>
+              <label class="label" for="status">Status</label>
+              <select class="input" id="status" name="status">
+                {ENQUIRY_STATUSES.map((s) => <option value={s.value} selected={s.value === enquiry!.status}>{s.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label class="label" for="assigneeId">Assigned to</label>
+              <select class="input" id="assigneeId" name="assigneeId">
+                <option value="">Nobody</option>
+                {staff.filter((s) => s.active).map((s) => <option value={s.id} selected={s.id === enquiry!.assigneeId}>{s.name}</option>)}
+              </select>
+            </div>
+            <button class="btn btn-primary justify-self-start" type="submit">Save</button>
+          </form>
+        )
+      }
+
+      <section class="a-card a-card-pad">
+        <h2 class="a-card-title">History</h2>
+        <ul class="a-timeline mt-3">
+          {history.map((h) => (
+            <li>
+              <p class="text-ink">{h.summary}</p>
+              <p class="a-muted text-xs">{formatDateTime(h.createdAt)}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {
+        canEdit && (
+          <details class="a-card a-card-pad">
+            <summary class="cursor-pointer font-semibold text-danger">Delete this enquiry</summary>
+            <p class="mt-2">This permanently removes enquiry {enquiry.ref} and its notes. It cannot be undone. To keep a record, mark it resolved or spam instead.</p>
+            <form method="post" class="mt-3">
+              <input type="hidden" name="_action" value="delete" />
+              <button class="btn btn-danger" type="submit">Delete {enquiry.ref} permanently</button>
+            </form>
+          </details>
+        )
+      }
+    </div>
+  </div>
+</AdminLayout>

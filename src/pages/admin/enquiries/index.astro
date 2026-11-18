@@ -1,0 +1,99 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import Badge from '../../../components/admin/Badge.astro';
+import Pagination from '../../../components/admin/Pagination.astro';
+import type { EnquiryStatus, EnquiryType } from '../../../server/db/schema';
+import { pageParams } from '../../../server/http/request';
+import { formatDateTime } from '../../../server/lib/dates';
+import { ENQUIRY_STATUSES, ENQUIRY_TYPES, enquiryCounts, enquiryStatusMeta, enquiryTypeLabel, listEnquiries } from '../../../server/services/enquiries';
+
+const q = Astro.url.searchParams.get('q') ?? '';
+const statusParam = Astro.url.searchParams.get('status') ?? 'active';
+const typeParam = Astro.url.searchParams.get('type') ?? '';
+const status = statusParam === 'all' ? undefined : statusParam === 'active' ? 'active' : ENQUIRY_STATUSES.find((s) => s.value === statusParam)?.value;
+const type = ENQUIRY_TYPES.find((t) => t.value === typeParam)?.value as EnquiryType | undefined;
+
+const { page, perPage, offset } = pageParams(Astro.url);
+const [{ rows, total }, counts] = await Promise.all([
+  listEnquiries({ status: status as EnquiryStatus | 'active' | undefined, type, q, limit: perPage, offset }),
+  enquiryCounts(),
+]);
+
+const tabs = [
+  { value: 'active', label: 'Open', count: counts.new + counts.open + counts.waiting },
+  { value: 'new', label: 'New', count: counts.new },
+  { value: 'open', label: 'In progress', count: counts.open },
+  { value: 'waiting', label: 'Waiting on guest', count: counts.waiting },
+  { value: 'resolved', label: 'Resolved', count: counts.resolved },
+  { value: 'spam', label: 'Spam', count: counts.spam },
+  { value: 'all', label: 'All', count: null },
+];
+const tabLink = (v: string) => {
+  const p = new URLSearchParams();
+  if (v !== 'active') p.set('status', v);
+  if (q) p.set('q', q);
+  if (typeParam) p.set('type', typeParam);
+  const s = p.toString();
+  return `/admin/enquiries${s ? `?${s}` : ''}`;
+};
+const exportLink = `/admin/enquiries/export.csv?${new URLSearchParams({ status: statusParam, type: typeParam, q }).toString()}`;
+---
+
+<AdminLayout title="Enquiries" subtitle="Messages sent through the website's contact forms.">
+  <Fragment slot="actions">
+    <a href={exportLink} class="btn btn-tertiary">Export CSV</a>
+  </Fragment>
+
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <nav class="a-tabs" aria-label="Filter by status">
+      {tabs.map((t) => (
+        <a class="a-tab" href={tabLink(t.value)} aria-current={statusParam === t.value ? 'true' : undefined}>
+          {t.label}{t.count !== null && <span class="a-muted">{t.count}</span>}
+        </a>
+      ))}
+    </nav>
+    <form method="get" class="flex flex-wrap items-center gap-2">
+      {statusParam !== 'active' && <input type="hidden" name="status" value={statusParam} />}
+      <select class="input !w-auto" name="type" aria-label="Topic">
+        <option value="">All topics</option>
+        {ENQUIRY_TYPES.map((t) => <option value={t.value} selected={t.value === typeParam}>{t.label}</option>)}
+      </select>
+      <input class="input !w-56" type="search" name="q" value={q} placeholder="Search name, email, message" aria-label="Search enquiries" />
+      <button class="btn btn-tertiary" type="submit">Filter</button>
+    </form>
+  </div>
+
+  <div class="a-table-wrap">
+    {
+      rows.length ? (
+        <table class="a-table">
+          <thead>
+            <tr><th>From</th><th>Message</th><th>Topic</th><th>Status</th><th>Assigned</th><th class="num">Received</th></tr>
+          </thead>
+          <tbody>
+            {rows.map((e) => (
+              <tr class:list={[e.status === 'new' && 'a-unread']}>
+                <td>
+                  <a class="a-primary-cell" href={`/admin/enquiries/${e.id}`}>{e.name}</a>
+                  <div class="a-muted">{e.ref}</div>
+                </td>
+                <td><div class="max-w-md truncate">{e.message}</div></td>
+                <td class="nowrap">{enquiryTypeLabel(e.type)}</td>
+                <td><Badge tone={enquiryStatusMeta(e.status).tone} label={enquiryStatusMeta(e.status).label} /></td>
+                <td class="nowrap">{e.assignee?.name ?? <span class="a-muted">Nobody</span>}</td>
+                <td class="num a-muted">{formatDateTime(e.createdAt)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <div class="a-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.500" stroke-linejoin="round"><path d="M4 13.500 6.500 5h11L20 13.500V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"/><path d="M4 13.500h4.500a3.500 3.500 0 0 0 7 0H20"/></svg>
+          <p class="a-empty-title">{q || type || statusParam !== 'active' ? 'No enquiries match these filters' : 'No open enquiries'}</p>
+          <p class="a-muted">{q || type || statusParam !== 'active' ? 'Try a different status, topic or search.' : 'New messages from the website will appear here.'}</p>
+        </div>
+      )
+    }
+  </div>
+  <Pagination page={page} perPage={perPage} total={total} />
+</AdminLayout>

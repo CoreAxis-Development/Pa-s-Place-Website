@@ -1,129 +1,117 @@
-// The booking engine: choose an option (rooms / whole house / venue) →
-// availability calendar → live quote → guest details → payment →
-// confirmation. Options come from the Keystatic `stayOptions` collection
-// (name, blurb, photo, capacity, rate), so the admin panel controls what's
-// bookable. Availability is seeded deterministically per option and
-// "payment" is simulated — the flow behaves like the real thing.
-import { useState } from 'react';
+// The booking form: choose an option, pick dates against live availability,
+// see the price, enter details, send the request. The request is stored and
+// the dates are held; staff confirm and the deposit is paid by EFT.
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { quote, formatRand, type PricingPolicy } from '../../server/lib/pricing';
 
 export interface EngineOption {
-  id: string;
+  slug: string;
   name: string;
   blurb: string;
-  sleeps: string;
+  capacityLabel: string;
   minPeople: number;
   maxPeople: number;
   rate: number;
   rateLabel: string;
   kind: 'stay' | 'venue';
-  image: { src: string; alt: string } | null;
+  image: { src: string; alt: string; color: string } | null;
 }
 
 interface Props {
   options: EngineOption[];
+  policy: PricingPolicy;
+  /** which kinds this page offers; the other kind links to its own page */
+  kinds?: ('stay' | 'venue')[];
   defaultOption?: string;
   phone?: string;
+  phoneLink?: string;
+  checkIn?: string;
+  checkOut?: string;
 }
 
-/* ---------- date helpers ---------- */
+interface Confirmation {
+  ref: string;
+  option: string;
+  when: string;
+  people: number;
+  total: number;
+  deposit: number;
+  balance: number;
+  paymentInstructions: string;
+}
 
-const DAY = 86_400_000;
+/* ---------- dates: plain YYYY-MM-DD strings, no time zones ---------- */
+
 const pad = (n: number) => String(n).padStart(2, '0');
-// local-date key (toISOString would shift a day for SAST evenings)
-const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const fromISO = (s: string) => new Date(`${s}T00:00:00`);
-const addDays = (d: Date, n: number) => new Date(d.getTime() + n * DAY);
-const startOfToday = () => {
-  const n = new Date();
-  return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+const iso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
+const parts = (s: string) => s.split('-').map(Number) as [number, number, number];
+const utc = (s: string) => {
+  const [y, m, d] = parts(s);
+  return Date.UTC(y, m - 1, d);
 };
-const fmtLong = (s: string) =>
-  fromISO(s).toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const addDays = (s: string, n: number) => new Date(utc(s) + n * 86_400_000).toISOString().slice(0, 10);
+const nightsBetween = (a: string, b: string) => Math.round((utc(b) - utc(a)) / 86_400_000);
+const isDate = (s: string | null): s is string => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s);
+const fmt = (s: string) =>
+  new Date(utc(s)).toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
-// Deterministic per-option "bookings" so each room has its own lived-in calendar.
-const isBooked = (d: Date, salt: string) => {
-  const s = `${salt}:${iso(d)}`;
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0;
-  const r = ((h >>> 0) % 100) / 100;
-  const clump = (((Math.floor(d.getTime() / DAY) + salt.length * 7) >> 2) * 2654435761) >>> 0;
-  return r < 0.09 || clump % 9 === 3;
-};
+const STEPS = ['Choose', 'Dates', 'Your details', 'Review'];
 
-const rand5 = () => {
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-  let out = '';
-  for (let i = 0; i < 5; i++) out += chars[Math.floor(Math.random() * chars.length)];
-  return out;
-};
+/* ---------- one month of the calendar ---------- */
 
-const fmtR = (n: number) => `R${n.toLocaleString('en-ZA')}`;
-const VENUE_DEPOSIT = 500;
-
-/* ---------- calendar month ---------- */
-
-function Month({
-  year,
-  month,
-  arrive,
-  depart,
-  salt,
-  onPick,
-}: {
+function Month(props: {
   year: number;
   month: number;
-  arrive: string | null;
-  depart: string | null;
-  salt: string;
+  today: string;
+  start: string | null;
+  end: string | null;
+  taken: Set<string>;
+  isStay: boolean;
   onPick: (s: string) => void;
 }) {
-  const first = new Date(year, month, 1);
-  const label = first.toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' });
-  const lead = (first.getDay() + 6) % 7;
-  const daysIn = new Date(year, month + 1, 0).getDate();
-  const today = startOfToday();
-
-  const cells: (Date | null)[] = [
+  const { year, month, today, start, end, taken, isStay, onPick } = props;
+  const label = new Date(Date.UTC(year, month, 1)).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const lead = (new Date(Date.UTC(year, month, 1)).getUTCDay() + 6) % 7;
+  const daysIn = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const cells: (string | null)[] = [
     ...Array.from({ length: lead }, () => null),
-    ...Array.from({ length: daysIn }, (_, i) => new Date(year, month, i + 1)),
+    ...Array.from({ length: daysIn }, (_, i) => iso(year, month, i + 1)),
   ];
 
   return (
-    <div className="w-full">
-      <p className="text-center font-display text-lg font-semibold text-bark-900">{label}</p>
-      <div className="mt-2 grid grid-cols-7 gap-1 text-center text-[0.68rem] font-extrabold uppercase tracking-wider text-bark-700/60">
+    <div>
+      <p className="text-center text-[0.9375rem] font-bold text-ink">{label}</p>
+      <div className="mt-3 grid grid-cols-7 text-center text-xs font-semibold text-ink-muted" aria-hidden="true">
         {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((d) => (
-          <span key={d}>{d}</span>
+          <span key={d} className="py-1">{d}</span>
         ))}
       </div>
-      <div className="mt-1 grid grid-cols-7 gap-1">
-        {cells.map((d, i) => {
-          if (!d) return <span key={`x${i}`} />;
-          const s = iso(d);
-          const past = d < today;
-          const booked = !past && isBooked(d, salt);
-          const isStart = arrive === s;
-          const isEnd = depart === s;
-          const inRange = arrive && depart && s > arrive && s < depart;
-          const cls = past
-            ? 'text-bark-700/25 cursor-default'
-            : booked
-              ? 'text-bark-700/35 line-through decoration-ember/60 cursor-not-allowed bg-cream-100/60'
-              : isStart || isEnd
-                ? 'bg-marigold-400 text-bark-950 font-extrabold shadow-[0.12rem_0.15rem_0_rgb(51_41_28/0.85)] cursor-pointer'
-                : inRange
-                  ? 'bg-marigold-300/40 text-bark-900 cursor-pointer'
-                  : 'text-bark-900 hover:bg-cream-200 cursor-pointer';
+      <div className="grid grid-cols-7 gap-y-1">
+        {cells.map((s, i) => {
+          if (!s) return <span key={`blank-${i}`} />;
+          const past = s < today;
+          const booked = taken.has(s);
+          // a departure day may fall on a night someone else arrives
+          const canEndHere = isStay && start && !end && s > start && booked;
+          const disabled = past || (booked && !canEndHere);
+          const isEdge = s === start || s === end;
+          const inRange = start && end && s > start && s < end;
+          let cls = 'text-ink hover:bg-canopy-50';
+          if (disabled) cls = booked && !past ? 'bg-sunken text-ink-muted line-through' : 'text-line-strong';
+          else if (isEdge) cls = 'bg-canopy-600 font-bold text-white';
+          else if (inRange) cls = 'bg-canopy-100 text-ink';
           return (
             <button
               key={s}
               type="button"
-              disabled={past || booked}
+              disabled={disabled}
               onClick={() => onPick(s)}
-              aria-label={`${fmtLong(s)}${booked ? ' — booked' : ''}`}
-              className={`aspect-square rounded-lg text-sm transition ${cls}`}
+              aria-label={`${fmt(s)}${booked && !past ? ', unavailable' : ''}`}
+              aria-pressed={isEdge}
+              className={`tnum relative mx-auto grid h-11 w-full max-w-11 place-items-center rounded-[10px] text-[0.9375rem] transition-colors ${cls} ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
             >
-              {d.getDate()}
+              {Number(s.slice(8))}
+              {s === today && <span className="pointer-events-none absolute inset-0 rounded-full border-2 border-sun-500" aria-hidden="true" />}
             </button>
           );
         })}
@@ -132,250 +120,378 @@ function Month({
   );
 }
 
-/* ---------- the engine ---------- */
+/* ---------- the form ---------- */
 
-export default function BookingEngine({ options, defaultOption, phone }: Props) {
-  const [optionId, setOptionId] = useState<string | null>(defaultOption ?? null);
-  const option = options.find((o) => o.id === optionId) ?? null;
+export default function BookingEngine({ options, policy, kinds = ['stay', 'venue'], defaultOption, phone, phoneLink, checkIn, checkOut }: Props) {
+  const shown = useMemo(() => options.filter((o) => kinds.includes(o.kind)), [options, kinds]);
+
+  const [slug, setSlug] = useState<string | null>(defaultOption ?? (shown.length === 1 ? shown[0].slug : null));
+  const option = shown.find((o) => o.slug === slug) ?? null;
   const isStay = option?.kind !== 'venue';
 
-  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4>(0);
+  const [step, setStep] = useState(defaultOption || shown.length === 1 ? 1 : 0);
+  const [start, setStart] = useState<string | null>(null);
+  const [end, setEnd] = useState<string | null>(null);
+  const [people, setPeople] = useState(option?.minPeople ?? 4);
   const [monthOffset, setMonthOffset] = useState(0);
-  const [arrive, setArrive] = useState<string | null>(null);
-  const [depart, setDepart] = useState<string | null>(null);
-  const [people, setPeople] = useState(defaultOption ? (options.find((o) => o.id === defaultOption)?.minPeople ?? 4) : 4);
-  const [warn, setWarn] = useState('');
 
-  const [name, setName] = useState('');
+  const [today, setToday] = useState(() => new Date().toISOString().slice(0, 10));
+  const [taken, setTaken] = useState<Set<string>>(new Set());
+  const [loadState, setLoadState] = useState<'idle' | 'loading' | 'error'>('idle');
+
+  const [guestName, setGuestName] = useState('');
   const [email, setEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [notes, setNotes] = useState('');
+  const [website, setWebsite] = useState(''); // honeypot
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const [payMethod, setPayMethod] = useState<'card' | 'eft'>('card');
-  const [cardNum, setCardNum] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [cardExp, setCardExp] = useState('');
-  const [cardCvc, setCardCvc] = useState('');
-  const [paying, setPaying] = useState(false);
-  const [ref] = useState(() => `PAS-${rand5()}`);
+  const [notice, setNotice] = useState('');
+  const [sending, setSending] = useState(false);
+  const [done, setDone] = useState<Confirmation | null>(null);
+  const top = useRef<HTMLDivElement>(null);
 
-  const today = startOfToday();
-  const base = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
-  const next = new Date(today.getFullYear(), today.getMonth() + monthOffset + 1, 1);
-  const salt = option?.id ?? 'x';
+  // pick up a search from the home page booking bar: ?option=&from=&to=&people=
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const o = shown.find((x) => x.slug === q.get('option'));
+    if (!o) return;
+    setSlug(o.slug);
+    setStep(1);
+    const from = q.get('from');
+    const to = q.get('to');
+    if (isDate(from)) {
+      setStart(from);
+      if (o.kind === 'venue') setEnd(from);
+      else if (isDate(to) && to > from) setEnd(to);
+      const [y, m] = parts(from);
+      const now = new Date();
+      setMonthOffset(Math.max(0, (y - now.getFullYear()) * 12 + (m - 1 - now.getMonth())));
+    }
+    const n = Number(q.get('people'));
+    setPeople(Math.min(Math.max(n || o.minPeople, o.minPeople), o.maxPeople));
+  }, [shown]);
 
-  const nights = arrive && depart ? Math.round((fromISO(depart).getTime() - fromISO(arrive).getTime()) / DAY) : 0;
-  const total = option ? (isStay ? nights * people * option.rate : people * option.rate) : 0;
-  const deposit = option ? (isStay ? Math.ceil(total / 2 / 50) * 50 : VENUE_DEPOSIT) : 0;
-  const balance = Math.max(0, total - deposit);
+  // live availability for the chosen option
+  useEffect(() => {
+    if (!slug) return;
+    let cancelled = false;
+    setLoadState('loading');
+    fetch(`/api/availability?option=${encodeURIComponent(slug)}&days=400`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('failed'))))
+      .then((data: { today: string; unavailable: string[] }) => {
+        if (cancelled) return;
+        setToday(data.today);
+        setTaken(new Set(data.unavailable));
+        setLoadState('idle');
+      })
+      .catch(() => !cancelled && setLoadState('error'));
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
 
-  const chooseOption = (o: EngineOption) => {
-    setOptionId(o.id);
-    setArrive(null);
-    setDepart(null);
-    setWarn('');
-    setPeople((p) => Math.min(Math.max(p, o.minPeople), o.maxPeople));
+  const nights = isStay && start && end ? nightsBetween(start, end) : 0;
+  const price = option ? quote({ kind: option.kind, rate: option.rate, people, nights }, policy) : null;
+  const datesDone = isStay ? Boolean(start && end && nights > 0) : Boolean(start);
+
+  // a selection made before availability loaded may clash with it
+  const clash = useMemo(() => {
+    if (!start || !option) return false;
+    if (!isStay) return taken.has(start);
+    if (!end) return taken.has(start);
+    for (let d = start; d < end; d = addDays(d, 1)) if (taken.has(d)) return true;
+    return false;
+  }, [start, end, taken, option, isStay]);
+
+  const goTo = (n: number) => {
+    setNotice('');
+    setStep(n);
+    top.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
   };
 
-  const rangeClear = (a: string, b: string) => {
-    for (let d = fromISO(a); iso(d) < b; d = addDays(d, 1)) if (isBooked(d, salt)) return false;
-    return true;
+  const chooseOption = (o: EngineOption) => {
+    if (o.slug !== slug) {
+      setStart(null);
+      setEnd(null);
+      setTaken(new Set());
+    }
+    setSlug(o.slug);
+    setPeople((p) => Math.min(Math.max(p, o.minPeople), o.maxPeople));
+    setNotice('');
   };
 
   const pick = (s: string) => {
-    setWarn('');
+    setNotice('');
     if (!isStay) {
-      setArrive(s);
-      setDepart(s);
+      setStart(s);
+      setEnd(s);
       return;
     }
-    if (!arrive || (arrive && depart)) {
-      setArrive(s);
-      setDepart(null);
-    } else if (s <= arrive) {
-      setArrive(s);
-    } else if (!rangeClear(arrive, s)) {
-      setWarn('Those dates include booked nights — try a clear stretch.');
-    } else {
-      setDepart(s);
+    if (!start || end || s <= start) {
+      if (taken.has(s)) return;
+      setStart(s);
+      setEnd(null);
+      return;
+    }
+    for (let d = start; d < s; d = addDays(d, 1)) {
+      if (taken.has(d)) {
+        setNotice('Those dates include nights that are already booked. Please choose a clear stretch.');
+        return;
+      }
+    }
+    setEnd(s);
+  };
+
+  const validateDetails = () => {
+    const errs: Record<string, string> = {};
+    if (guestName.trim().length < 2) errs.guestName = 'Please tell us your name.';
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) errs.email = 'That email address does not look right.';
+    if (guestPhone.replace(/\D/g, '').length < 9) errs.phone = 'Please give a phone number we can reach you on.';
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const submit = async () => {
+    if (!option || !start) return;
+    setSending(true);
+    setNotice('');
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          option: option.slug,
+          startDate: start,
+          endDate: isStay ? end : start,
+          people,
+          guestName,
+          email,
+          phone: guestPhone,
+          notes,
+          website,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        setDone(data as Confirmation);
+        top.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
+        return;
+      }
+      if (data.fields) {
+        setFieldErrors(data.fields);
+        setStep(2);
+      }
+      if (res.status === 409) {
+        // someone else took the dates: refresh the calendar and go back to it
+        setStart(null);
+        setEnd(null);
+        setStep(1);
+        fetch(`/api/availability?option=${encodeURIComponent(option.slug)}&days=400`)
+          .then((r) => r.json())
+          .then((d) => setTaken(new Set(d.unavailable)))
+          .catch(() => {});
+      }
+      setNotice(data.error || 'We could not save your booking. Please try again, or call us.');
+    } catch {
+      setNotice('We could not reach the server. Check your connection and try again, or call us.');
+    } finally {
+      setSending(false);
     }
   };
 
-  const datesDone = isStay ? Boolean(arrive && depart && nights > 0) : Boolean(arrive);
-  const detailsDone = name.trim().length > 1 && /\S+@\S+\.\S+/.test(email) && guestPhone.trim().length >= 9;
-  const cardDone =
-    cardNum.replace(/\s/g, '').length >= 15 && cardName.trim().length > 1 && /^\d\d\/\d\d$/.test(cardExp) && cardCvc.length >= 3;
+  const now = parts(today);
+  const base = new Date(Date.UTC(now[0], now[1] - 1 + monthOffset, 1));
+  const next = new Date(Date.UTC(now[0], now[1] + monthOffset, 1));
+  const tel = phoneLink || phone;
 
-  const payNow = () => {
-    setPaying(true);
-    window.setTimeout(() => {
-      setPaying(false);
-      setStep(4);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1900);
-  };
+  /* ---------- confirmation ---------- */
+  if (done) {
+    return (
+      <div ref={top} className="card relative mx-auto max-w-2xl scroll-mt-28 overflow-hidden p-6 sm:p-10" role="status">
+        <span className="ring ring-done h-12 w-12" aria-hidden="true">
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m5 12.5 4.5 4.500L19 7.500" />
+          </svg>
+        </span>
+        <h2 className="t-h2 mt-5">Request received</h2>
+        <p className="mt-3 max-w-prose">
+          Thank you, {guestName.split(' ')[0]}. We are holding your dates and will confirm with you shortly by phone or email.
+        </p>
 
-  const steps = ['Choose', 'Dates', 'Details', 'Payment', 'Booked'];
+        <dl className="mt-6 grid gap-x-8 gap-y-4 rounded-[14px] bg-sunken p-5 sm:grid-cols-2">
+          <div>
+            <dt className="t-caption">Reference</dt>
+            <dd className="tnum text-lg font-bold text-ink">{done.ref}</dd>
+          </div>
+          <div>
+            <dt className="t-caption">Booking</dt>
+            <dd className="font-semibold text-ink">{done.option}</dd>
+          </div>
+          <div>
+            <dt className="t-caption">{isStay ? 'Dates' : 'Date'}</dt>
+            <dd className="tnum font-semibold text-ink">{done.when}</dd>
+          </div>
+          <div>
+            <dt className="t-caption">People</dt>
+            <dd className="tnum font-semibold text-ink">{done.people}</dd>
+          </div>
+          <div>
+            <dt className="t-caption">Total</dt>
+            <dd className="tnum font-semibold text-ink">{formatRand(done.total)}</dd>
+          </div>
+          <div>
+            <dt className="t-caption">Deposit to secure it</dt>
+            <dd className="tnum font-semibold text-ink">{formatRand(done.deposit)}</dd>
+          </div>
+        </dl>
 
-  /* ---------- summary panel ---------- */
+        <h3 className="t-h4 mt-7">What happens next</h3>
+        <ol className="mt-3 space-y-2 text-[0.9375rem]">
+          <li>1. We check your request and confirm it with you.</li>
+          <li>2. You pay the deposit of {formatRand(done.deposit)} by EFT, using {done.ref} as the reference.</li>
+          <li>3. The balance of {formatRand(done.balance)} is paid {isStay ? 'on arrival' : 'on the day'}.</li>
+        </ol>
+        {done.paymentInstructions && (
+          <div className="mt-5 rounded-[10px] border border-line bg-sun-50 p-4 text-[0.9375rem]">
+            <p className="font-bold text-ink">Paying the deposit</p>
+            <p className="mt-1 whitespace-pre-line">{done.paymentInstructions}</p>
+          </div>
+        )}
+        <p className="mt-5 text-[0.9375rem]">
+          A copy has been sent to <strong className="text-ink">{email}</strong>.
+          {phone && (
+            <> Need to change something? Call <a className="link tnum" href={`tel:${tel}`}>{phone}</a> and quote your reference.</>
+          )}
+        </p>
+        <a href="/" className="btn btn-tertiary mt-7">Back to the home page</a>
+      </div>
+    );
+  }
+
+  /* ---------- quote panel ---------- */
   const summary = (
-    <aside className="relative h-fit rounded-[1.4rem] border-2 border-bark-900/10 bg-cream-100 p-6 lg:sticky lg:top-24">
-      <span className="tape" aria-hidden="true"></span>
-      <h3 className="font-display text-xl font-semibold text-bark-900">Your booking</h3>
-      <dl className="mt-4 space-y-2.5 text-[0.95rem] text-cocoa/85">
+    <aside className="rounded-[14px] bg-sunken p-5 lg:sticky lg:top-24" aria-label="Your booking">
+      <h3 className="t-h4">Your booking</h3>
+      <dl className="mt-4 space-y-2.5 text-[0.9375rem]">
         <div className="flex justify-between gap-4">
           <dt>Option</dt>
-          <dd className="text-right font-bold text-bark-900">{option?.name ?? '—'}</dd>
+          <dd className="text-right font-semibold text-ink">{option?.name ?? 'Not chosen yet'}</dd>
         </div>
         {isStay ? (
           <>
             <div className="flex justify-between gap-4">
-              <dt>Arrive</dt>
-              <dd className="text-right font-bold text-bark-900">{arrive ? fmtLong(arrive) : '—'}</dd>
+              <dt>Check-in</dt>
+              <dd className="tnum text-right font-semibold text-ink">{start ? fmt(start) : 'Choose a date'}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt>Leave</dt>
-              <dd className="text-right font-bold text-bark-900">{depart ? fmtLong(depart) : '—'}</dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt>Nights</dt>
-              <dd className="font-bold text-bark-900">{nights || '—'}</dd>
+              <dt>Check-out</dt>
+              <dd className="tnum text-right font-semibold text-ink">{end ? fmt(end) : 'Choose a date'}</dd>
             </div>
           </>
         ) : (
           <div className="flex justify-between gap-4">
             <dt>Date</dt>
-            <dd className="text-right font-bold text-bark-900">{arrive ? fmtLong(arrive) : '—'}</dd>
+            <dd className="tnum text-right font-semibold text-ink">{start ? fmt(start) : 'Choose a date'}</dd>
           </div>
         )}
         <div className="flex justify-between gap-4">
-          <dt>People</dt>
-          <dd className="font-bold text-bark-900">{option ? people : '—'}</dd>
+          <dt>{isStay ? 'People' : 'Guests'}</dt>
+          <dd className="tnum font-semibold text-ink">{option ? people : 0}</dd>
         </div>
       </dl>
 
-      <div className="mt-4 border-t-2 border-dashed border-cream-300 pt-4 text-[0.95rem]">
-        <div className="flex justify-between text-cocoa/85">
-          <span>
-            {option
-              ? isStay
-                ? `${people} × ${nights || 0} nights × ${fmtR(option.rate)}`
-                : `${people} × ${fmtR(option.rate)}`
-              : 'Total'}
-          </span>
-          <span className="font-bold text-bark-900">{total ? fmtR(total) : '—'}</span>
+      {option && price && datesDone ? (
+        <div className="mt-4 border-t border-line-strong pt-4 text-[0.9375rem]">
+          <div className="flex justify-between gap-4">
+            <span className="tnum">
+              {isStay
+                ? `${people} × ${nights} night${nights === 1 ? '' : 's'} × ${formatRand(option.rate)}`
+                : `${people} × ${formatRand(option.rate)}`}
+            </span>
+            <span className="tnum text-xl font-extrabold text-ink">{formatRand(price.total)}</span>
+          </div>
+          <div className="-mx-2 mt-3 flex justify-between gap-4 rounded-[6px] bg-sun-100 px-2 py-1.5 font-semibold text-ink">
+            <span>Deposit to secure it</span>
+            <span className="tnum">{formatRand(price.deposit)}</span>
+          </div>
+          <div className="mt-2 flex justify-between gap-4">
+            <span>Balance {isStay ? 'on arrival' : 'on the day'}</span>
+            <span className="tnum">{formatRand(price.balance)}</span>
+          </div>
         </div>
-        <div className="mt-2 flex justify-between text-cocoa/85">
-          <span>Deposit due now{isStay && option ? ' (50%)' : ''}</span>
-          <span className="font-bold text-bark-900">{total ? fmtR(deposit) : '—'}</span>
-        </div>
-        <div className="mt-1 flex justify-between text-cocoa/70">
-          <span>Balance {isStay ? 'on arrival' : 'on the day'}</span>
-          <span>{total ? fmtR(balance) : '—'}</span>
-        </div>
-      </div>
-      <p className="hand mt-4 text-lg leading-snug text-marigold-600">
-        every rand of profit funds a child's seaside holiday
-      </p>
+      ) : (
+        <p className="mt-4 border-t border-line-strong pt-4 text-[0.9375rem]">
+          {option ? `${option.rateLabel}. Choose your dates to see the total.` : 'Choose an option to see the price.'}
+        </p>
+      )}
+      <p className="t-caption mt-4">No payment is taken online. Every booking helps fund a child&rsquo;s first seaside holiday.</p>
     </aside>
   );
 
-  /* ---------- confirmation ---------- */
-  if (step === 4 && option) {
-    return (
-      <div className="relative mx-auto max-w-2xl rounded-[1.6rem] border-2 border-bark-900/10 bg-[#fffdf6] p-8 text-center shadow-[0_26px_52px_-28px_rgb(24_18_10/0.5)] sm:p-10">
-        <span className="tape" aria-hidden="true"></span>
-        <svg className="mx-auto h-20 w-20" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-          <circle cx="50" cy="50" r="34" fill="#f7ae3c" />
-          <g stroke="#f0931f" strokeWidth="4" strokeLinecap="round">
-            <path d="M50 6v8M50 86v8M6 50h8M86 50h8M19 19l6 6M75 75l6 6M81 19l-6 6M25 75l-6 6" />
-          </g>
-          <path d="M36 51l10 10 19-22" stroke="#33291c" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <h3 className="mt-4 font-display text-3xl font-semibold text-bark-900">You're booked!</h3>
-        <p className="hand mt-2 text-2xl text-marigold-600">reference {ref}</p>
-        <p className="mx-auto mt-4 max-w-md text-cocoa/85">
-          <strong className="text-bark-900">{option.name}</strong> ·{' '}
-          {isStay ? `${fmtLong(arrive!)} → ${fmtLong(depart!)} · ${people} people` : `${fmtLong(arrive!)} · ${people} guests`} ·
-          deposit of {fmtR(deposit)} received. A confirmation with directions and your balance ({fmtR(balance)}) is on its way to{' '}
-          <strong className="text-bark-900">{email}</strong>.
-        </p>
-        <p className="mx-auto mt-3 max-w-md text-sm text-cocoa/70">
-          {phone && <>Need to change anything? Call {phone} and quote your reference.</>}
-        </p>
-        <div className="mt-7 flex flex-wrap justify-center gap-4">
-          <a href="/" className="btn btn-marigold">Back to the beach</a>
-          <a href="/our-story" className="btn btn-paper">Read our story</a>
-        </div>
-        <p className="mt-6 text-[0.7rem] uppercase tracking-widest text-bark-700/40">demo booking — no payment was processed</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="grid items-start gap-8 lg:grid-cols-[1.5fr_1fr]">
-      <div className="relative rounded-[1.6rem] border-2 border-bark-900/10 bg-[#fffdf6] p-6 shadow-[0_26px_52px_-28px_rgb(24_18_10/0.5)] sm:p-8">
-        <span className="tape" aria-hidden="true"></span>
-
-        {/* step indicator */}
-        <ol className="flex flex-wrap items-center gap-2 text-sm font-bold">
-          {steps.map((s, i) => (
-            <li key={s} className="flex items-center gap-2">
-              <span
-                className={`grid h-7 w-7 place-items-center rounded-full border-2 text-[0.8rem] ${
-                  i < step
-                    ? 'border-marigold-500 bg-marigold-400 text-bark-950'
-                    : i === step
-                      ? 'border-bark-950 bg-marigold-400 text-bark-950'
-                      : 'border-bark-900/20 text-bark-700/50'
-                }`}
-              >
-                {i < step ? '✓' : i + 1}
+    <div ref={top} className="grid scroll-mt-28 items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
+      <div className="card p-5 sm:p-8">
+        {/* steps */}
+        <ol className="flex flex-wrap items-center gap-x-3 gap-y-2" aria-label="Booking steps">
+          {STEPS.map((s, i) => (
+            <li key={s} className="flex items-center gap-2" aria-current={i === step ? 'step' : undefined}>
+              <span className={`ring ${i < step ? 'ring-done' : ''} ${i > step ? '!border-line-strong !text-ink-muted' : ''}`}>
+                {i < step ? (
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-label="done">
+                    <path d="m5 12.5 4.5 4.500L19 7.500" />
+                  </svg>
+                ) : (
+                  i + 1
+                )}
               </span>
-              <span className={`${i === step ? 'text-bark-900' : 'text-bark-700/50'} hidden sm:inline`}>{s}</span>
-              {i < steps.length - 1 && <span className="mx-0.5 h-[2px] w-4 bg-bark-900/15" aria-hidden="true"></span>}
+              <span className={`text-sm font-semibold ${i === step ? 'text-ink' : 'text-ink-muted'} ${i === step ? '' : 'hidden sm:inline'}`}>{s}</span>
+              {i < STEPS.length - 1 && <span className="hidden h-px w-5 bg-line-strong sm:block" aria-hidden="true" />}
             </li>
           ))}
         </ol>
 
-        {/* ============ STEP 0: CHOOSE ============ */}
+        {notice && (
+          <p className="alert alert-danger mt-5" role="alert">
+            {notice}
+          </p>
+        )}
+
+        {/* ---- 1: choose ---- */}
         {step === 0 && (
           <div className="mt-6">
-            <p className="hand text-xl text-bark-700/80">what kind of visit is this?</p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {options.map((o) => {
-                const active = optionId === o.id;
+            <h2 className="t-h3">What would you like to book?</h2>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {shown.map((o) => {
+                const active = slug === o.slug;
                 return (
                   <button
-                    key={o.id}
+                    key={o.slug}
                     type="button"
                     onClick={() => chooseOption(o)}
                     aria-pressed={active}
-                    className={`relative overflow-hidden rounded-[1.2rem] border-2 text-left transition ${
-                      active
-                        ? 'border-bark-950 bg-marigold-400/25 shadow-[0.2rem_0.25rem_0_rgb(51_41_28/0.85)]'
-                        : 'border-bark-900/12 bg-paper hover:border-bark-900/30 hover:bg-cream-100'
+                    className={`overflow-hidden rounded-[14px] text-left transition-colors ${
+                      active ? 'bg-canopy-50 outline outline-2 outline-canopy-600' : 'border border-line bg-white hover:border-line-strong'
                     }`}
                   >
-                    {o.image && (
-                      <span className="relative block">
-                        <img
-                          src={o.image.src}
-                          alt={o.image.alt}
-                          loading="lazy"
-                          className="aspect-[16/9] w-full object-cover"
-                        />
+                    {o.image ? (
+                      <img src={o.image.src} alt={o.image.alt} loading="lazy" className="aspect-[4/3] w-full object-cover" style={{ backgroundColor: o.image.color }} />
+                    ) : (
+                      <span className="grid aspect-[4/3] w-full place-items-center bg-sunken text-sm font-semibold text-ink-muted">Photo coming soon</span>
+                    )}
+                    <span className="block p-4">
+                      <span className="flex items-start justify-between gap-3">
+                        <span className="t-h4">{o.name}</span>
                         {active && (
-                          <span className="absolute right-2.5 top-2.5 grid h-7 w-7 place-items-center rounded-full bg-marigold-400 text-sm font-extrabold text-bark-950 shadow ring-2 ring-bark-950">✓</span>
+                          <svg viewBox="0 0 24 24" className="mt-0.5 h-5 w-5 flex-none text-canopy-600" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-label="selected">
+                            <path d="m5 12.5 4.5 4.500L19 7.500" />
+                          </svg>
                         )}
                       </span>
-                    )}
-                    <span className="block p-4 pt-3">
-                      <h3 className="font-display text-xl font-semibold text-bark-900">{o.name}</h3>
-                      <p className="hand mt-0.5 text-lg leading-snug text-bark-700/85">{o.blurb}</p>
-                      <span className="mt-2.5 flex flex-wrap items-center gap-2 text-[0.78rem] font-bold">
-                        <span className="rounded-full bg-cream-200 px-2.5 py-0.5 text-bark-900">{o.rateLabel}</span>
-                        <span className="rounded-full bg-cream-200 px-2.5 py-0.5 text-bark-700/80">{o.sleeps}</span>
+                      <span className="mt-1 block text-[0.9375rem]">{o.blurb}</span>
+                      <span className="mt-3 flex flex-wrap gap-2">
+                        <span className="tag tag-price">{o.rateLabel}</span>
+                        {o.capacityLabel && <span className="tag">{o.capacityLabel}</span>}
                       </span>
                     </span>
                   </button>
@@ -383,189 +499,151 @@ export default function BookingEngine({ options, defaultOption, phone }: Props) 
               })}
             </div>
             <div className="mt-6 flex justify-end">
-              <button type="button" disabled={!option} onClick={() => setStep(1)} className="btn btn-marigold disabled:cursor-not-allowed disabled:opacity-40">
-                {option ? `Continue with ${option.name}` : 'Pick an option to continue'}
+              <button type="button" disabled={!option} onClick={() => goTo(1)} className="btn btn-primary w-full sm:w-auto">
+                Choose dates
               </button>
             </div>
           </div>
         )}
 
-        {/* ============ STEP 1: DATES ============ */}
+        {/* ---- 2: dates ---- */}
         {step === 1 && option && (
           <div className="mt-6">
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setMonthOffset((m) => Math.max(0, m - 1))}
-                disabled={monthOffset === 0}
-                className="grid h-9 w-9 place-items-center rounded-full border-2 border-bark-900/15 text-bark-900 transition hover:bg-cream-100 disabled:opacity-30"
-                aria-label="Previous month"
-              >
-                ←
+            <h2 className="t-h3">{isStay ? 'When are you coming?' : 'Which day is your event?'}</h2>
+            <p className="mt-1 text-[0.9375rem]">
+              {option.name} &middot; {isStay ? 'choose your check-in date, then your check-out date' : 'choose one day'}
+            </p>
+
+            <div className="mt-5 flex items-center justify-between">
+              <button type="button" onClick={() => setMonthOffset((m) => Math.max(0, m - 1))} disabled={monthOffset === 0} className="btn btn-tertiary btn-sm !px-3" aria-label="Earlier months">
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
               </button>
-              <p className="hand text-xl text-bark-700/80">
-                {isStay ? `${option.name} — arrival, then departure` : 'pick your event day'}
-              </p>
-              <button
-                type="button"
-                onClick={() => setMonthOffset((m) => Math.min(10, m + 1))}
-                className="grid h-9 w-9 place-items-center rounded-full border-2 border-bark-900/15 text-bark-900 transition hover:bg-cream-100"
-                aria-label="Next month"
-              >
-                →
+              <span className="t-caption" aria-live="polite">
+                {loadState === 'loading' ? 'Checking availability…' : loadState === 'error' ? 'Could not load availability' : ''}
+              </span>
+              <button type="button" onClick={() => setMonthOffset((m) => Math.min(12, m + 1))} className="btn btn-tertiary btn-sm !px-3" aria-label="Later months">
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg>
               </button>
             </div>
 
             <div className="mt-4 grid gap-8 sm:grid-cols-2">
-              <Month year={base.getFullYear()} month={base.getMonth()} arrive={arrive} depart={depart} salt={salt} onPick={pick} />
+              <Month year={base.getUTCFullYear()} month={base.getUTCMonth()} today={today} start={start} end={end} taken={taken} isStay={isStay} onPick={pick} />
               <div className="hidden sm:block">
-                <Month year={next.getFullYear()} month={next.getMonth()} arrive={arrive} depart={depart} salt={salt} onPick={pick} />
+                <Month year={next.getUTCFullYear()} month={next.getUTCMonth()} today={today} start={start} end={end} taken={taken} isStay={isStay} onPick={pick} />
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-bark-700/60">
-              <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-marigold-400"></span> selected</span>
-              <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded bg-cream-100"></span> <s>booked</s></span>
-            </div>
-
-            {warn && <p className="mt-3 rounded-lg bg-ember/10 px-4 py-2 text-sm font-bold text-ember">{warn}</p>}
-
-            <div className="mt-6 flex flex-wrap items-end justify-between gap-5">
-              <label className="block">
-                <span className="text-sm font-bold text-bark-900">
-                  {isStay ? 'People' : 'Guests'} (min {option.minPeople}, max {option.maxPeople})
-                </span>
-                <div className="mt-1.5 flex items-center gap-3">
-                  <button type="button" onClick={() => setPeople((p) => Math.max(option.minPeople, p - 1))} className="grid h-10 w-10 place-items-center rounded-full border-2 border-bark-900/15 text-lg font-bold text-bark-900 hover:bg-cream-100">−</button>
-                  <span className="w-8 text-center text-lg font-extrabold text-bark-900">{people}</span>
-                  <button type="button" onClick={() => setPeople((p) => Math.min(option.maxPeople, p + 1))} className="grid h-10 w-10 place-items-center rounded-full border-2 border-bark-900/15 text-lg font-bold text-bark-900 hover:bg-cream-100">+</button>
-                </div>
-              </label>
-              <div className="flex items-center gap-5">
-                <button type="button" onClick={() => setStep(0)} className="font-bold text-bark-700/70 underline-offset-4 hover:underline">← Options</button>
-                <button type="button" disabled={!datesDone} onClick={() => setStep(2)} className="btn btn-marigold disabled:cursor-not-allowed disabled:opacity-40">
-                  Continue {total > 0 && `· ${fmtR(total)}`}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ============ STEP 2: DETAILS ============ */}
-        {step === 2 && (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="text-sm font-bold text-bark-900">Full name</span>
-              <input value={name} onChange={(e) => setName(e.target.value)} type="text" autoComplete="name" className="frm mt-1.5" placeholder="Nomsa Dlamini" />
-            </label>
-            <label className="block">
-              <span className="text-sm font-bold text-bark-900">Email (for confirmation)</span>
-              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" className="frm mt-1.5" placeholder="you@example.co.za" />
-            </label>
-            <label className="block">
-              <span className="text-sm font-bold text-bark-900">Phone</span>
-              <input value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} type="tel" autoComplete="tel" className="frm mt-1.5" placeholder="073 …" />
-            </label>
-            <label className="block sm:col-span-2">
-              <span className="text-sm font-bold text-bark-900">Anything we should know?</span>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="frm mt-1.5" placeholder={isStay ? 'small kids, a gran who loves birds…' : 'a 60th birthday, long tables for 30…'} />
-            </label>
-            <div className="flex items-center justify-between gap-4 sm:col-span-2">
-              <button type="button" onClick={() => setStep(1)} className="font-bold text-bark-700/70 underline-offset-4 hover:underline">← Dates</button>
-              <button type="button" disabled={!detailsDone} onClick={() => setStep(3)} className="btn btn-marigold disabled:cursor-not-allowed disabled:opacity-40">
-                Continue to payment
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ============ STEP 3: PAYMENT ============ */}
-        {step === 3 && (
-          <div className="mt-6">
-            <div className="flex gap-2">
-              {(['card', 'eft'] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setPayMethod(m)}
-                  className={`rounded-full border-2 px-5 py-2 text-sm font-extrabold transition ${
-                    payMethod === m ? 'border-bark-950 bg-marigold-400 text-bark-950' : 'border-bark-900/15 text-bark-700/70 hover:bg-cream-100'
-                  }`}
-                >
-                  {m === 'card' ? 'Card' : 'Instant EFT'}
-                </button>
-              ))}
-              <span className="ml-auto self-center text-[0.65rem] font-bold uppercase tracking-widest text-bark-700/40">sandbox</span>
-            </div>
-
-            {payMethod === 'card' ? (
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <label className="block sm:col-span-2">
-                  <span className="text-sm font-bold text-bark-900">Card number</span>
-                  <input
-                    value={cardNum}
-                    onChange={(e) => setCardNum(e.target.value.replace(/[^\d]/g, '').slice(0, 16).replace(/(\d{4})(?=\d)/g, '$1 '))}
-                    inputMode="numeric"
-                    className="frm mt-1.5 tracking-widest"
-                    placeholder="4242 4242 4242 4242"
-                  />
-                </label>
-                <label className="block sm:col-span-2">
-                  <span className="text-sm font-bold text-bark-900">Name on card</span>
-                  <input value={cardName} onChange={(e) => setCardName(e.target.value)} className="frm mt-1.5" placeholder="N DLAMINI" />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-bold text-bark-900">Expiry</span>
-                  <input
-                    value={cardExp}
-                    onChange={(e) => setCardExp(e.target.value.replace(/[^\d]/g, '').slice(0, 4).replace(/(\d{2})(?=\d)/, '$1/'))}
-                    inputMode="numeric"
-                    className="frm mt-1.5"
-                    placeholder="08/27"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-bold text-bark-900">CVC</span>
-                  <input value={cardCvc} onChange={(e) => setCardCvc(e.target.value.replace(/[^\d]/g, '').slice(0, 4))} inputMode="numeric" className="frm mt-1.5" placeholder="123" />
-                </label>
-              </div>
-            ) : (
-              <div className="mt-5 rounded-xl border-2 border-dashed border-cream-300 bg-paper p-5 text-cocoa/85">
-                <p>
-                  You'll be taken to your bank to approve an instant EFT of <strong className="text-bark-900">{fmtR(deposit)}</strong> —
-                  reference <strong className="text-bark-900">{ref}</strong>. It clears immediately and your booking is locked in.
-                </p>
-              </div>
-            )}
-
-            <div className="mt-6 flex items-center justify-between gap-4">
-              <button type="button" onClick={() => setStep(2)} className="font-bold text-bark-700/70 underline-offset-4 hover:underline">← Details</button>
-              <button
-                type="button"
-                disabled={paying || (payMethod === 'card' && !cardDone)}
-                onClick={payNow}
-                className="btn btn-marigold disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {paying ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3.5" />
-                      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
-                    </svg>
-                    Processing…
-                  </span>
-                ) : (
-                  `Pay deposit · ${fmtR(deposit)}`
-                )}
-              </button>
-            </div>
-            <p className="mt-4 flex items-center justify-end gap-1.5 text-xs text-bark-700/50">
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
-                <rect x="4" y="10" width="16" height="10" rx="2.5" />
-                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-              </svg>
-              secured payment · your details never leave this page
+            <p className="t-caption mt-4 flex flex-wrap gap-x-5 gap-y-1">
+              <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-[3px] bg-canopy-600" /> Your dates</span>
+              <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-[3px] border border-line-strong bg-sunken" /> Unavailable</span>
+              <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full border-2 border-sun-500" /> Today</span>
             </p>
+
+            {loadState === 'error' && (
+              <p className="alert alert-warning mt-4">
+                We could not load the calendar. You can still send your dates and we will confirm them, or call us{phone ? ` on ${phone}` : ''}.
+              </p>
+            )}
+            {clash && <p className="alert alert-danger mt-4" role="alert">Some of those dates are no longer available. Please choose again.</p>}
+
+            <div className="mt-6 flex flex-wrap items-end justify-between gap-5 border-t border-line pt-6">
+              <div>
+                <span className="label" id="people-label">
+                  {isStay ? 'People' : 'Guests'} <span className="font-normal text-ink-muted">({option.minPeople} to {option.maxPeople})</span>
+                </span>
+                <div className="flex items-center gap-3" role="group" aria-labelledby="people-label">
+                  <button type="button" onClick={() => setPeople((p) => Math.max(option.minPeople, p - 1))} disabled={people <= option.minPeople} className="btn btn-tertiary !h-11 !w-11 !p-0 text-xl" aria-label="Fewer people">−</button>
+                  <span className="tnum w-9 text-center text-lg font-bold text-ink" aria-live="polite">{people}</span>
+                  <button type="button" onClick={() => setPeople((p) => Math.min(option.maxPeople, p + 1))} disabled={people >= option.maxPeople} className="btn btn-tertiary !h-11 !w-11 !p-0 text-xl" aria-label="More people">+</button>
+                </div>
+              </div>
+              <div className="flex w-full flex-col-reverse gap-3 sm:w-auto sm:flex-row">
+                {shown.length > 1 && <button type="button" onClick={() => goTo(0)} className="btn btn-tertiary">Back</button>}
+                <button type="button" disabled={!datesDone || clash} onClick={() => goTo(2)} className="btn btn-primary">
+                  Continue{price && datesDone ? ` · ${formatRand(price.total)}` : ''}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ---- 3: details ---- */}
+        {step === 2 && (
+          <form
+            className="mt-6"
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (validateDetails()) goTo(3);
+            }}
+          >
+            <h2 className="t-h3">Your details</h2>
+            <div className="mt-5 grid gap-5 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label className="label" htmlFor="bk-name">Full name</label>
+                <input id="bk-name" className="input" value={guestName} onChange={(e) => setGuestName(e.target.value)} autoComplete="name" aria-invalid={!!fieldErrors.guestName} aria-describedby={fieldErrors.guestName ? 'bk-name-err' : undefined} />
+                {fieldErrors.guestName && <p id="bk-name-err" className="field-error">{fieldErrors.guestName}</p>}
+              </div>
+              <div>
+                <label className="label" htmlFor="bk-email">Email</label>
+                <input id="bk-email" type="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" aria-invalid={!!fieldErrors.email} aria-describedby={fieldErrors.email ? 'bk-email-err' : undefined} />
+                {fieldErrors.email && <p id="bk-email-err" className="field-error">{fieldErrors.email}</p>}
+              </div>
+              <div>
+                <label className="label" htmlFor="bk-phone">Phone</label>
+                <input id="bk-phone" type="tel" className="input" value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} autoComplete="tel" aria-invalid={!!fieldErrors.phone} aria-describedby={fieldErrors.phone ? 'bk-phone-err' : undefined} />
+                {fieldErrors.phone && <p id="bk-phone-err" className="field-error">{fieldErrors.phone}</p>}
+              </div>
+              <div className="sm:col-span-2">
+                <label className="label" htmlFor="bk-notes">Anything we should know? <span className="font-normal text-ink-muted">(optional)</span></label>
+                <textarea id="bk-notes" className="input" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} />
+              </div>
+              {/* hidden from people; bots fill it in */}
+              <div className="hidden" aria-hidden="true">
+                <label htmlFor="bk-website">Website</label>
+                <input id="bk-website" tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => goTo(1)} className="btn btn-tertiary">Back</button>
+              <button type="submit" className="btn btn-primary">Review request</button>
+            </div>
+          </form>
+        )}
+
+        {/* ---- 4: review ---- */}
+        {step === 3 && option && price && start && (
+          <div className="mt-6">
+            <h2 className="t-h3">Check your request</h2>
+            <dl className="mt-5 divide-y divide-line border-y border-line text-[0.9375rem]">
+              {[
+                ['Booking', option.name],
+                [isStay ? 'Dates' : 'Date', isStay && end ? `${fmt(start)} to ${fmt(end)} (${nights} night${nights === 1 ? '' : 's'})` : fmt(start)],
+                [isStay ? 'People' : 'Guests', String(people)],
+                ['Name', guestName],
+                ['Contact', `${email} · ${guestPhone}`],
+                ...(notes ? [['Notes', notes]] : []),
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-6 py-3">
+                  <dt className="flex-none">{k}</dt>
+                  <dd className="tnum text-right font-semibold text-ink">{v}</dd>
+                </div>
+              ))}
+            </dl>
+            {isStay && (checkIn || checkOut) && (
+              <p className="t-caption mt-3">Check-in from {checkIn}, check-out by {checkOut}.</p>
+            )}
+            <p className="mt-5 text-[0.9375rem]">
+              Sending this request holds your dates. Nothing is charged now: we confirm with you first, then you pay the
+              deposit of <strong className="tnum text-ink">{formatRand(price.deposit)}</strong> by EFT.
+            </p>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={() => goTo(2)} className="btn btn-tertiary" disabled={sending}>Back</button>
+              <button type="button" onClick={submit} className="btn btn-primary" disabled={sending}>
+                {sending ? 'Sending…' : 'Send booking request'}
+              </button>
+            </div>
+            <p className="t-caption mt-4 sm:text-right">Registered non-profit company · No online payment · Balance payable {isStay ? 'on arrival' : 'on the day'}</p>
           </div>
         )}
       </div>

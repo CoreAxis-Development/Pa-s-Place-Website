@@ -1,22 +1,43 @@
 import { defineMiddleware } from 'astro:middleware';
+import { SESSION_COOKIE, getSessionUser } from './server/auth/session';
+import { ensureReady } from './server/seed';
 
-// HTTP Basic Auth over the CMS admin and its API. Public pages are
-// prerendered and never hit this at runtime. Override the defaults with
-// CMS_USER / CMS_PASSWORD env vars in production.
-const PROTECTED = /^\/(keystatic|api\/keystatic)(\/|$)/;
+const PUBLIC_ADMIN = new Set(['/admin/login']);
 
-export const onRequest = defineMiddleware((context, next) => {
-  if (!PROTECTED.test(context.url.pathname)) return next();
+export const onRequest = defineMiddleware(async (context, next) => {
+  // migrations + first-run content; resolves instantly after the first request
+  await ensureReady();
 
-  const user = process.env.CMS_USER || 'admin';
-  const pass = process.env.CMS_PASSWORD || 'rootpass';
-  const expected = 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
+  const path = context.url.pathname.replace(/\/+$/, '') || '/';
+  const isAdmin = path === '/admin' || path.startsWith('/admin/');
+  context.locals.user = null;
 
-  const auth = context.request.headers.get('authorization');
-  if (auth === expected) return next();
+  if (isAdmin) {
+    const user = await getSessionUser(context.cookies.get(SESSION_COOKIE)?.value);
+    context.locals.user = user;
 
-  return new Response('Authentication required', {
-    status: 401,
-    headers: { 'WWW-Authenticate': 'Basic realm="Pa\'s Place CMS", charset="UTF-8"' },
-  });
+    if (!user && !PUBLIC_ADMIN.has(path)) {
+      const back = context.request.method === 'GET' ? `?next=${encodeURIComponent(path + context.url.search)}` : '';
+      return context.redirect(`/admin/login${back}`);
+    }
+    // a temporary password must be replaced before anything else is allowed
+    if (user?.mustChangePassword && path !== '/admin/account' && path !== '/admin/logout') {
+      return context.redirect('/admin/account');
+    }
+  }
+
+  const response = await next();
+
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  if (context.url.protocol === 'https:') {
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  if (isAdmin) {
+    response.headers.set('Cache-Control', 'no-store');
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  }
+  return response;
 });

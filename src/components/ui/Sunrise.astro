@@ -1,0 +1,22 @@
+---
+// Corner sunrise: a quarter of the logo's sunburst, cropped by its container
+// so only the rays show. Allowed in three places: the mission band, the
+// footer and the booking confirmation. Static.
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+
+const lengths = [26, 16, 34, 20, 28, 14, 32, 22, 18, 30, 15, 25];
+const rays = Array.from({ length: 24 }, (_, i) => {
+  const angle = (i / 24) * Math.PI * 2 + (i % 3) * 0.045;
+  const inner = 52 + (i % 4) * 3.5;
+  const len = lengths[i % lengths.length];
+  const p = (r: number) => `${(100 + Math.cos(angle) * r).toFixed(1)},${(100 + Math.sin(angle) * r).toFixed(1)}`;
+  return `M${p(inner)} L${p(inner + len)}`;
+});
+---
+
+<svg class={className} viewBox="0 0 200 200" fill="none" stroke="#FF9900" stroke-width="4" stroke-linecap="round" aria-hidden="true">
+  {rays.map((d) => <path d={d} />)}
+</svg>

@@ -1,0 +1,201 @@
+/* The storybook layer. Loaded by /our-story only: handwriting, taped
+   keepsakes, torn paper and ambient night-sky motion live here and nowhere
+   else on the site (brand spec 5.4). Everything is scoped to #storybook. */
+
+#storybook {
+  background-color: var(--color-paper);
+  color: var(--color-cocoa);
+}
+
+#storybook h1,
+#storybook h2,
+#storybook h3 {
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  line-height: 1.08;
+  color: inherit;
+}
+
+#storybook .hand {
+  font-family: var(--font-hand);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+#storybook .drop-cap::first-letter {
+  float: left;
+  font-family: var(--font-display);
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-weight: 600;
+  font-size: 4.6em;
+  line-height: 0.78;
+  padding: 0.08em 0.12em 0 0;
+  color: var(--color-marigold-600);
+}
+
+/* film photos taped into the book */
+#storybook .keepsake {
+  position: relative;
+  background: #fffdf6;
+  padding: 0.7rem 0.7rem 1rem;
+  border-radius: 3px;
+  box-shadow:
+    0 1px 2px rgb(24 18 10 / 0.14),
+    0 18px 36px -18px rgb(24 18 10 / 0.45);
+}
+#storybook .keepsake::before,
+#storybook .keepsake::after {
+  content: "";
+  position: absolute;
+  width: 84px;
+  height: 25px;
+  background: color-mix(in srgb, var(--color-cream-200) 72%, #ffffff);
+  opacity: 0.85;
+  box-shadow: 0 1px 2px rgb(24 18 10 / 0.18);
+  clip-path: polygon(3% 10%, 97% 0%, 100% 90%, 0% 100%);
+}
+#storybook .keepsake::before {
+  top: -11px;
+  left: -26px;
+  transform: rotate(-38deg);
+}
+#storybook .keepsake::after {
+  top: -11px;
+  right: -26px;
+  transform: rotate(38deg);
+}
+#storybook .keepsake img {
+  border-radius: 2px;
+}
+#storybook .keepsake-tilt:nth-child(3n + 1) {
+  transform: rotate(-1.8deg);
+}
+#storybook .keepsake-tilt:nth-child(3n + 2) {
+  transform: rotate(1.4deg);
+}
+#storybook .keepsake-tilt:nth-child(3n) {
+  transform: rotate(-0.6deg);
+}
+
+#storybook .tape {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  width: 96px;
+  height: 25px;
+  transform: translateX(-50%) rotate(-2.5deg);
+  background: color-mix(in srgb, var(--color-cream-200) 74%, #ffffff);
+  opacity: 0.85;
+  box-shadow: 0 1px 2px rgb(24 18 10 / 0.16);
+  clip-path: polygon(2% 8%, 98% 0%, 100% 92%, 0% 100%);
+}
+
+/* ambient life: transform and opacity only */
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.82);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+#storybook .twinkle {
+  animation: twinkle 3.4s ease-in-out infinite;
+  animation-delay: var(--tw-delay, 0s);
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes firefly {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.15;
+  }
+  30% {
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate(9px, -14px);
+    opacity: 0.5;
+  }
+  70% {
+    opacity: 0.9;
+  }
+}
+#storybook .firefly {
+  animation: firefly 7s ease-in-out infinite;
+  animation-delay: var(--tw-delay, 0s);
+  transform-box: fill-box;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2.5deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(2.5deg);
+  }
+}
+#storybook .bob {
+  animation: bob 4.5s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes rays-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+#storybook .rays-slow {
+  animation: rays-slow 140s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes waft {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(2.5%);
+  }
+}
+#storybook .waft {
+  animation: waft 9s ease-in-out infinite;
+}
+#storybook .waft-late {
+  animation: waft 11s ease-in-out infinite reverse;
+}
+
+@keyframes story-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+#storybook .fade-up {
+  animation: story-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #storybook .fade-up,
+  #storybook .twinkle,
+  #storybook .firefly,
+  #storybook .bob,
+  #storybook .rays-slow,
+  #storybook .waft,
+  #storybook .waft-late {
+    animation: none;
+  }
+}

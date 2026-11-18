@@ -1,0 +1,124 @@
+---
+// The contact form. Posts to /api/enquiries: as JSON when JavaScript is
+// available (inline errors, no page reload), as a plain form post otherwise.
+import { ENQUIRY_TYPES } from '../../server/services/enquiries';
+
+interface Props {
+  /** pre-selected topic */
+  type?: string;
+  heading?: string;
+}
+const { type = Astro.url.searchParams.get('about') ?? 'general', heading = 'Send us a message' } = Astro.props;
+const sent = Astro.url.searchParams.get('sent');
+const source = Astro.url.pathname;
+
+const serverMessages: Record<string, { tone: string; text: string }> = {
+  ok: { tone: 'success', text: 'Thank you. Your message has reached us and we will reply as soon as we can.' },
+  invalid: { tone: 'danger', text: 'Please fill in your name, a valid email address and a message, then send it again.' },
+  slow: { tone: 'warning', text: 'Too many messages in a short time. Please wait a few minutes, or call us.' },
+  error: { tone: 'danger', text: 'We could not send your message. Please try again, or call us.' },
+};
+const banner = sent ? serverMessages[sent] : undefined;
+---
+
+<form id="enquiry" class="card card-pad scroll-mt-28" method="post" action="/api/enquiries" novalidate data-enquiry-form>
+  <h2 class="t-h3">{heading}</h2>
+
+  <p class:list={['alert mt-4', banner ? `alert-${banner.tone}` : 'hidden']} role="status" data-form-status>
+    {banner?.text}
+  </p>
+
+  <div class="mt-5 grid gap-5 sm:grid-cols-2" data-form-fields>
+    <div class="sm:col-span-2">
+      <label class="label" for="enq-type">What is it about?</label>
+      <select class="input" id="enq-type" name="type">
+        {ENQUIRY_TYPES.map((t) => <option value={t.value} selected={t.value === type}>{t.label}</option>)}
+      </select>
+    </div>
+    <div class="sm:col-span-2">
+      <label class="label" for="enq-name">Your name</label>
+      <input class="input" id="enq-name" name="name" autocomplete="name" required aria-describedby="enq-name-err" />
+      <p class="field-error hidden" id="enq-name-err" data-error-for="name"></p>
+    </div>
+    <div>
+      <label class="label" for="enq-email">Email</label>
+      <input class="input" id="enq-email" name="email" type="email" autocomplete="email" required aria-describedby="enq-email-err" />
+      <p class="field-error hidden" id="enq-email-err" data-error-for="email"></p>
+    </div>
+    <div>
+      <label class="label" for="enq-phone">Phone <span class="font-normal text-ink-muted">(optional)</span></label>
+      <input class="input" id="enq-phone" name="phone" type="tel" autocomplete="tel" aria-describedby="enq-phone-err" />
+      <p class="field-error hidden" id="enq-phone-err" data-error-for="phone"></p>
+    </div>
+    <div class="sm:col-span-2">
+      <label class="label" for="enq-message">Message</label>
+      <textarea class="input" id="enq-message" name="message" rows="5" maxlength="4000" required aria-describedby="enq-message-err"></textarea>
+      <p class="field-error hidden" id="enq-message-err" data-error-for="message"></p>
+    </div>
+    <!-- hidden from people; bots fill it in -->
+    <div class="hidden" aria-hidden="true">
+      <label for="enq-website">Website</label>
+      <input id="enq-website" name="website" tabindex="-1" autocomplete="off" />
+    </div>
+    <input type="hidden" name="source" value={source} />
+    <div class="flex flex-wrap items-center justify-between gap-4 sm:col-span-2">
+      <p class="t-caption max-w-sm">
+        We use your details only to reply to you. See our <a class="link" href="/privacy">privacy notice</a>.
+      </p>
+      <button class="btn btn-secondary w-full sm:w-auto" type="submit">Send message</button>
+    </div>
+  </div>
+</form>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>('[data-enquiry-form]').forEach((form) => {
+    const status = form.querySelector<HTMLElement>('[data-form-status]')!;
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+
+    const show = (tone: string, text: string) => {
+      status.className = `alert mt-4 alert-${tone}`;
+      status.textContent = text;
+    };
+    const setErrors = (errors: Record<string, string>) => {
+      form.querySelectorAll<HTMLElement>('[data-error-for]').forEach((el) => {
+        const msg = errors[el.dataset.errorFor!];
+        el.textContent = msg ?? '';
+        el.classList.toggle('hidden', !msg);
+        const input = form.elements.namedItem(el.dataset.errorFor!) as HTMLElement | null;
+        input?.setAttribute('aria-invalid', msg ? 'true' : 'false');
+      });
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setErrors({});
+      button.disabled = true;
+      button.textContent = 'Sending…';
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.fromEntries(new FormData(form))),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ok) {
+          show('success', `Thank you. Your message has reached us and we will reply as soon as we can. Your reference is ${data.ref}.`);
+          form.querySelector<HTMLElement>('[data-form-fields]')!.hidden = true;
+          status.focus?.();
+        } else {
+          if (data.fields) {
+            setErrors(data.fields);
+            const first = Object.keys(data.fields)[0];
+            (form.elements.namedItem(first) as HTMLElement | null)?.focus();
+          }
+          show('danger', data.error ?? 'We could not send your message. Please try again, or call us.');
+        }
+      } catch {
+        show('danger', 'We could not reach the server. Check your connection and try again, or call us.');
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Send message';
+      }
+    });
+  });
+</script>

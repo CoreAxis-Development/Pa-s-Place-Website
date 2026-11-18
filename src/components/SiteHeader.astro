@@ -1,126 +1,119 @@
 ---
+// Solid white, sticky, the same on every page. Booking is always one tap away.
 import { Image } from 'astro:assets';
 import logo from '../assets/brand/pas-place-logo.png';
+import Icon from './ui/Icon.astro';
+import { getSite } from '../server/services/content';
 
-// theme 'night': the page opens on a dark scene — the header floats moonlit
-// and turns into a paper ribbon once the reader starts scrolling.
-interface Props {
-  theme?: 'day' | 'night';
-}
-const { theme = 'day' } = Astro.props;
+const { settings } = await getSite();
 
 const links = [
-  { label: 'Home', href: '/' },
-  { label: 'Our Story', href: '/our-story' },
-  { label: 'What We Do', href: '/what-we-do' },
-  { label: 'Get Involved', href: '/get-involved' },
+  { label: 'Stay', href: '/book-a-stay' },
+  { label: 'Venue hire', href: '/venue-hire' },
+  { label: 'Gallery', href: '/gallery' },
+  { label: 'What we do', href: '/what-we-do' },
+  { label: 'Our story', href: '/our-story' },
+  { label: 'Get involved', href: '/get-involved' },
 ];
-// booking is the primary action, so it lives on the button — not in the list
 
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
-const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
 ---
 
-<header
-  id="site-header"
-  data-theme={theme}
-  class:list={['fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,box-shadow] duration-300', theme === 'day' && 'is-solid']}
->
-  <div class="relative mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-2.5">
-    <a href="/" class="flex shrink-0 items-center gap-3">
-      <Image src={logo} alt="" widths={[96, 144]} sizes="52px" class="h-13 w-13 object-contain drop-shadow-[0_1px_6px_rgba(17,21,43,0.35)]" />
+<header id="site-header" class="sticky top-0 z-50 border-b border-line bg-raised transition-shadow duration-150">
+  <div class="container-page relative flex h-[60px] items-center justify-between gap-6 md:h-[68px]">
+    <a href="/" class="flex shrink-0 items-center gap-3" aria-label="Pa's Place, home">
+      <span class="grid h-11 w-11 place-items-center rounded-full bg-canopy-900">
+        <Image src={logo} alt="" widths={[80, 120]} sizes="40px" class="h-10 w-10 object-contain" loading="eager" />
+      </span>
       <span class="leading-none">
-        <span class="hdr-title font-display text-[1.35rem] font-bold">Pa&rsquo;s Place</span>
-        <span class="hdr-sub mt-1 block text-[0.62rem] font-extrabold uppercase tracking-[0.2em]">
-          Pennington &middot; KZN &middot; NPC
-        </span>
+        <span class="wordmark block text-[1.375rem] text-ink">Pa&rsquo;s Place</span>
+        <span class="mt-1 block text-[0.6875rem] font-semibold tracking-[0.06em] text-ink-muted">Pennington &middot; Non-profit company</span>
       </span>
     </a>
 
-    <nav class="hidden items-center gap-7 md:flex" aria-label="Main">
+    <nav class="hidden items-center gap-6 lg:flex" aria-label="Main">
       {
         links.map((l) => (
-          <a
-            href={l.href}
-            class="navlink hdr-link pb-0.5 text-[0.95rem] font-bold"
-            aria-current={isActive(l.href) ? 'page' : undefined}
-          >
+          <a href={l.href} class="navlink text-[0.9375rem] font-semibold" aria-current={isActive(l.href) ? 'page' : undefined}>
             {l.label}
           </a>
         ))
       }
     </nav>
 
-    <a href="/book-a-stay" class="btn btn-marigold hidden !py-2.5 md:inline-flex">Book a stay</a>
+    <div class="hidden items-center gap-5 lg:flex">
+      {
+        settings.contact.phone && (
+          <a
+            href={`tel:${settings.contact.phoneLink || settings.contact.phone}`}
+            class="tnum hidden items-center gap-2 text-[0.9375rem] font-semibold text-canopy-600 hover:text-canopy-700 xl:flex"
+          >
+            <Icon name="phone" class="h-4 w-4" />
+            {settings.contact.phone}
+          </a>
+        )
+      }
+      <a href="/book-a-stay" class="btn btn-primary btn-sm">Book a stay</a>
+    </div>
 
-    <!-- mobile menu: pure CSS checkbox toggle, no JS -->
-    <input type="checkbox" id="nav-toggle" class="peer sr-only" />
+    <!-- mobile menu: a checkbox toggle, so it works without JavaScript -->
+    <input type="checkbox" id="nav-toggle" class="peer sr-only" aria-label="Open the menu" />
     <label
       for="nav-toggle"
-      class="hdr-burger grid h-11 w-11 cursor-pointer place-items-center rounded-full transition md:hidden"
+      class="grid h-11 w-11 cursor-pointer place-items-center rounded-[10px] text-ink hover:bg-sunken peer-focus-visible:outline-2 peer-focus-visible:outline-canopy-600 lg:hidden"
     >
-      <span class="sr-only">Open menu</span>
-      <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-        <path d="M4 7h16M4 12h16M4 17h10"></path>
-      </svg>
+      <Icon name="menu" class="h-6 w-6" />
     </label>
 
-    <div class="absolute inset-x-0 top-full hidden bg-paper shadow-[0_24px_40px_-18px_rgb(24_18_10/0.5)] peer-checked:block md:!hidden">
-      <nav class="flex flex-col gap-1 px-5 pb-5 pt-4" aria-label="Mobile">
+    <div class="absolute inset-x-0 top-full hidden border-b border-line bg-raised shadow-lg peer-checked:block lg:!hidden">
+      <nav class="container-page flex flex-col py-3" aria-label="Mobile">
         {
           links.map((l) => (
-            <a
-              href={l.href}
-              class="rounded-xl px-3 py-2.5 font-bold text-bark-900 hover:bg-cream-100"
-              aria-current={isActive(l.href) ? 'page' : undefined}
-            >
+            <a href={l.href} class="flex h-12 items-center border-b border-line font-semibold text-ink" aria-current={isActive(l.href) ? 'page' : undefined}>
               {l.label}
             </a>
           ))
         }
-        <a href="/book-a-stay" class="btn btn-marigold mt-2 justify-center">Book a stay</a>
-        <a href="/get-involved" class="btn btn-bark justify-center">Sponsor a holiday</a>
+        <a href="/contact" class="flex h-12 items-center font-semibold text-ink">Contact</a>
+        <div class="mt-3 grid gap-3 pb-2">
+          <a href="/book-a-stay" class="btn btn-primary">Book a stay</a>
+          <a href="/venue-hire" class="btn btn-secondary">Hire the venue</a>
+        </div>
       </nav>
-      <svg class="block h-[14px] w-full" viewBox="0 0 1440 18" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0,0 L1440,0 L1440,7 L1398,13 L1340,5 L1275,14 L1198,6 L1130,15 L1052,7 L980,16 L900,6 L830,13 L748,5 L672,15 L590,7 L510,14 L438,5 L352,13 L270,6 L196,15 L118,7 L48,13 L0,6 Z" fill="var(--color-paper)"></path>
-      </svg>
     </div>
   </div>
 </header>
 
 <style>
-  /* over a night scene: moonlit text, no background */
-  #site-header .hdr-title { color: var(--color-moon); }
-  #site-header .hdr-sub { color: color-mix(in srgb, var(--color-moon) 72%, transparent); }
-  #site-header .hdr-link { color: var(--color-moon); }
-  #site-header .hdr-burger { color: var(--color-moon); }
-  #site-header .hdr-burger:hover { background: rgb(255 253 246 / 0.12); }
-
-  /* the paper ribbon (always for day pages, after scroll for night pages) */
-  #site-header.is-solid {
-    background: color-mix(in srgb, var(--color-paper) 92%, transparent);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid color-mix(in srgb, var(--color-cream-200) 90%, transparent);
-    box-shadow: 0 10px 30px -18px rgb(24 18 10 / 0.35);
+  .wordmark {
+    font-family: var(--font-display);
+    font-variation-settings: 'SOFT' 50, 'WONK' 0;
+    font-weight: 600;
   }
-  #site-header.is-solid .hdr-title { color: var(--color-bark-900); }
-  #site-header.is-solid .hdr-sub { color: color-mix(in srgb, var(--color-bark-700) 80%, transparent); }
-  #site-header.is-solid .hdr-link { color: var(--color-bark-900); }
-  #site-header.is-solid .hdr-burger { color: var(--color-bark-900); }
-  #site-header.is-solid .hdr-burger:hover { background: var(--color-cream-100); }
+  .navlink {
+    color: var(--color-ink-body);
+    padding-block: 8px;
+    border-bottom: 2px solid transparent;
+    transition:
+      color 120ms,
+      border-color 120ms;
+  }
+  .navlink:hover {
+    color: var(--color-ink);
+  }
+  .navlink[aria-current='page'] {
+    color: var(--color-ink);
+    border-bottom-color: var(--color-sun-500);
+  }
+  #site-header.is-scrolled {
+    box-shadow: var(--shadow-sm);
+  }
 </style>
 
 <script>
-  // Night pages: swap the floating moonlit bar for the paper ribbon on scroll.
-  // One persistent listener that always targets the live header, so view
-  // transitions don't stack handlers.
-  const update = () => {
-    const header = document.getElementById('site-header');
-    if (!header || header.dataset.theme !== 'night') return;
-    header.classList.toggle('is-solid', window.scrollY > 40);
-  };
+  const header = document.getElementById('site-header');
+  const update = () => header?.classList.toggle('is-scrolled', window.scrollY > 8);
   window.addEventListener('scroll', update, { passive: true });
-  document.addEventListener('astro:page-load', update);
   update();
 </script>

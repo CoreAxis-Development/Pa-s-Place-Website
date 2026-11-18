@@ -1,0 +1,56 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import Badge from '../../../../components/admin/Badge.astro';
+import { can } from '../../../../server/auth/session';
+import { currentUser } from '../../../../server/http/request';
+import { COLLECTIONS } from '../../../../server/services/collections';
+
+const user = currentUser(Astro);
+const def = COLLECTIONS[Astro.params.collection ?? ''];
+if (!def) return Astro.redirect('/admin/content');
+const rows = await def.list();
+const base = `/admin/content/${def.key}`;
+---
+
+<AdminLayout title={def.title} subtitle={def.description}>
+  <a slot="breadcrumb" href="/admin/content" class="link">Content</a>
+  <Fragment slot="actions">
+    <a class="btn btn-tertiary" href={def.preview} target="_blank" rel="noopener">View on the website</a>
+    {can(user, 'edit') && <a class="btn btn-primary" href={`${base}/new`}>Add a {def.singular}</a>}
+  </Fragment>
+
+  <div class="a-table-wrap">
+    {
+      rows.length ? (
+        <table class="a-table">
+          <thead>
+            <tr><th class="w-16">Order</th><th>{def.singular.replace(/^./, (c) => c.toUpperCase())}</th><th>Visibility</th></tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr>
+                <td class="a-muted">{r.position}</td>
+                <td>
+                  <div class="flex items-center gap-3">
+                    {r.thumb && <img src={r.thumb} alt="" class="h-10 w-14 flex-none rounded object-cover" loading="lazy" />}
+                    <div class="min-w-0">
+                      <a class="a-primary-cell" href={`${base}/${r.id}`}>{r.title}</a>
+                      <div class="a-muted max-w-2xl truncate">{r.detail}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>{r.published ? <Badge tone="success" label="On the website" /> : <Badge tone="neutral" label="Hidden" />}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <div class="a-empty">
+          <p class="a-empty-title">Nothing here yet</p>
+          <p class="a-muted">Add the first {def.singular} to show it on the website.</p>
+          {can(user, 'edit') && <a class="btn btn-primary mt-4" href={`${base}/new`}>Add a {def.singular}</a>}
+        </div>
+      )
+    }
+  </div>
+</AdminLayout>

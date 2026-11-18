@@ -1,134 +1,71 @@
 ---
-import type { ImageMetadata } from 'astro';
-import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
-import ChapterHeader from '../components/story/ChapterHeader.astro';
-import TornEdge from '../components/story/TornEdge.astro';
-import { getGallery, getSettings } from '../lib/cms';
+import MissionBand from '../components/sections/MissionBand.astro';
+import Icon from '../components/ui/Icon.astro';
+import Picture from '../components/ui/Picture.astro';
+import SectionHeader from '../components/ui/SectionHeader.astro';
+import { getSite } from '../server/services/content';
 
-const settings = await getSettings();
-const gallery = await getGallery();
+const site = await getSite();
+const { settings, amenities, homepage } = site;
+const photoFor = (icon: string) => amenities.find((a) => a.icon === icon)?.image ?? null;
 
-const allImages = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/images/**/*.{webp,jpg,jpeg,png}',
-  { eager: true }
-);
-const photo = (slug: string) => {
-  const g = gallery.find((x) => x.slug === slug);
-  return g?.image ? { meta: allImages[g.image]?.default, alt: g.alt, caption: g.caption } : undefined;
-};
-
-const offerings = [
+const work = [
   {
-    eyebrow: 'for children',
-    title: 'Sponsored seaside retreats',
-    text: 'Our reason for being. Fun-filled, carefully held holidays for disadvantaged children — beach days, trail walks, rock pools, sports, team building, music and arts, and food they’ve never tried before. Every retreat is paced to each group: room for the noisiest hours and the quietest ones.',
-    image: photo('rock-pools'),
-    note: 'funded by sponsors and bookings — see how you can help',
-    noteHref: '/get-involved',
+    eyebrow: 'For children',
+    title: 'Sponsored seaside holidays',
+    text: 'The reason we exist. Children who have never had a seaside holiday come to stay: beach days, the pool and slides, mini-golf, games on the lawn, music and art, and food made together. Each group is looked after closely, with room for the loud hours and the quiet ones.',
+    image: photoFor('pool'),
+    link: { label: 'Sponsor a child’s holiday', href: '/contact?about=sponsor#enquiry' },
   },
   {
-    eyebrow: 'for families & groups',
-    title: 'Affordable beachside stays',
-    text: 'Comfortable, peaceful accommodation two minutes from the waves, priced for families and groups who struggle to find the funds for a restful holiday in today’s economy. Every paid stay helps keep the lights on for our children’s retreats.',
-    image: photo('the-house'),
-    note: `${settings.pricing.accommodation} — book a stay`,
-    noteHref: '/book-a-stay',
+    eyebrow: 'For families and groups',
+    title: 'Affordable holidays',
+    text: `Comfortable rooms in a big shaded garden, two minutes from the beach, priced so that an ordinary family can get away. ${settings.pricing.accommodation}. What you pay helps fund the children’s holidays.`,
+    image: photoFor('tree'),
+    link: { label: 'Book a stay', href: '/book-a-stay' },
   },
   {
-    eyebrow: 'for our neighbours',
-    title: 'Community food & play days',
-    text: 'Occasional open days for local families: big pots of unique, filling meals, our playground in full voice, and planned programmes of activity. Long tables, longer afternoons.',
-    image: photo('food-day'),
-    note: `venue hire: ${settings.pricing.venue}`,
-    noteHref: '/venue-hire',
+    eyebrow: 'For celebrations',
+    title: 'Venue hire and community days',
+    text: `The lapa, pool and lawns are hired out for birthdays, church groups and family days, and opened to local families for food and play days. ${settings.pricing.venue}.`,
+    image: photoFor('lapa'),
+    link: { label: 'Hire the venue', href: '/venue-hire' },
   },
 ];
 
 const day = [
-  {
-    time: 'sunrise',
-    what: 'Beach walk while the sand is still cool — rock pools at low tide.',
-    dark: false,
-    icon: `<svg viewBox="0 0 64 64" class="h-12 w-12" fill="none" aria-hidden="true"><path d="M16 40 a16 16 0 0 1 32 0" fill="#f7ae3c"/><g stroke="#d1770e" stroke-width="3.5" stroke-linecap="round"><path d="M32 14 v-7 M14 22 l-5 -5 M50 22 l5 -5 M8 40 h-5 M61 40 h-5"/></g><path d="M4 46 h56 M12 53 h18 M38 53 h14" stroke="#3e7e8e" stroke-width="3.5" stroke-linecap="round"/></svg>`,
-  },
-  {
-    time: 'morning',
-    what: 'Trails through the milkwoods; nature seeking with big questions welcome.',
-    dark: false,
-    icon: `<svg viewBox="0 0 64 64" class="h-12 w-12" fill="none" aria-hidden="true"><path d="M8 56 C20 48 26 36 24 24 C36 30 44 26 48 16" stroke="#5c4a36" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="1 7"/><circle cx="50" cy="12" r="7" fill="#7d9a6a"/><circle cx="43" cy="17" r="5" fill="#7d9a6a"/><circle cx="56" cy="17" r="5" fill="#7d9a6a"/><path d="M50 22 v8" stroke="#5c4a36" stroke-width="3" stroke-linecap="round"/></svg>`,
-  },
-  {
-    time: 'midday',
-    what: 'Unique foods, prepared together and eaten loudly.',
-    dark: false,
-    icon: `<svg viewBox="0 0 64 64" class="h-12 w-12" fill="none" aria-hidden="true"><g stroke="#b4dceb" stroke-width="3" stroke-linecap="round"><path d="M26 16 c-2 -4 2 -6 0 -10"/><path d="M38 16 c-2 -4 2 -6 0 -10"/></g><ellipse cx="32" cy="24" rx="18" ry="4" fill="#33291c"/><path d="M14 24 h36 v6 a18 12 0 0 1 -36 0 Z" fill="#423424"/><path d="M10 21 l6 4 M54 21 l-6 4" stroke="#33291c" stroke-width="4" stroke-linecap="round"/></svg>`,
-  },
-  {
-    time: 'afternoon',
-    what: 'Sports, team building and beach games until the shadows stretch.',
-    dark: false,
-    icon: `<svg viewBox="0 0 64 64" class="h-12 w-12" fill="none" aria-hidden="true"><circle cx="32" cy="30" r="16" fill="#fffdf6" stroke="#423424" stroke-width="3"/><path d="M32 14 C38 22 38 38 32 46 M18 24 C26 28 38 28 46 24 M18 37 C26 33 38 33 46 37" stroke="#e2673f" stroke-width="3" fill="none"/><path d="M12 54 h40" stroke="#e2cb9a" stroke-width="4" stroke-linecap="round"/></svg>`,
-  },
-  {
-    time: 'evening',
-    what: 'Music, arts and shell painting on the veranda.',
-    dark: true,
-    icon: `<svg viewBox="0 0 64 64" class="h-12 w-12" fill="none" aria-hidden="true"><path d="M24 44 V16 l22 -6 v28" stroke="#f7ecd2" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><ellipse cx="19" cy="45" rx="6.5" ry="5" fill="#fbc968"/><ellipse cx="41" cy="39" rx="6.5" ry="5" fill="#fbc968"/></svg>`,
-  },
-  {
-    time: 'night',
-    what: 'Star gazing, quiet hours, and falling asleep to the sound of the sea.',
-    dark: true,
-    icon: `<svg viewBox="0 0 64 64" class="h-12 w-12" fill="none" aria-hidden="true"><path d="M40 10 a20 20 0 1 0 14 32 a17 17 0 0 1 -14 -32 Z" fill="#f7ecd2"/><path d="M18 14 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 Z" fill="#fbc968"/><path d="M52 46 l1.2 3 3 1.2 -3 1.2 -1.2 3 -1.2 -3 -3 -1.2 3 -1.2 Z" fill="#fbc968"/></svg>`,
-  },
+  { icon: 'beach', time: 'Early', text: 'A walk to the beach while the sand is still cool.' },
+  { icon: 'pool', time: 'Morning', text: 'The pool and slides, then mini-golf in the shade.' },
+  { icon: 'braai', time: 'Midday', text: 'Lunch made together and eaten at the lapa.' },
+  { icon: 'play', time: 'Afternoon', text: 'Sport, team games and time on the lawn.' },
+  { icon: 'heart', time: 'Evening', text: 'Music, art and quiet time before bed.' },
 ];
 ---
 
-<Layout title="What We Do" description="Sponsored children's retreats, affordable family stays, and community food & play days in Pennington, KZN.">
-  <ChapterHeader
-    chapter="two"
-    title="One home, three tides of work."
-    note="the sponsored holidays are why we exist — the stays and open days keep them possible"
-    seed={59}
-  />
+<Layout title="What we do" description="Pa's Place gives children their first seaside holiday, funded by affordable family stays and venue hire in Pennington, KZN.">
+  <section class="bg-page" aria-label="What we do">
+    <div class="container-page pb-4 pt-10 lg:pt-14">
+      <p class="eyebrow">What we do</p>
+      <h1 class="t-h1 mt-2 max-w-3xl">One garden, three kinds of work</h1>
+      <p class="t-lead mt-4 max-w-[62ch]">
+        The sponsored children&rsquo;s holidays are why Pa&rsquo;s Place exists. Family stays and venue hire are how they are paid for.
+      </p>
+    </div>
+  </section>
 
-  <!-- ============ OFFERINGS ============ -->
-  <section class="bg-paper py-14 sm:py-20">
-    <div class="mx-auto max-w-6xl space-y-24 px-5">
+  <section class="section !pt-12" aria-label="Our work">
+    <div class="container-page space-y-16 lg:space-y-24">
       {
-        offerings.map((o, i) => (
-          <article class={`grid items-center gap-12 lg:grid-cols-2 ${i % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''}`}>
-            <div class="reveal">
-              <p class="hand text-2xl text-sea-600">{o.eyebrow}</p>
-              <h2 class="mt-3 font-display text-3xl font-semibold text-bark-900 sm:text-4xl">{o.title}</h2>
-              <p class="mt-5 max-w-lg text-lg text-cocoa/85">{o.text}</p>
-              {o.note && (
-                <p class="relative mt-8 inline-block rounded-xl border-2 border-bark-900/10 bg-cream-100 px-5 py-3">
-                  <span class="tape" aria-hidden="true" />
-                  {o.noteHref ? (
-                    <a href={o.noteHref} class="hand text-xl text-bark-900 underline decoration-marigold-500 decoration-2 underline-offset-4">
-                      {o.note}
-                    </a>
-                  ) : (
-                    <span class="hand text-xl text-bark-900">{o.note}</span>
-                  )}
-                </p>
-              )}
+        work.map((w, i) => (
+          <article class="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
+            <div class:list={[i % 2 === 1 && 'lg:order-2']}>
+              {w.image && <Picture image={w.image} sizes="(min-width: 1024px) 540px, 92vw" class="photo aspect-[3/2]" />}
             </div>
-            <div class="reveal">
-              {o.image?.meta && (
-                <figure class={`keepsake mx-auto max-w-lg ${i % 2 === 1 ? '!-rotate-1' : '!rotate-1'}`}>
-                  <Image
-                    src={o.image.meta}
-                    alt={o.image.alt}
-                    widths={[480, 800, 1100]}
-                    sizes="(min-width: 1024px) 45vw, 92vw"
-                    class="aspect-[4/3] w-full object-cover"
-                  />
-                  {o.image.caption && <figcaption class="hand pt-3 text-center text-[1.4rem] text-cocoa/85">{o.image.caption}</figcaption>}
-                </figure>
-              )}
+            <div>
+              <SectionHeader rays={i === 0} eyebrow={w.eyebrow} title={w.title} class="!mb-4" />
+              <p class="max-w-[58ch]">{w.text}</p>
+              <a href={w.link.href} class="link mt-5 inline-block">{w.link.label}</a>
             </div>
           </article>
         ))
@@ -136,48 +73,22 @@ const day = [
     </div>
   </section>
 
-  <!-- ============ A DAY THAT PASSES AS YOU READ IT ============ -->
-  <section class="bg-paper pb-20 sm:pb-24">
-    <div class="mx-auto max-w-6xl px-5">
-      <div class="reveal max-w-2xl">
-        <p class="hand text-2xl text-marigold-600">read it left to right, like a day</p>
-        <h2 class="mt-2 font-display text-4xl font-semibold text-bark-900 sm:text-5xl">A day moves with the tides</h2>
-      </div>
-
-      <div
-        class="reveal mt-10 overflow-hidden rounded-[1.8rem] border-2 border-bark-900/10 shadow-[0_28px_56px_-30px_rgb(24_18_10/0.55)]"
-      >
-        <ol
-          class="flex snap-x snap-mandatory overflow-x-auto"
-          style="background: linear-gradient(to right, #fbf3e3 0%, #f9e0ae 26%, #f6c88b 46%, #c98a70 62%, #635177 78%, #1b2140 94%, #11152b 100%);"
-        >
-          {
-            day.map((d, i) => (
-              <li class={`min-w-[248px] shrink-0 snap-center px-7 py-9 sm:min-w-[264px] ${d.dark ? 'text-moon' : 'text-bark-950'}`}>
-                <Fragment set:html={d.icon} />
-                <p class={`hand mt-4 text-2xl ${d.dark ? 'text-marigold-300' : 'text-marigold-600'}`}>
-                  {i + 1}. {d.time}
-                </p>
-                <p class={`mt-2 text-[0.98rem] leading-relaxed ${d.dark ? 'text-cream-100/80' : 'text-bark-950/80'}`}>{d.what}</p>
-              </li>
-            ))
-          }
-        </ol>
-      </div>
-      <p class="hand mt-4 text-center text-xl text-bark-700/60">drag your way through the day &rarr;</p>
-
-      <div class="reveal mt-12 text-center">
-        <a href="/get-involved" class="btn btn-marigold">Make a day like this happen</a>
-      </div>
+  <section class="section bg-sunken" aria-label="A day on a children's holiday">
+    <div class="container-page">
+      <SectionHeader eyebrow="A children’s holiday" title="What a day looks like" lead="Every group is different, but the shape of the day is much the same." />
+      <ol class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {
+          day.map((d) => (
+            <li class="card card-pad">
+              <Icon name={d.icon} class="h-6 w-6 text-canopy-600" />
+              <h3 class="t-h4 mt-3">{d.time}</h3>
+              <p class="mt-1 text-[0.9375rem]">{d.text}</p>
+            </li>
+          ))
+        }
+      </ol>
     </div>
   </section>
 
-  <div class="relative">
-    <TornEdge fill="var(--color-cream-100)" seed={67} class="bg-paper" />
-    <div class="bg-cream-100 pb-16 pt-8 text-center">
-      <p class="hand text-2xl text-bark-700/70">
-        next: <a href="/get-involved" class="text-sea-800 underline decoration-marigold-400 decoration-2 underline-offset-4 hover:text-bark-900">chapter three &mdash; how the story continues &rarr;</a>
-      </p>
-    </div>
-  </div>
+  <MissionBand title={homepage.missionTitle} text={homepage.missionText} sponsor />
 </Layout>

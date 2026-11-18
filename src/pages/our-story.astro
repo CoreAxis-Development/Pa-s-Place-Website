@@ -1,5 +1,11 @@
 ---
-import type { ImageMetadata } from 'astro';
+// The one page where the storybook lives: handwriting, taped keepsakes and
+// illustrated scenes. It sits behind the standard header and footer so a
+// reader can always get to "Book a stay". Its images are illustration, not
+// photographs of the property.
+import '@fontsource-variable/caveat';
+import '@fontsource-variable/fraunces/full-italic.css';
+import '../styles/story.css';
 import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
 import StoryNight from '../components/story/scenes/StoryNight.astro';
@@ -7,23 +13,14 @@ import StoryDream from '../components/story/scenes/StoryDream.astro';
 import StoryJourney from '../components/story/scenes/StoryJourney.astro';
 import NotebookSpread from '../components/story/scenes/NotebookSpread.astro';
 import StoryEnd from '../components/story/scenes/StoryEnd.astro';
-import { getGallery } from '../lib/cms';
-import coastline from '../assets/images/coastline.webp';
-import firstSea from '../assets/images/hero-first-sea.webp';
-
-const gallery = await getGallery();
-const allImages = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/images/**/*.{webp,jpg,jpeg,png}',
-  { eager: true }
-);
-const house = gallery.find((g) => g.slug === 'the-house');
-const houseImage = house?.image ? allImages[house.image]?.default : undefined;
+import coastline from '../assets/images/story/coastline.webp';
+import firstSea from '../assets/images/story/hero-first-sea.webp';
+import house from '../assets/images/story/the-house.webp';
 ---
 
 <Layout
-  title="Our Story"
-  description="The story of Pa's Place — a nonprofit in Pennington, KZN giving children who have never seen the sea their first seaside holiday."
-  headerTheme="night"
+  title="Our story"
+  description="The story of Pa's Place: a non-profit in Pennington, KZN giving children who have never seen the sea their first seaside holiday."
 >
   <div id="storybook">
     <StoryNight />
@@ -37,7 +34,7 @@ const houseImage = house?.image ? allImages[house.image]?.default : undefined;
     <!-- ============ THE STORY, TOLD ============ -->
     <section class="relative bg-paper" aria-label="What Pa's Place is">
       <div class="mx-auto grid max-w-6xl gap-14 px-5 py-14 sm:py-20 lg:grid-cols-[1.2fr_1fr]">
-        <div class="max-w-xl space-y-6 text-lg text-cocoa/90">
+        <div class="max-w-xl space-y-6 text-lg text-cocoa">
           <p class="hand !-mb-2 text-2xl text-marigold-600">so, plainly then:</p>
           <p class="reveal drop-cap">
             Pa&rsquo;s Place Non-Profit Company was founded with a simple mission: <strong class="text-bark-900">giving coastal, fun-filled holidays to disadvantaged children.</strong> Based in Kelso,
@@ -45,53 +42,49 @@ const houseImage = house?.image ? allImages[house.image]?.default : undefined;
             peaceful and activity-filled beachside accommodation.
           </p>
           <p class="reveal">
-            But Pa&rsquo;s Place is more than accommodation. It&rsquo;s a retreat — one that lifts children out of
+            But Pa&rsquo;s Place is more than accommodation. It&rsquo;s a retreat, one that lifts children out of
             buildings, classrooms and familiar concerns. With attention to communication, care with questions
             and energy toward activities, we&rsquo;ve learned how deeply a real holiday can settle a young mind.
           </p>
           <p class="reveal">
-            Our days move with the tides — through the noisiest and the quietest hours. Beach going, trail
+            Our days move with the tides, through the noisiest and the quietest hours. Beach going, trail
             walking, nature seeking, sports playing, team building, music and arts creating, unique foods
             preparing. And woven through all of it: learning. Whether it&rsquo;s a piece of marine life in a rock
             pool or a fruit hanging from a tree, children leave Pa&rsquo;s Place knowing something they didn&rsquo;t
             know before.
           </p>
           <p class="reveal">
-            The holidays are funded by sponsors — and by the ordinary paying guests who book the house for
+            The holidays are funded by sponsors, and by the ordinary paying guests who book the house for
             their own family holidays. That&rsquo;s the whole machine: <strong class="text-bark-900">every stay helps fund the next child&rsquo;s first look at the sea.</strong>
           </p>
 
           <blockquote class="reveal !mt-10 border-l-4 border-marigold-400 pl-5">
             <p class="font-display text-2xl font-semibold italic text-bark-900">
-              Every stay carries a little learning &mdash; and a lot of sea air.
+              Every stay carries a little learning, and a lot of sea air.
             </p>
           </blockquote>
         </div>
 
         <aside class="reveal self-start lg:sticky lg:top-28">
-          {
-            houseImage && (
-              <figure class="keepsake mx-auto max-w-sm !rotate-1">
-                <Image
-                  src={houseImage}
-                  alt={house?.alt ?? "The Pa's Place house"}
-                  widths={[480, 760]}
-                  sizes="(min-width: 1024px) 30vw, 90vw"
-                  class="aspect-[4/3] w-full object-cover"
-                />
-                <figcaption class="hand pt-3 text-center text-[1.4rem] text-cocoa/85">{house?.caption}</figcaption>
-              </figure>
-            )
-          }
-          <figure class="keepsake mx-auto mt-12 max-w-sm !-rotate-1">
+          <figure class="keepsake mx-auto max-w-sm rotate-1">
             <Image
-              src={coastline}
-              alt="The Pennington coastline — a golden beach and an old bench facing the sea"
+              src={house}
+              alt="An illustration of a beach house with a wide veranda among coastal trees"
               widths={[480, 760]}
               sizes="(min-width: 1024px) 30vw, 90vw"
               class="aspect-[4/3] w-full object-cover"
             />
-            <figcaption class="hand pt-3 text-center text-[1.4rem] text-cocoa/85">our stretch of the Indian Ocean</figcaption>
+            <figcaption class="hand pt-3 text-center text-[1.4rem] text-cocoa">home base, a short walk from the waves</figcaption>
+          </figure>
+          <figure class="keepsake mx-auto mt-12 max-w-sm -rotate-1">
+            <Image
+              src={coastline}
+              alt="An illustration of a golden beach with an old bench facing the sea"
+              widths={[480, 760]}
+              sizes="(min-width: 1024px) 30vw, 90vw"
+              class="aspect-[4/3] w-full object-cover"
+            />
+            <figcaption class="hand pt-3 text-center text-[1.4rem] text-cocoa">our stretch of the Indian Ocean</figcaption>
           </figure>
         </aside>
       </div>

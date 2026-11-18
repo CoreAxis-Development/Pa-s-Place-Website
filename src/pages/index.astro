@@ -1,68 +1,267 @@
 ---
-import type { ImageMetadata } from 'astro';
 import Layout from '../layouts/Layout.astro';
-import HeroDay from '../components/story/scenes/HeroDay.astro';
-import StayOptions from '../components/home/StayOptions.astro';
-import ThePlace from '../components/home/ThePlace.astro';
-import SceneAlbum from '../components/story/scenes/SceneAlbum.astro';
-import LocationBand from '../components/home/LocationBand.astro';
-import CharityNote from '../components/home/CharityNote.astro';
-import { getGallery, getHomepage, getSettings } from '../lib/cms';
-import coastline from '../assets/images/coastline.webp';
+import Faqs from '../components/sections/Faqs.astro';
+import MissionBand from '../components/sections/MissionBand.astro';
+import OptionCard from '../components/sections/OptionCard.astro';
+import Icon from '../components/ui/Icon.astro';
+import Picture from '../components/ui/Picture.astro';
+import SectionHeader from '../components/ui/SectionHeader.astro';
+import { todaySast } from '../server/lib/dates';
+import { formatRand } from '../server/lib/pricing';
+import { getSite } from '../server/services/content';
 
-const homepage = await getHomepage();
-const gallery = await getGallery();
-const settings = await getSettings();
+const site = await getSite();
+const { settings, homepage, options, amenities, gallery } = site;
 
-// CMS image fields store repo paths; resolve them to Astro's optimized assets.
-const allImages = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/images/**/*.{webp,jpg,jpeg,png}',
-  { eager: true }
-);
-const resolve = (path: string | null) => (path ? allImages[path]?.default : undefined);
+const stays = options.filter((o) => o.kind === 'stay');
+const lowest = stays.length ? Math.min(...stays.map((o) => o.rate)) : null;
+const today = todaySast();
 
-const heroImage = resolve(homepage.heroImage);
-const house = gallery.find((g) => g.slug === 'the-house');
-const houseImage = house?.image ? allImages[house.image]?.default : undefined;
-const photos = gallery
-  .map((g) => ({ meta: resolve(g.image), alt: g.alt, caption: g.caption }))
-  .filter((g): g is { meta: ImageMetadata; alt: string; caption: string | null } => Boolean(g.meta));
-
-const whatsapp = settings.contact.phoneLink
-  ? `https://wa.me/${settings.contact.phoneLink.replace(/[^0-9]/g, '')}`
-  : undefined;
-
-// "R200 per person per night (minimum 4 people)" → chip-sized "R200 per person per night"
-const priceChip = settings.pricing.accommodation?.split(' (')[0];
+// the collage: the hero photo plus the first two grounds features that have their own photo
+const tiles = amenities.filter((a) => a.image && a.image.id !== homepage.heroImage?.id).slice(0, 2);
+const galleryPreview = gallery.slice(0, 6);
 ---
 
-<Layout>
-  <div id="storybook">
-    {
-      heroImage && (
-        <HeroDay
-          eyebrow={homepage.heroEyebrow ?? ''}
-          title={homepage.heroTitle ?? ''}
-          subtitle={homepage.heroSubtitle ?? ''}
-          image={heroImage}
-          imageAlt="Children playing ball on the golden beach in the late afternoon sun"
-          priceChip={priceChip}
-        />
-      )
-    }
-    <StayOptions accommodation={settings.pricing.accommodation} venue={settings.pricing.venue} />
-    <ThePlace
-      housePhoto={houseImage}
-      houseAlt={house?.alt ?? "The Pa's Place house"}
-      houseCaption={house?.caption}
-      beachPhoto={coastline}
-      pricing={settings.pricing.accommodation ?? ''}
-      phone={settings.contact.phone}
-      phoneLink={settings.contact.phoneLink}
-      whatsapp={whatsapp}
-    />
-    <SceneAlbum photos={photos} />
-    <LocationBand address={settings.contact.address ?? ''} mapUrl={settings.contact.mapUrl} />
-    <CharityNote />
-  </div>
+<Layout image={homepage.heroImage?.src}>
+  <!-- ============ HERO: the promise, the booking bar, the place ============ -->
+  <section class="bg-page" aria-label="Welcome">
+    <div class="container-page grid items-center gap-10 pb-14 pt-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 lg:pb-16 lg:pt-12">
+      <div>
+        <p class="eyebrow">{homepage.heroEyebrow}</p>
+        <h1 class="t-display mt-3">{homepage.heroTitle}</h1>
+        <p class="t-lead mt-5 max-w-[52ch]">{homepage.heroSubtitle}</p>
+
+        <!-- booking bar: a plain GET form, so it works before any script loads -->
+        <form action="/book-a-stay" method="get" class="mt-8 rounded-[20px] border border-line bg-raised p-3 shadow-lg" aria-label="Check availability">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bar-cell col-span-2 sm:col-span-1">
+              <label for="hb-option">Stay</label>
+              <select id="hb-option" name="option">
+                {stays.map((o) => <option value={o.slug}>{o.name}</option>)}
+              </select>
+            </div>
+            <div class="bar-cell">
+              <label for="hb-from">Check-in</label>
+              <input id="hb-from" name="from" type="date" min={today} />
+            </div>
+            <div class="bar-cell">
+              <label for="hb-to">Check-out</label>
+              <input id="hb-to" name="to" type="date" min={today} />
+            </div>
+            <div class="bar-cell col-span-2 sm:order-2 sm:col-span-1">
+              <label for="hb-people">People</label>
+              <input id="hb-people" name="people" type="number" min="1" max="40" value="4" inputmode="numeric" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary mt-3 w-full">Check availability</button>
+        </form>
+
+        <ul class="mt-5 flex flex-wrap gap-2">
+          {
+            lowest !== null && (
+              <li class="chip tnum">
+                <Icon name="wallet" />
+                From {formatRand(lowest)} per person per night
+              </li>
+            )
+          }
+          <li class="chip"><Icon name="beach" />2 minutes from the beach</li>
+          <li class="chip"><Icon name="pool" />Pool, slides and mini-golf</li>
+        </ul>
+      </div>
+
+      {
+        homepage.heroImage && (
+          <div class="relative mx-auto w-full max-w-[540px] pb-10 pl-6 sm:pb-14 sm:pl-10 lg:max-w-none">
+            <Picture
+              image={homepage.heroImage}
+              sizes="(min-width: 1024px) 500px, 92vw"
+              class="aspect-[4/3] w-full rounded-[20px] object-cover sm:aspect-[4/5]"
+              eager
+            />
+            <div class="absolute bottom-0 left-0 flex w-[62%] gap-3 sm:w-[58%] sm:gap-4">
+              {tiles.map((t) => (
+                <Picture
+                  image={t.image!}
+                  sizes="180px"
+                  class="aspect-square w-1/2 rounded-[14px] border-4 border-white object-cover shadow-md"
+                  eager
+                />
+              ))}
+            </div>
+            {
+              lowest !== null && (
+                <p class="roundel tnum" aria-label={`From ${formatRand(lowest)} per person per night`}>
+                  <span class="text-[0.6875rem] font-semibold text-ink-muted">from</span>
+                  <span class="text-xl font-extrabold leading-none text-ink">{formatRand(lowest)}</span>
+                  <span class="text-[0.6875rem] font-semibold leading-tight text-ink-muted">pp / night</span>
+                </p>
+              )
+            }
+          </div>
+        )
+      }
+    </div>
+  </section>
+
+  <!-- ============ WAYS TO BOOK ============ -->
+  <section class="section bg-sunken" id="stay" aria-label="Stays and venue hire">
+    <div class="container-page">
+      <SectionHeader rays eyebrow="Stay or celebrate" title="Rooms, the whole house, or the venue for a day" lead="Prices are per person. Pick what suits your group and check the calendar." />
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {options.map((o) => <OptionCard option={o} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ THE GROUNDS ============ -->
+  <section class="section" id="grounds" aria-label="The grounds">
+    <div class="container-page">
+      <SectionHeader rays eyebrow="The grounds" title={homepage.groundsTitle} lead={homepage.groundsIntro} />
+      <div class="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+        {
+          amenities.map((a) => (
+            <article class="reveal">
+              {a.image && <Picture image={a.image} sizes="(min-width: 1024px) 270px, (min-width: 640px) 45vw, 92vw" class="photo aspect-[4/3]" />}
+              <h3 class="t-h4 mt-4 flex items-center gap-2">
+                <Icon name={a.icon} class="h-5 w-5 flex-none text-canopy-600" />
+                {a.title}
+              </h3>
+              <p class="mt-1.5 text-[0.9375rem]">{a.description}</p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VENUE HIRE ============ -->
+  <section class="section bg-sunken" aria-label="Venue hire">
+    <div class="container-page grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+      {homepage.venueImage && <Picture image={homepage.venueImage} sizes="(min-width: 1024px) 540px, 92vw" class="photo aspect-[3/2]" />}
+      <div>
+        <SectionHeader rays eyebrow="Venue hire" title={homepage.venueTitle} lead={homepage.venueIntro} class="!mb-6" />
+        <ul class="ray-list grid gap-2 sm:grid-cols-2">
+          {site.venuePage.occasions.map((o) => <li>{o}</li>)}
+        </ul>
+        {settings.pricing.venue && <p class="mt-6"><span class="tag tag-price !h-auto py-1.5">{settings.pricing.venue}</span></p>}
+        <a href="/venue-hire" class="btn btn-secondary mt-6">Hire the venue</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GALLERY PREVIEW ============ -->
+  {
+    galleryPreview.length > 0 && (
+      <section class="section" aria-label="Photos">
+        <div class="container-page">
+          <div class="flex flex-wrap items-end justify-between gap-4">
+            <SectionHeader eyebrow="Photos" title="See the place for yourself" class="!mb-0" />
+            <a href="/gallery" class="btn btn-tertiary">View all photos</a>
+          </div>
+          <ul class="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+            {galleryPreview.map((g) => (
+              <li>
+                <a href="/gallery" class="block">
+                  <Picture image={g.image} sizes="(min-width: 640px) 31vw, 46vw" class="photo aspect-square" />
+                </a>
+                {g.caption && <p class="t-caption mt-2">{g.caption}</p>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- ============ FINDING US ============ -->
+  <section class="section bg-sunken" aria-label="Where to find us">
+    <div class="container-page grid items-center gap-8 md:grid-cols-[1fr_auto]">
+      <div>
+        <SectionHeader eyebrow="Finding us" title="Kelso, Pennington, on the KZN South Coast" class="!mb-4" />
+        <p class="flex max-w-xl items-start gap-2.5">
+          <Icon name="pin" class="mt-1 h-5 w-5 flex-none text-canopy-600" />
+          <span class="whitespace-pre-line">{settings.contact.address}</span>
+        </p>
+        <p class="mt-2 max-w-xl">About an hour south of Durban, and two minutes on foot from the beach.</p>
+      </div>
+      <div class="flex flex-wrap gap-3 md:flex-col">
+        {settings.contact.mapUrl && <a href={settings.contact.mapUrl} target="_blank" rel="noopener" class="btn btn-tertiary bg-raised">Open the map</a>}
+        <a href="/contact" class="btn btn-tertiary bg-raised">Contact us</a>
+      </div>
+    </div>
+  </section>
+
+  <MissionBand title={homepage.missionTitle} text={homepage.missionText} />
+
+  <Faqs faqs={site.faqs.filter((f) => f.topic !== 'venue').slice(0, 6)} />
 </Layout>
+
+<style>
+  .bar-cell {
+    border: 1px solid var(--color-line);
+    border-radius: 10px;
+    padding: 8px 12px 6px;
+    background: #fff;
+    transition:
+      border-color 120ms,
+      box-shadow 120ms;
+  }
+  .bar-cell:focus-within {
+    border-color: var(--color-canopy-600);
+    box-shadow: 0 0 0 3px rgb(44 98 57 / 0.2);
+  }
+  .bar-cell label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-ink-muted);
+  }
+  .bar-cell input,
+  .bar-cell select {
+    display: block;
+    width: 100%;
+    min-height: 28px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    font: 600 1rem var(--font-body);
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .bar-cell input:focus,
+  .bar-cell select:focus {
+    outline: none;
+  }
+
+  /* the Ring: price roundel */
+  .roundel {
+    position: absolute;
+    top: 16px;
+    right: -6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 96px;
+    height: 96px;
+    border-radius: 999px;
+    background: #fff;
+    border: 2px solid var(--color-sun-500);
+    box-shadow: var(--shadow-md);
+  }
+</style>
+
+<script>
+  // keep check-out after check-in
+  const from = document.getElementById('hb-from') as HTMLInputElement | null;
+  const to = document.getElementById('hb-to') as HTMLInputElement | null;
+  from?.addEventListener('change', () => {
+    if (!to || !from.value) return;
+    const next = new Date(`${from.value}T00:00:00Z`);
+    next.setUTCDate(next.getUTCDate() + 1);
+    to.min = next.toISOString().slice(0, 10);
+    if (!to.value || to.value <= from.value) to.value = to.min;
+  });
+</script>

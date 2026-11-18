@@ -1,0 +1,178 @@
+---
+// Month view of who is where, plus dates taken off sale.
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { can } from '../../server/auth/session';
+import { currentUser, deny, fieldErrors, setFlash, str } from '../../server/http/request';
+import { addDays, eachDate, formatDate, fromIso, toIso, todaySast } from '../../server/lib/dates';
+import { blockInput, calendarEntries, createBlock, deleteBlock, listBlocks } from '../../server/services/bookings';
+import { listOptions } from '../../server/services/content';
+
+const user = currentUser(Astro);
+const today = todaySast();
+const monthParam = Astro.url.searchParams.get('month') ?? '';
+const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam) ? monthParam : today.slice(0, 7);
+const here = `/admin/calendar?month=${month}`;
+
+let blockErrors: Record<string, string> = {};
+if (Astro.request.method === 'POST') {
+  const denied = deny(Astro, 'edit', here);
+  if (denied) return denied;
+  const form = await Astro.request.formData();
+  if (str(form, '_action') === 'unblock') {
+    await deleteBlock(str(form, 'id'), user);
+    setFlash(Astro, 'Dates are back on sale.');
+    return Astro.redirect(here);
+  }
+  const parsed = blockInput.safeParse({
+    optionId: str(form, 'optionId'),
+    startDate: str(form, 'startDate'),
+    endDate: str(form, 'endDate') || str(form, 'startDate'),
+    reason: str(form, 'reason'),
+  });
+  if (parsed.success) {
+    await createBlock(parsed.data, user);
+    setFlash(Astro, 'Dates blocked. They can no longer be booked on the website.');
+    return Astro.redirect(here);
+  }
+  blockErrors = fieldErrors(parsed.error);
+}
+
+const first = `${month}-01`;
+const d0 = fromIso(first);
+const lead = (d0.getUTCDay() + 6) % 7;
+const gridStart = addDays(first, -lead);
+const nextMonth = toIso(new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth() + 1, 1)));
+const prevMonth = toIso(new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth() - 1, 1)));
+const daysInMonth = Number(addDays(nextMonth, -1).slice(8));
+const cellCount = Math.ceil((lead + daysInMonth) / 7) * 7;
+const gridEnd = addDays(gridStart, cellCount);
+const days = eachDate(gridStart, gridEnd);
+
+const [options, { bookings, blocks }, upcomingBlocks] = await Promise.all([
+  listOptions(),
+  calendarEntries(gridStart, gridEnd),
+  listBlocks(today),
+]);
+
+// one waterslide colour per option, so the calendar reads at a glance
+const palette = ['var(--color-play-green)', 'var(--color-play-blue)', 'var(--color-play-pink)', 'var(--color-play-yellow)'];
+const colour = new Map(options.map((o, i) => [o.id, palette[i % palette.length]]));
+
+const entriesFor = (day: string) => [
+  ...bookings
+    .filter((b) => (b.option.kind === 'venue' ? b.startDate === day : b.startDate <= day && day < b.endDate))
+    .map((b) => ({ kind: 'booking' as const, b })),
+  ...blocks.filter((k) => k.startDate <= day && day <= k.endDate).map((k) => ({ kind: 'block' as const, k })),
+];
+const monthLabel = formatDate(first, { month: 'long', year: 'numeric' });
+---
+
+<AdminLayout title="Calendar" subtitle="Bookings and blocked dates by day.">
+  <Fragment slot="actions">
+    <a class="btn btn-tertiary" href={`/admin/calendar?month=${prevMonth.slice(0, 7)}`} aria-label="Previous month">Previous</a>
+    <a class="btn btn-tertiary" href="/admin/calendar">This month</a>
+    <a class="btn btn-tertiary" href={`/admin/calendar?month=${nextMonth.slice(0, 7)}`} aria-label="Next month">Next</a>
+  </Fragment>
+
+  <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+    <h2 class="a-card-title !text-lg">{monthLabel}</h2>
+    <ul class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-ink">
+      {options.map((o) => <li class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm" style={`background:${colour.get(o.id)}`}></span>{o.name}</li>)}
+      <li class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm border-2 border-dashed border-ink-muted"></span>Not yet confirmed</li>
+      <li class="flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm border border-line-strong bg-white"></span>Blocked</li>
+    </ul>
+  </div>
+
+  <div class="a-card overflow-hidden">
+    <div class="a-cal">
+      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => <div class="a-cal-head">{d}</div>)}
+      {
+        days.map((day) => (
+          <div class:list={['a-cal-day', day.slice(0, 7) !== month && 'is-out', day === today && 'is-today']}>
+            <span class="a-cal-date">{Number(day.slice(8))}</span>
+            {entriesFor(day).map((e) =>
+              e.kind === 'booking' ? (
+                <a
+                  href={`/admin/bookings/${e.b.id}`}
+                  class:list={['a-cal-entry', e.b.status === 'requested' && 'is-requested']}
+                  style={`background:${colour.get(e.b.option.id)};--entry-color:${colour.get(e.b.option.id)}`}
+                  title={`${e.b.guestName} · ${e.b.option.name} · ${e.b.status}`}
+                >
+                  {e.b.guestName}
+                </a>
+              ) : (
+                <span class="a-cal-entry is-block" title={`Blocked: ${e.k.option?.name ?? 'whole property'}${e.k.reason ? ` · ${e.k.reason}` : ''}`}>
+                  {e.k.reason || 'Blocked'}
+                </span>
+              )
+            )}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <div class="mt-5 grid gap-5 xl:grid-cols-2">
+    {
+      can(user, 'edit') && (
+        <form method="post" class="a-card a-card-pad">
+          <h2 class="a-card-title">Block dates</h2>
+          <p class="a-muted">Take dates off sale for maintenance, a sponsored children&rsquo;s holiday or private use.</p>
+          <div class="a-form-grid mt-4">
+            <div class="a-span-2">
+              <label class="label" for="optionId">What to block</label>
+              <select class="input" id="optionId" name="optionId">
+                <option value="">The whole property (everything)</option>
+                {options.map((o) => <option value={o.id}>{o.name} only</option>)}
+              </select>
+            </div>
+            <div>
+              <label class="label" for="startDate">First day</label>
+              <input class="input" id="startDate" name="startDate" type="date" required aria-invalid={blockErrors.startDate ? 'true' : undefined} />
+              {blockErrors.startDate && <p class="field-error">{blockErrors.startDate}</p>}
+            </div>
+            <div>
+              <label class="label" for="endDate">Last day</label>
+              <input class="input" id="endDate" name="endDate" type="date" aria-invalid={blockErrors.endDate ? 'true' : undefined} />
+              {blockErrors.endDate ? <p class="field-error">{blockErrors.endDate}</p> : <p class="help">Leave empty to block one day.</p>}
+            </div>
+            <div class="a-span-2">
+              <label class="label" for="reason">Reason (shown to staff only)</label>
+              <input class="input" id="reason" name="reason" maxlength="200" placeholder="Sponsored holiday" />
+            </div>
+          </div>
+          <button class="btn btn-primary mt-4" type="submit">Block these dates</button>
+        </form>
+      )
+    }
+
+    <section class="a-card">
+      <div class="a-card-head"><h2 class="a-card-title">Blocked dates ahead</h2></div>
+      {
+        upcomingBlocks.length ? (
+          <table class="a-table">
+            <tbody>
+              {upcomingBlocks.map((k) => (
+                <tr>
+                  <td class="nowrap">{formatDate(k.startDate, { day: 'numeric', month: 'short', year: 'numeric' })}{k.endDate !== k.startDate && ` to ${formatDate(k.endDate, { day: 'numeric', month: 'short', year: 'numeric' })}`}</td>
+                  <td>{k.option?.name ?? 'Whole property'}<div class="a-muted">{k.reason}</div></td>
+                  <td class="num">
+                    {can(user, 'edit') && (
+                      <form method="post">
+                        <input type="hidden" name="_action" value="unblock" />
+                        <input type="hidden" name="id" value={k.id} />
+                        <button class="btn btn-tertiary btn-sm" type="submit">Unblock</button>
+                      </form>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div class="a-empty"><p class="a-empty-title">Nothing is blocked</p><p class="a-muted">Every date without a booking can be booked on the website.</p></div>
+        )
+      }
+    </section>
+  </div>
+</AdminLayout>

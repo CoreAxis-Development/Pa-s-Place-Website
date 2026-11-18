@@ -1,0 +1,39 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { COLLECTIONS } from '../../../server/services/collections';
+import { DOCUMENTS } from '../../../server/services/documents';
+
+const collections = await Promise.all(
+  Object.values(COLLECTIONS).map(async (c) => ({ ...c, count: (await c.list()).length }))
+);
+---
+
+<AdminLayout title="Content" subtitle="Everything visitors read on the website. Changes go live as soon as you save.">
+  <h2 class="a-card-title mb-3">Pages</h2>
+  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    {
+      Object.values(DOCUMENTS).map((d) => (
+        <a class="a-kpi" href={`/admin/content/page/${d.key}`}>
+          <p class="a-card-title">{d.title}</p>
+          <p class="a-kpi-note">{d.description}</p>
+        </a>
+      ))
+    }
+  </div>
+
+  <h2 class="a-card-title mb-3 mt-8">Lists</h2>
+  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    {
+      collections.map((c) => (
+        <a class="a-kpi" href={`/admin/content/${c.key}`}>
+          <p class="a-card-title">{c.title} <span class="a-muted font-normal">({c.count})</span></p>
+          <p class="a-kpi-note">{c.description}</p>
+        </a>
+      ))
+    }
+    <a class="a-kpi" href="/admin/media">
+      <p class="a-card-title">Photo library</p>
+      <p class="a-kpi-note">Upload photos and set their descriptions before using them on a page.</p>
+    </a>
+  </div>
+</AdminLayout>

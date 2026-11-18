@@ -1,0 +1,35 @@
+---
+// Questions and answers as native disclosure widgets: no JavaScript, and the
+// answers stay searchable in the page.
+import SectionHeader from '../ui/SectionHeader.astro';
+import type { PublicFaq } from '../../server/services/content';
+
+interface Props {
+  faqs: PublicFaq[];
+  title?: string;
+}
+const { faqs, title = 'Good to know' } = Astro.props;
+---
+
+{
+  faqs.length > 0 && (
+    <section class="section bg-sunken" aria-label="Frequently asked questions">
+      <div class="container-page grid gap-x-16 lg:grid-cols-[1fr_1.6fr]">
+        <SectionHeader eyebrow="Questions" title={title} />
+        <div class="divide-y divide-line-strong border-y border-line-strong">
+          {faqs.map((f) => (
+            <details class="group">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-4 font-semibold text-ink [&::-webkit-details-marker]:hidden">
+                {f.question}
+                <svg class="h-5 w-5 flex-none text-canopy-600 transition-transform group-open:rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </summary>
+              <p class="max-w-[62ch] whitespace-pre-line pb-5">{f.answer}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}

@@ -1,0 +1,61 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getSite } from '../server/services/content';
+
+const { settings } = await getSite();
+const { contact, organisation } = settings;
+---
+
+<Layout title="Privacy notice" description="How Pa's Place collects, uses and protects personal information under POPIA.">
+  <section class="bg-page" aria-label="Privacy notice">
+    <div class="container-page pb-20 pt-10 lg:pt-14">
+      <p class="eyebrow">Privacy</p>
+      <h1 class="t-h1 mt-2">Privacy notice</h1>
+      <div class="prose-brand mt-8">
+        <p>
+          {organisation.legalName} (&ldquo;we&rdquo;) respects your privacy. This notice explains what personal information we collect through
+          this website and what we do with it, in line with the Protection of Personal Information Act 4 of 2013 (POPIA).
+        </p>
+
+        <h2 class="t-h3 !mt-10">What we collect</h2>
+        <ul class="ray-list space-y-2">
+          <li>When you send a booking request: your name, email address, phone number, dates, party size and any notes you add.</li>
+          <li>When you send a message: your name, email address, phone number (if given) and your message.</li>
+          <li>We do not collect card or banking details on this website, and we do not use advertising or tracking cookies.</li>
+        </ul>
+
+        <h2 class="t-h3 !mt-10">Why we collect it</h2>
+        <p>
+          To answer your question, to manage your booking, and to keep the accounting records the law requires of us. We do not sell your
+          information or share it with anyone for marketing.
+        </p>
+
+        <h2 class="t-h3 !mt-10">How long we keep it</h2>
+        <p>
+          Enquiries are kept for as long as we need them to help you. Booking records are kept for as long as financial record-keeping
+          rules require, and then deleted.
+        </p>
+
+        <h2 class="t-h3 !mt-10">Photographs</h2>
+        <p>
+          We only publish photographs in which a child can be recognised when a parent or guardian has agreed in writing. If you appear in
+          a photograph on this site and would like it removed, tell us and we will take it down.
+        </p>
+
+        <h2 class="t-h3 !mt-10">Your rights</h2>
+        <p>
+          You may ask to see the information we hold about you, ask us to correct or delete it, or object to how we use it. You may also
+          complain to the Information Regulator (South Africa) at inforegulator.org.za.
+        </p>
+
+        <h2 class="t-h3 !mt-10">Contact</h2>
+        <p>
+          {contact.email && <>Email <a class="link" href={`mailto:${contact.email}`}>{contact.email}</a></>}
+          {contact.email && contact.phone && ' or '}
+          {contact.phone && <>call <a class="link tnum" href={`tel:${contact.phoneLink || contact.phone}`}>{contact.phone}</a></>}.
+          {contact.address && <span> Our address is {contact.address}.</span>}
+        </p>
+      </div>
+    </div>
+  </section>
+</Layout>

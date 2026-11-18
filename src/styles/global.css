@@ -1,395 +1,655 @@
 @import "tailwindcss";
 
+/* Pa's Place — "The Garden by the Sea".
+   The identity is specified in docs/superpowers/specs/2026-11-17-brand-identity.md.
+   Sun (logo marigold) is for the primary action and the Rays/Ring devices only;
+   Canopy (the trees) does every other job that needs colour. */
+
 @theme {
-  /* ---- Pa's Place: palette drawn from the sunburst-dove logo ---- */
-  --color-paper: #fbf3e3;        /* warm cream base — the book's pages */
+  /* Sun: logo rays. Fills and devices only, never text on a light surface. */
+  --color-sun-50: #fff8e8;
+  --color-sun-100: #ffefd1;
+  --color-sun-400: #ffae33;
+  --color-sun-500: #ff9900;
+  --color-sun-600: #e58600;
+  --color-sun-700: #9a5200; /* the only orange allowed as text on light */
+  --color-sun-800: #855000;
+
+  /* Canopy: the trees. Dark anchor and interactive green. */
+  --color-canopy-50: #f0f6ec;
+  --color-canopy-100: #e2eedd;
+  --color-canopy-600: #2c6239;
+  --color-canopy-700: #22482f;
+  --color-canopy-800: #1a3324;
+  --color-canopy-900: #12241a;
+
+  /* Surfaces */
+  --color-page: #fbf8f2;
+  --color-raised: #ffffff;
+  --color-sunken: #f3eee4;
+
+  /* Text */
+  --color-ink: #17231b;
+  --color-ink-body: #3a443c;
+  --color-ink-muted: #5f685f;
+  --color-on-dark: #f6f2e7;
+  --color-on-dark-muted: #b9c7b8;
+
+  /* Borders */
+  --color-line: #e4ddce;
+  --color-line-strong: #cfc6b2;
+  --color-line-field: #8a8472;
+
+  /* Accents from the property */
+  --color-terracotta-100: #fbe6dc;
+  --color-terracotta-500: #d2603a;
+  --color-terracotta-700: #a8431f;
+  --color-pool-100: #ddf3f4;
+  --color-pool-500: #3fbfc6;
+  --color-pool-700: #0e6f78;
+
+  /* Status (foreground on its tint; foreground also passes on white) */
+  --color-success: #1e6e3a;
+  --color-success-bg: #e1f2e3;
+  --color-warning: #855000;
+  --color-warning-bg: #ffefd1;
+  --color-danger: #b42318;
+  --color-danger-bg: #fce8e4;
+  --color-info: #0e6f78;
+  --color-info-bg: #ddf3f4;
+  --color-neutral: #4f574f;
+  --color-neutral-bg: #ece8df;
+
+  /* Play: the waterslides. Admin calendar fills only, with ink text. */
+  --color-play-pink: #e79cc4;
+  --color-play-blue: #78b4e4;
+  --color-play-green: #5fb083;
+  --color-play-yellow: #e3c56b;
+
+  --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
+  --font-body: "Figtree Variable", "Segoe UI", system-ui, sans-serif;
+  --font-hand: "Caveat Variable", "Segoe Script", cursive; /* /our-story only */
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --shadow-xs: 0 1px 2px rgb(18 36 26 / 0.06);
+  --shadow-sm: 0 1px 2px rgb(18 36 26 / 0.06), 0 2px 6px rgb(18 36 26 / 0.06);
+  --shadow-md: 0 2px 4px rgb(18 36 26 / 0.06), 0 10px 24px -6px rgb(18 36 26 / 0.12);
+  --shadow-lg: 0 4px 8px rgb(18 36 26 / 0.06), 0 24px 48px -12px rgb(18 36 26 / 0.18);
+
+  --ease-brand: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ---- Storybook palette: used by /our-story only. Do not use on guest
+     pages or in the admin portal. ---- */
+  --color-paper: #fbf3e3;
   --color-cream-100: #f6ead1;
   --color-cream-200: #eedcb6;
   --color-cream-300: #e2cb9a;
-
-  --color-bark-700: #5c4a36;     /* driftwood brown */
+  --color-bark-700: #5c4a36;
   --color-bark-900: #423424;
   --color-bark-950: #33291c;
-  --color-cocoa: #4a3c2d;        /* body text */
-
-  --color-marigold-300: #fbc968; /* the logo's sun rays */
+  --color-cocoa: #4a3c2d;
+  --color-marigold-300: #fbc968;
   --color-marigold-400: #f7ae3c;
   --color-marigold-500: #f0931f;
   --color-marigold-600: #d1770e;
-
-  --color-dove-200: #d8edf5;     /* the dove's soft blue edge */
+  --color-dove-200: #d8edf5;
   --color-dove-300: #b4dceb;
-
   --color-sea-500: #4f93a3;
   --color-sea-600: #3e7e8e;
   --color-sea-800: #29586a;
-
-  /* ---- the dream pages: a warm storybook night ---- */
-  /* daylight hills for the journey pages */
   --color-grass-300: #a9bd8e;
   --color-grass-500: #7d9a6a;
   --color-grass-700: #55703f;
-
-  --color-night-300: #8d97c9;    /* dusk haze */
+  --color-night-300: #8d97c9;
   --color-night-500: #4d5890;
-  --color-night-700: #333d6e;    /* far hills by moonlight */
+  --color-night-700: #333d6e;
   --color-night-800: #262e56;
   --color-night-900: #1b2140;
-  --color-night-950: #11152b;    /* deep sky */
-  --color-moon: #f7ecd2;         /* warm moonlight text on night pages */
-  --color-ember: #e2673f;        /* sunset accent, used sparingly */
-
-  --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
-  --font-body: "Nunito Sans Variable", "Segoe UI", system-ui, sans-serif;
-  --font-hand: "Caveat Variable", "Segoe Script", cursive;
+  --color-night-950: #11152b;
+  --color-moon: #f7ecd2;
+  --color-ember: #e2673f;
 }
-
-/* ---------- base ---------- */
-/* Element styles live in the `base` layer and class components in
-   `components`, so Tailwind utilities (the `utilities` layer) always win —
-   e.g. `hidden` must beat `.btn { display: inline-flex }`. */
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 84px;
+  }
 
-html {
-  scroll-behavior: smooth;
-}
+  body {
+    background-color: var(--color-page);
+    color: var(--color-ink-body);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+  @media (min-width: 768px) {
+    body {
+      font-size: 1.0625rem;
+    }
+  }
 
-body {
-  background-color: var(--color-paper);
-  color: var(--color-cocoa);
-  font-family: var(--font-body);
-  font-size: 1.0625rem;
-  line-height: 1.68;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: clip;
-}
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-variation-settings: "SOFT" 50, "WONK" 0;
+    font-optical-sizing: auto;
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+  h4 {
+    color: var(--color-ink);
+    font-weight: 700;
+  }
+  p {
+    text-wrap: pretty;
+  }
 
-h1, h2, h3, h4 {
-  font-family: var(--font-display);
-  font-variation-settings: "SOFT" 100, "WONK" 1;
-  line-height: 1.08;
-  text-wrap: balance;
-}
+  ::selection {
+    background: var(--color-canopy-100);
+    color: var(--color-ink);
+  }
 
-::selection {
-  background: var(--color-marigold-300);
-  color: var(--color-bark-950);
+  :focus-visible {
+    outline: 2px solid var(--color-canopy-600);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .on-dark :focus-visible,
+  .on-dark:focus-visible {
+    outline-color: var(--color-sun-500);
+  }
 }
-
-:focus-visible {
-  outline: 3px solid var(--color-marigold-500);
-  outline-offset: 3px;
-  border-radius: 4px;
-}
-
-/* a storybook scrollbar: paper gutter, driftwood thumb */
-html {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-bark-700) var(--color-cream-100);
-}
-::-webkit-scrollbar { width: 12px; }
-::-webkit-scrollbar-track { background: var(--color-cream-100); }
-::-webkit-scrollbar-thumb {
-  background: var(--color-bark-700);
-  border-radius: 8px;
-  border: 3px solid var(--color-cream-100);
-}
-
-} /* end @layer base */
 
 @layer components {
+  /* ---------- layout ---------- */
 
-/* ---------- film grain (the whole book is shot on film) ---------- */
+  .container-page {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: 20px;
+  }
+  @media (min-width: 768px) {
+    .container-page {
+      padding-inline: 32px;
+    }
+  }
 
-.grain::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  pointer-events: none;
-  opacity: 0.06;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
+  .section {
+    padding-block: 64px;
+  }
+  @media (min-width: 768px) {
+    .section {
+      padding-block: 96px;
+    }
+  }
 
-/* ---------- handwriting (margin notes, captions) ---------- */
+  /* ---------- type ---------- */
 
-.hand {
-  font-family: var(--font-hand);
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
+  .t-display {
+    font-family: var(--font-display);
+    font-variation-settings: "SOFT" 50, "WONK" 0;
+    font-weight: 500;
+    font-size: 2.5rem;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+  .t-h1 {
+    font-weight: 500;
+    font-size: 2.125rem;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .t-h2 {
+    font-weight: 600;
+    font-size: 1.75rem;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+  }
+  .t-h3 {
+    font-weight: 600;
+    font-size: 1.375rem;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  .t-h4 {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 1.125rem;
+    line-height: 1.35;
+    color: var(--color-ink);
+  }
+  .t-lead {
+    font-size: 1.125rem;
+    line-height: 1.55;
+  }
+  .t-small {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  .t-caption {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    font-weight: 500;
+    color: var(--color-ink-muted);
+  }
+  @media (min-width: 768px) {
+    .t-display {
+      font-size: 3.75rem;
+    }
+    .t-h1 {
+      font-size: 3rem;
+    }
+    .t-h2 {
+      font-size: 2.25rem;
+    }
+    .t-h3 {
+      font-size: 1.5rem;
+    }
+    .t-lead {
+      font-size: 1.25rem;
+    }
+  }
 
-.kicker {
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.28em;
-}
+  /* the only uppercase text on the site; at most one per section */
+  .eyebrow {
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-sun-700);
+  }
+  .on-dark .eyebrow {
+    color: var(--color-sun-500);
+  }
 
-/* chapter openers: an illuminated first letter */
-.drop-cap::first-letter {
-  float: left;
-  font-family: var(--font-display);
-  font-variation-settings: "SOFT" 100, "WONK" 1;
-  font-weight: 600;
-  font-size: 4.6em;
-  line-height: 0.78;
-  padding: 0.08em 0.12em 0 0;
-  color: var(--color-marigold-600);
-}
+  .price {
+    font-weight: 800;
+    font-size: 1.75rem;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
 
-/* ---------- paper-sticker buttons ---------- */
+  .link {
+    color: var(--color-canopy-600);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  .link:hover {
+    color: var(--color-canopy-700);
+    text-decoration-thickness: 2px;
+  }
+  .on-dark .link {
+    color: var(--color-on-dark);
+  }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: 999px;
-  padding: 0.85rem 1.8rem;
-  font-weight: 800;
-  font-size: 0.98rem;
-  letter-spacing: 0.01em;
-  border: 2px solid var(--color-bark-950);
-  box-shadow: 0.22rem 0.28rem 0 color-mix(in srgb, var(--color-bark-950) 88%, transparent);
-  transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
-}
-.btn:hover {
-  transform: translate(-1px, -2px);
-  box-shadow: 0.3rem 0.4rem 0 color-mix(in srgb, var(--color-bark-950) 88%, transparent);
-}
-.btn:active {
-  transform: translate(2px, 3px);
-  box-shadow: 0.05rem 0.05rem 0 color-mix(in srgb, var(--color-bark-950) 88%, transparent);
-}
+  .prose-brand {
+    max-width: 68ch;
+  }
+  .prose-brand > * + * {
+    margin-top: 1.1em;
+  }
 
-.btn-marigold { background: var(--color-marigold-400); color: var(--color-bark-950); }
-.btn-marigold:hover { background: var(--color-marigold-300); }
+  /* ---------- buttons ---------- */
 
-.btn-paper { background: var(--color-paper); color: var(--color-bark-950); }
-.btn-paper:hover { background: #fffdf6; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 48px;
+    padding: 0 22px;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    font: 700 1rem/1 var(--font-body);
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: none;
+    transition:
+      background-color 120ms,
+      border-color 120ms,
+      box-shadow 120ms,
+      color 120ms;
+  }
+  .btn-sm {
+    height: 40px;
+    padding: 0 16px;
+    font-size: 0.9375rem;
+  }
 
-.btn-bark { background: var(--color-bark-900); color: var(--color-paper); border-color: var(--color-bark-950); }
-.btn-bark:hover { background: var(--color-bark-950); }
+  .btn-primary {
+    background: var(--color-sun-500);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-xs);
+  }
+  .btn-primary:hover {
+    background: var(--color-sun-400);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary:active {
+    background: var(--color-sun-600);
+  }
 
-/* on night pages the shadow falls in moonlight */
-.btn-on-night {
-  border-color: var(--color-night-950);
-  box-shadow: 0.22rem 0.28rem 0 rgb(0 0 0 / 0.55);
-}
-.btn-on-night:hover { box-shadow: 0.3rem 0.4rem 0 rgb(0 0 0 / 0.55); }
-.btn-on-night:active { box-shadow: 0.05rem 0.05rem 0 rgb(0 0 0 / 0.55); }
+  .btn-secondary {
+    background: var(--color-canopy-600);
+    color: #ffffff;
+  }
+  .btn-secondary:hover {
+    background: var(--color-canopy-700);
+  }
+  .btn-secondary:active {
+    background: var(--color-canopy-800);
+  }
 
-/* ---------- form fields ---------- */
+  .btn-tertiary {
+    background: transparent;
+    color: var(--color-canopy-600);
+    border-color: var(--color-line-strong);
+  }
+  .btn-tertiary:hover {
+    background: var(--color-canopy-50);
+    border-color: var(--color-canopy-600);
+  }
+  .btn-tertiary:active {
+    background: var(--color-canopy-100);
+  }
 
-.frm {
-  display: block;
-  width: 100%;
-  border-radius: 0.8rem;
-  border: 2px solid color-mix(in srgb, var(--color-bark-900) 14%, transparent);
-  background: var(--color-paper);
-  padding: 0.6rem 0.9rem;
-  color: var(--color-cocoa);
-  font-size: 1rem;
-}
-.frm:focus {
-  outline: none;
-  border-color: var(--color-marigold-500);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-marigold-400) 30%, transparent);
-}
+  .btn-on-dark {
+    background: transparent;
+    color: var(--color-on-dark);
+    border-color: rgb(246 242 231 / 0.4);
+  }
+  .btn-on-dark:hover {
+    background: rgb(246 242 231 / 0.1);
+  }
 
-/* ---------- squiggle underline accent ---------- */
+  .btn-danger {
+    background: var(--color-danger);
+    color: #ffffff;
+  }
+  .btn-danger:hover {
+    background: #912018;
+  }
 
-.squiggle {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='104' height='10' viewBox='0 0 104 10'%3E%3Cpath d='M1 7c8-5 16-5 24 0s16 5 24 0 16-5 24 0 16 5 24 0' fill='none' stroke='%23f0931f' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: 50% 100%;
-  background-size: 100% 0.32em;
-  padding-bottom: 0.28em;
-}
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    background: var(--color-neutral-bg);
+    color: var(--color-ink-muted);
+    border-color: transparent;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
 
-/* nav link underline that draws in on hover */
-.navlink { position: relative; }
-.navlink::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -3px;
-  height: 2.5px;
-  border-radius: 2px;
-  background: var(--color-marigold-500);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.22s ease;
-}
-.navlink:hover::after,
-.navlink[aria-current="page"]::after { transform: scaleX(1); }
+  /* ---------- form fields ---------- */
 
-/* ---------- keepsakes: film photos taped into the book ---------- */
+  .label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    margin-bottom: 6px;
+  }
+  .help {
+    font-size: 0.8125rem;
+    color: var(--color-ink-muted);
+    margin-top: 6px;
+  }
+  .field-error {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-danger);
+    margin-top: 6px;
+  }
 
-.keepsake {
-  position: relative;
-  background: #fffdf6;
-  padding: 0.7rem 0.7rem 1rem;
-  border-radius: 3px;
-  box-shadow:
-    0 1px 2px rgb(24 18 10 / 0.14),
-    0 18px 36px -18px rgb(24 18 10 / 0.45);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
-}
-.keepsake::before,
-.keepsake::after {
-  content: "";
-  position: absolute;
-  width: 84px;
-  height: 25px;
-  background: color-mix(in srgb, var(--color-cream-200) 72%, #ffffff);
-  opacity: 0.85;
-  box-shadow: 0 1px 2px rgb(24 18 10 / 0.18);
-  clip-path: polygon(3% 10%, 97% 0%, 100% 90%, 0% 100%);
-}
-.keepsake::before { top: -11px; left: -26px; transform: rotate(-38deg); }
-.keepsake::after  { top: -11px; right: -26px; transform: rotate(38deg); }
-.keepsake:hover {
-  transform: rotate(0deg) translateY(-6px) scale(1.02);
-  box-shadow:
-    0 2px 4px rgb(24 18 10 / 0.16),
-    0 30px 52px -22px rgb(24 18 10 / 0.55);
-  z-index: 5;
-}
-.keepsake img { border-radius: 2px; }
+  .input {
+    display: block;
+    width: 100%;
+    height: 48px;
+    padding: 0 14px;
+    border: 1px solid var(--color-line-field);
+    border-radius: var(--radius-md);
+    background: #ffffff;
+    color: var(--color-ink);
+    font: 400 1rem var(--font-body);
+    transition:
+      border-color 120ms,
+      box-shadow 120ms;
+  }
+  textarea.input {
+    height: auto;
+    min-height: 120px;
+    padding: 12px 14px;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  select.input {
+    appearance: none;
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%235F685F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+  .input::placeholder {
+    color: var(--color-ink-muted);
+  }
+  .input:hover {
+    border-color: var(--color-ink-muted);
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--color-canopy-600);
+    box-shadow: 0 0 0 3px rgb(44 98 57 / 0.2);
+  }
+  .input[aria-invalid="true"] {
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 3px rgb(180 35 24 / 0.15);
+  }
 
-/* a strip of masking tape for pinning notes and cards to the page */
-.tape {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  width: 96px;
-  height: 25px;
-  transform: translateX(-50%) rotate(-2.5deg);
-  background: color-mix(in srgb, var(--color-cream-200) 74%, #ffffff);
-  opacity: 0.85;
-  box-shadow: 0 1px 2px rgb(24 18 10 / 0.16);
-  clip-path: polygon(2% 8%, 98% 0%, 100% 92%, 0% 100%);
-}
+  /* ---------- cards ---------- */
 
-/* scattered, like they were taped in by hand */
-.keepsake-tilt:nth-child(3n + 1) { transform: rotate(-1.8deg); }
-.keepsake-tilt:nth-child(3n + 2) { transform: rotate(1.4deg); }
-.keepsake-tilt:nth-child(3n)     { transform: rotate(-0.6deg); }
+  .card {
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+  .card-pad {
+    padding: 20px;
+  }
+  @media (min-width: 768px) {
+    .card-pad {
+      padding: 24px;
+    }
+  }
+  a.card,
+  .card-link {
+    display: block;
+    transition:
+      box-shadow 120ms,
+      border-color 120ms;
+  }
+  a.card:hover,
+  .card-link:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-line-strong);
+  }
 
-/* ---------- ambient life (cheap: transform/opacity only) ---------- */
+  /* photos sit in plain rounded rectangles: no frames, no tilt */
+  .photo {
+    display: block;
+    width: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+  }
 
-@keyframes twinkle {
-  0%, 100% { opacity: 0.25; transform: scale(0.82); }
-  50%      { opacity: 1;    transform: scale(1); }
-}
-.twinkle {
-  animation: twinkle 3.4s ease-in-out infinite;
-  animation-delay: var(--tw-delay, 0s);
-  transform-origin: center;
-  transform-box: fill-box;
-}
+  /* ---------- chips, tags ---------- */
 
-@keyframes firefly {
-  0%, 100% { transform: translate(0, 0); opacity: 0.15; }
-  30%      { opacity: 0.95; }
-  50%      { transform: translate(9px, -14px); opacity: 0.5; }
-  70%      { opacity: 0.9; }
-}
-.firefly {
-  animation: firefly 7s ease-in-out infinite;
-  animation-delay: var(--tw-delay, 0s);
-  transform-box: fill-box;
-}
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    background: #ffffff;
+    border: 1px solid var(--color-line);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  .chip svg {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    color: var(--color-canopy-600);
+  }
 
-@keyframes bob {
-  0%, 100% { transform: translateY(0) rotate(-2.5deg); }
-  50%      { transform: translateY(-7px) rotate(2.5deg); }
-}
-.bob { animation: bob 4.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--color-canopy-100);
+    color: var(--color-canopy-700);
+  }
+  .tag-terracotta {
+    background: var(--color-terracotta-100);
+    color: var(--color-terracotta-700);
+  }
+  .tag-pool {
+    background: var(--color-pool-100);
+    color: var(--color-pool-700);
+  }
+  .tag-price {
+    background: var(--color-sun-100);
+    color: var(--color-ink);
+    font-size: 0.875rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
 
-@keyframes rays-slow { to { transform: rotate(360deg); } }
-.rays-slow {
-  animation: rays-slow 140s linear infinite;
-  transform-box: fill-box;
-  transform-origin: center;
-}
+  /* ---------- the Ring (logo device) ---------- */
 
-@keyframes waft {
-  0%, 100% { transform: translateX(0); }
-  50%      { transform: translateX(2.5%); }
-}
-.waft { animation: waft 9s ease-in-out infinite; }
-.waft-late { animation: waft 11s ease-in-out infinite reverse; }
+  .ring {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: 999px;
+    border: 2px solid var(--color-sun-500);
+    background: #ffffff;
+    color: var(--color-ink);
+    font-weight: 700;
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .ring-done {
+    background: var(--color-sun-500);
+  }
 
-/* ---------- entrances ---------- */
+  /* ray bullet list */
+  .ray-list > li {
+    position: relative;
+    padding-left: 26px;
+  }
+  .ray-list > li::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 0.72em;
+    width: 12px;
+    height: 2.5px;
+    border-radius: 2px;
+    background: var(--color-canopy-600);
+    transform: rotate(-32deg);
+  }
+  .on-dark .ray-list > li::before {
+    background: var(--color-sun-500);
+  }
 
-@keyframes rise-in {
-  from { opacity: 0; transform: translateY(26px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+  /* ---------- alerts ---------- */
 
-.fade-up {
-  animation: rise-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--d, 0s);
-}
+  .alert {
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    font-size: 0.9375rem;
+    border: 1px solid;
+  }
+  .alert-success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border-color: rgb(30 110 58 / 0.3);
+  }
+  .alert-danger {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    border-color: rgb(180 35 24 / 0.3);
+  }
+  .alert-warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    border-color: rgb(133 80 0 / 0.3);
+  }
+  .alert-info {
+    background: var(--color-info-bg);
+    color: var(--color-info);
+    border-color: rgb(14 111 120 / 0.3);
+  }
 
-/* scroll-driven reveals for chapter pages — pure CSS, static where unsupported */
-@media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .reveal {
-      animation: rise-in 1s cubic-bezier(0.16, 1, 0.3, 1) both;
-      animation-timeline: view();
-      animation-range: entry 5% entry 45%;
+  /* ---------- motion: one quiet reveal per section ---------- */
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .reveal {
+        animation: rise-in 280ms var(--ease-brand) both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 30%;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
   }
 }
-
-/* ---------- tide marquee (chapter pages) ---------- */
-
-.marquee {
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-}
-.marquee-track {
-  display: flex;
-  width: max-content;
-  gap: 3.5rem;
-  padding-right: 3.5rem;
-  animation: drift 38s linear infinite;
-}
-.marquee:hover .marquee-track { animation-play-state: paused; }
-@keyframes drift { to { transform: translateX(-50%); } }
-
-/* ---------- the storybook page-turn between routes ---------- */
-
-@media (prefers-reduced-motion: no-preference) {
-  ::view-transition-old(root) {
-    animation: 0.32s cubic-bezier(0.4, 0, 1, 1) both page-out;
-  }
-  ::view-transition-new(root) {
-    animation: 0.5s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both page-in;
-  }
-  @keyframes page-out {
-    to { opacity: 0; transform: translateX(-2.5%) rotate(-0.4deg); }
-  }
-  @keyframes page-in {
-    from { opacity: 0; transform: translateX(3%) rotate(0.3deg); }
-  }
-}
-
-/* ---------- reduced motion: the book holds still ---------- */
-
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .fade-up, .twinkle, .firefly, .bob, .rays-slow, .waft, .waft-late {
-    animation: none;
-  }
-  .marquee-track { animation: none; flex-wrap: wrap; width: auto; }
-}
-
-} /* end @layer components */

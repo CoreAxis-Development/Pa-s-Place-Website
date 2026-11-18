@@ -1,162 +1,92 @@
 ---
-import type { ImageMetadata } from 'astro';
-import { Image, getImage } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
-import Sunburst from '../components/story/Sunburst.astro';
-import TornEdge from '../components/story/TornEdge.astro';
 import BookingEngine from '../components/booking/BookingEngine.tsx';
-import { getGallery, getSettings, getStayOptions } from '../lib/cms';
-import coastline from '../assets/images/coastline.webp';
+import { engineProps } from '../components/booking/engine-props';
+import Faqs from '../components/sections/Faqs.astro';
+import MissionBand from '../components/sections/MissionBand.astro';
+import Icon from '../components/ui/Icon.astro';
+import Picture from '../components/ui/Picture.astro';
+import SectionHeader from '../components/ui/SectionHeader.astro';
+import { getSite } from '../server/services/content';
 
-const settings = await getSettings();
-const gallery = await getGallery();
-
-const allImages = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/images/**/*.{webp,jpg,jpeg,png}',
-  { eager: true }
-);
-const house = gallery.find((g) => g.slug === 'the-house');
-const houseImage = house?.image ? allImages[house.image]?.default : undefined;
-
-// CMS-managed bookable options, photos resolved to optimized URLs for the island
-const rawOptions = await getStayOptions();
-const options = await Promise.all(
-  rawOptions.map(async (o) => {
-    const meta = o.image ? allImages[o.image]?.default : undefined;
-    const img = meta ? await getImage({ src: meta, width: 800, format: 'webp' }) : null;
-    return {
-      id: o.slug,
-      name: o.name,
-      blurb: o.blurb ?? '',
-      sleeps: o.sleeps ?? '',
-      minPeople: o.minPeople ?? 2,
-      maxPeople: o.maxPeople ?? 12,
-      rate: o.rate ?? 200,
-      rateLabel: `R${o.rate ?? 200} pp / ${o.kind === 'venue' ? 'day' : 'night'}`,
-      kind: (o.kind ?? 'stay') as 'stay' | 'venue',
-      image: img ? { src: img.src, alt: o.name } : null,
-    };
-  })
-);
-
-const facts = [
-  { label: 'The place', value: 'A comfortable, peaceful beachside home in Kelso, Pennington — two minutes’ walk from the water.' },
-  { label: 'Who it suits', value: 'Families and groups — school holidays, church groups, quiet weekends away.' },
-  { label: 'The rate', value: settings.pricing.accommodation },
-  { label: 'Day events', value: `Rather hosting than sleeping over? ${settings.pricing.venue}` },
-];
+const site = await getSite();
+const { settings, stayPage, homepage } = site;
+const tel = settings.contact.phoneLink || settings.contact.phone;
 
 const steps = [
-  { title: 'Pick your dates', text: 'The calendar shows live availability — choose a clear stretch and your party size.' },
-  { title: 'Pay the 50% deposit', text: 'Card or instant EFT, secured — your dates are locked in the moment it clears.' },
-  { title: 'Get your confirmation', text: 'A booking reference and directions land in your inbox. Balance is payable on arrival.' },
+  { title: 'Send your request', text: 'Choose your dates and party size. Your dates are held as soon as you send it.' },
+  { title: 'We confirm', text: 'We check the request and confirm with you by phone or email.' },
+  { title: 'Pay the deposit', text: `Pay the ${settings.booking.stayDepositPercent}% deposit by EFT. The balance is paid on arrival.` },
 ];
 ---
 
-<Layout title="Book a Stay" description="Book affordable beachside accommodation in Pennington, KZN — R200 per person per night, and every booking funds a child's holiday.">
-  <!-- ============ HEADER ============ -->
-  <section class="relative overflow-hidden bg-cream-100">
-    <Sunburst class="absolute -right-16 -top-20 h-56 w-56 opacity-70 sm:-right-10 sm:h-72 sm:w-72" spin />
-    <div class="relative mx-auto max-w-6xl px-5 pb-12 pt-28 sm:pb-14 sm:pt-36">
-      <p class="hand fade-up text-2xl text-marigold-600" style="--d: 0.05s">book a stay</p>
-      <h1 class="fade-up mt-3 max-w-3xl font-display text-[2.6rem] font-semibold leading-[1.06] text-bark-900 sm:text-6xl" style="--d: 0.18s">
-        Pick your dates. We&rsquo;ll have the sea ready.
-      </h1>
-      <p class="hand fade-up mt-5 max-w-xl text-2xl text-bark-700/80" style="--d: 0.32s">
-        {settings.pricing.accommodation} &mdash; and every night funds a child&rsquo;s seaside retreat
-      </p>
-    </div>
-    <TornEdge fill="var(--color-paper)" seed={83} class="relative" />
-  </section>
-
-  <!-- ============ THE BOOKING ENGINE ============ -->
-  <section class="bg-paper py-12 sm:py-16">
-    <div class="mx-auto max-w-6xl px-5">
-      <div class="fade-up" style="--d: 0.15s">
-        <BookingEngine client:load options={options} phone={settings.contact.phone} />
-      </div>
-      <p class="hand mt-6 text-center text-xl text-bark-700/75">
-        rather book by voice? {settings.contact.phone && <a class="text-sea-800 underline decoration-marigold-400 decoration-2 underline-offset-4 hover:text-bark-900" href={`tel:${settings.contact.phoneLink || settings.contact.phone}`}>call {settings.contact.person ?? 'us'} on {settings.contact.phone}</a>}
-      </p>
+<Layout
+  title="Book a stay"
+  description={`Book affordable family accommodation in Pennington, KZN. ${settings.pricing.accommodation}. Pool, waterslides and mini-golf included.`}
+  image={stayPage.image?.src}
+>
+  <section class="bg-page" aria-label="Book a stay">
+    <div class="container-page pb-8 pt-10 lg:pt-14">
+      <p class="eyebrow">Accommodation</p>
+      <h1 class="t-h1 mt-2">{stayPage.title}</h1>
+      <p class="t-lead mt-4 max-w-[60ch]">{stayPage.intro}</p>
+      <ul class="mt-5 flex flex-wrap gap-2">
+        {settings.pricing.accommodation && <li class="chip tnum"><Icon name="wallet" />{settings.pricing.accommodation}</li>}
+        <li class="chip tnum"><Icon name="clock" />Check-in from {settings.booking.checkIn}, check-out by {settings.booking.checkOut}</li>
+      </ul>
     </div>
   </section>
 
-  <!-- ============ THE PLACE, BRIEFLY ============ -->
-  <section class="bg-paper pb-16">
-    <div class="mx-auto grid max-w-6xl items-center gap-12 px-5 lg:grid-cols-2">
+  <section class="bg-page pb-16" id="book" aria-label="Booking form">
+    <div class="container-page">
+      <BookingEngine client:load {...engineProps(site)} kinds={['stay']} />
       {
-        houseImage && (
-          <figure class="keepsake reveal mx-auto max-w-md !rotate-1">
-            <Image
-              src={houseImage}
-              alt={house?.alt ?? "The Pa's Place house"}
-              widths={[480, 800]}
-              sizes="(min-width: 1024px) 40vw, 92vw"
-              class="aspect-[4/3] w-full object-cover"
-            />
-            <figcaption class="hand pt-3 text-center text-[1.4rem] text-cocoa/85">{house?.caption}</figcaption>
-          </figure>
+        settings.contact.phone && (
+          <p class="mt-5 text-center text-[0.9375rem]">
+            Rather book by phone? Call {settings.contact.person || 'us'} on{' '}
+            <a class="link tnum" href={`tel:${tel}`}>{settings.contact.phone}</a>
+            {site.whatsappUrl && <>, or <a class="link" href={site.whatsappUrl} rel="noopener">send a WhatsApp</a></>}.
+          </p>
         )
       }
-      <div>
-        <dl class="space-y-5">
-          {
-            facts.map((f) => (
-              <div class="reveal flex gap-5 border-b border-dashed border-cream-300 pb-4">
-                <dt class="hand w-32 shrink-0 text-xl leading-tight text-marigold-600">{f.label}</dt>
-                <dd class="text-cocoa/85">{f.value}</dd>
-              </div>
-            ))
-          }
-        </dl>
-        {
-          settings.contact.mapUrl && (
-            <a class="hand mt-4 inline-block text-xl text-sea-800 underline decoration-marigold-400 decoration-2 underline-offset-4 hover:text-bark-900" href={settings.contact.mapUrl} target="_blank" rel="noopener">
-              open the map &rarr;
-            </a>
-          )
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ HOW BOOKING & PAYMENT WORK ============ -->
-  <section class="relative">
-    <TornEdge fill="var(--color-cream-100)" seed={89} class="bg-paper" />
-    <div class="bg-cream-100 py-16 sm:py-20">
-      <div class="mx-auto max-w-6xl px-5">
-        <h2 class="reveal text-center font-display text-3xl font-semibold text-bark-900 sm:text-4xl">Booking &amp; payment, in three small steps</h2>
-        <ol class="mx-auto mt-12 grid max-w-4xl gap-8 sm:grid-cols-3">
-          {
-            steps.map((s, i) => (
-              <li class={`reveal relative rounded-[1.4rem] border-2 border-bark-900/10 bg-[#fffdf6] p-7 pt-9 text-center shadow-[0_20px_40px_-26px_rgb(24_18_10/0.5)] ${i === 0 ? 'sm:-rotate-1' : i === 2 ? 'sm:rotate-1' : 'sm:translate-y-3'}`}>
-                <span class="tape" aria-hidden="true" />
-                <span class="hand text-3xl text-marigold-500">{i + 1}.</span>
-                <h3 class="mt-2 font-display text-xl font-semibold text-bark-900">{s.title}</h3>
-                <p class="mt-2 text-cocoa/80">{s.text}</p>
-              </li>
-            ))
-          }
-        </ol>
-        <p class="reveal hand mt-10 text-center text-2xl text-bark-700/75">
-          hosting a day event instead? <a href="/venue-hire" class="text-sea-800 underline decoration-marigold-400 decoration-2 underline-offset-4 hover:text-bark-900">hire the venue &rarr;</a>
+      <noscript>
+        <p class="alert alert-info mt-5">
+          The booking calendar needs JavaScript. You can still book by phone on {settings.contact.phone}, or <a class="link" href="/contact?about=stay">send us a message</a>.
         </p>
-      </div>
+      </noscript>
     </div>
-    <TornEdge fill="var(--color-paper)" flip seed={95} class="bg-cream-100" />
   </section>
 
-  <!-- ============ BEACH REMINDER ============ -->
-  <section class="bg-paper pb-20">
-    <figure class="keepsake mx-auto max-w-2xl !-rotate-1 px-0">
-      <Image
-        src={coastline}
-        alt="The Pennington coastline — a golden beach and an old bench facing the sea"
-        widths={[640, 1024]}
-        sizes="(min-width: 768px) 672px, 92vw"
-        class="aspect-[16/9] w-full object-cover"
-      />
-      <figcaption class="hand pt-3 text-center text-[1.4rem] text-cocoa/85">two minutes from your front door &rarr;</figcaption>
-    </figure>
+  <section class="section bg-sunken" aria-label="What is included">
+    <div class="container-page grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+      {stayPage.image && <Picture image={stayPage.image} sizes="(min-width: 1024px) 540px, 92vw" class="photo aspect-[3/2]" />}
+      <div>
+        <SectionHeader rays eyebrow="Included in every stay" title="The whole garden is yours" class="!mb-6" />
+        <ul class="ray-list space-y-2.5">
+          {stayPage.included.map((item) => <li>{item}</li>)}
+        </ul>
+        <p class="mt-6 text-[0.9375rem]">Hosting a party instead? <a class="link" href="/venue-hire">Hire the venue for the day</a>.</p>
+      </div>
+    </div>
   </section>
+
+  <section class="section" aria-label="How booking works">
+    <div class="container-page">
+      <SectionHeader eyebrow="How it works" title="Booking in three steps" />
+      <ol class="grid gap-6 md:grid-cols-3">
+        {
+          steps.map((s, i) => (
+            <li class="card card-pad">
+              <span class="ring">{i + 1}</span>
+              <h3 class="t-h4 mt-4">{s.title}</h3>
+              <p class="mt-1.5 text-[0.9375rem]">{s.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <Faqs faqs={site.faqs.filter((f) => f.topic === 'stays')} title="About staying with us" />
+  <MissionBand title={homepage.missionTitle} text={homepage.missionText} />
 </Layout>

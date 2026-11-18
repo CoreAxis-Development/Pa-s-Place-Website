@@ -1,0 +1,142 @@
+---
+import '@fontsource-variable/figtree';
+import '../styles/global.css';
+import '../styles/admin.css';
+import { Image } from 'astro:assets';
+import logo from '../assets/brand/pas-place-logo.png';
+import { can, ROLE_LABELS } from '../server/auth/session';
+import { currentUser, takeFlash } from '../server/http/request';
+import { bookingStats } from '../server/services/bookings';
+import { enquiryCounts } from '../server/services/enquiries';
+
+interface Props {
+  title: string;
+  subtitle?: string;
+}
+const { title, subtitle } = Astro.props;
+const user = currentUser(Astro);
+const flash = takeFlash(Astro);
+const [enquiries, bookings] = await Promise.all([enquiryCounts(), bookingStats()]);
+
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/admin';
+const active = (href: string) => (href === '/admin' ? path === '/admin' : path === href || path.startsWith(`${href}/`));
+
+const icons: Record<string, string> = {
+  home: '<path d="M4 11 12 4l8 7v8.500a1 1 0 0 1-1 1h-4.500v-6h-5v6H5a1 1 0 0 1-1-1Z"/>',
+  inbox: '<path d="M4 13.500 6.500 5h11L20 13.500V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"/><path d="M4 13.500h4.500a3.500 3.500 0 0 0 7 0H20"/>',
+  book: '<rect x="3.500" y="5" width="17" height="15.500" rx="2"/><path d="M3.500 10h17M8 3v4M16 3v4M8 14.500l2.500 2.500 5-5"/>',
+  calendar: '<rect x="3.500" y="5" width="17" height="15.500" rx="2"/><path d="M3.500 10h17M8 3v4M16 3v4"/>',
+  page: '<path d="M6 3.500h8l4 4V20a.500.500 0 0 1-.500.500h-11A.500.500 0 0 1 6 20Z"/><path d="M14 3.500v4h4M9 12h6M9 15.500h6"/>',
+  image: '<rect x="3.500" y="4.500" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.800"/><path d="m4 17 5-4.500 3.500 3 3-2.500 4.500 4"/>',
+  users: '<circle cx="9" cy="8" r="3.200"/><path d="M3 20a6 6 0 0 1 12 0M16 5.200a3.200 3.200 0 0 1 0 5.600M17.500 14.500A6 6 0 0 1 21 20"/>',
+  log: '<path d="M5 6h14M5 12h14M5 18h9"/>',
+};
+
+const nav = [
+  {
+    label: 'Work',
+    items: [
+      { label: 'Dashboard', href: '/admin', icon: 'home' },
+      { label: 'Enquiries', href: '/admin/enquiries', icon: 'inbox', count: enquiries.new },
+      { label: 'Bookings', href: '/admin/bookings', icon: 'book', count: bookings.requested },
+      { label: 'Calendar', href: '/admin/calendar', icon: 'calendar' },
+    ],
+  },
+  {
+    label: 'Website',
+    items: [
+      { label: 'Content', href: '/admin/content', icon: 'page' },
+      { label: 'Photos', href: '/admin/media', icon: 'image' },
+    ],
+  },
+  {
+    label: 'Admin',
+    items: [
+      ...(can(user, 'manage-users') ? [{ label: 'Staff', href: '/admin/users', icon: 'users' }] : []),
+      { label: 'Activity', href: '/admin/activity', icon: 'log' },
+    ],
+  },
+];
+---
+
+<!doctype html>
+<html lang="en-ZA">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | Pa&rsquo;s Place admin</title>
+  </head>
+  <body class="admin">
+    <input type="checkbox" id="a-nav-toggle" class="sr-only" aria-label="Open the menu" />
+    <div class="a-shell">
+      <aside class="a-sidebar on-dark">
+        <a href="/admin" class="a-brand">
+          <Image src={logo} alt="" widths={[64, 96]} sizes="32px" class="h-8 w-8 object-contain" />
+          Pa&rsquo;s Place
+        </a>
+        <nav aria-label="Admin">
+          {
+            nav.map((group) => (
+              <div>
+                <p class="a-nav-label">{group.label}</p>
+                {group.items.map((item) => (
+                  <a href={item.href} class="a-nav-item" aria-current={active(item.href) ? 'page' : undefined}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.750" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={icons[item.icon]} />
+                    {item.label}
+                    {'count' in item && item.count ? <span class="a-count" aria-label={`${item.count} new`}>{item.count}</span> : null}
+                  </a>
+                ))}
+              </div>
+            ))
+          }
+        </nav>
+        <div class="mt-auto pt-6">
+          <a href="/" target="_blank" rel="noopener" class="a-nav-item">View the website</a>
+        </div>
+      </aside>
+
+      <div class="min-w-0">
+        <header class="a-topbar">
+          <div class="flex min-w-0 items-center gap-3">
+            <label for="a-nav-toggle" class="a-menu-toggle">
+              <span class="sr-only">Menu</span>
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+            </label>
+            <slot name="breadcrumb" />
+          </div>
+          <div class="flex items-center gap-3">
+            <a href="/admin/account" class="text-right leading-tight hover:underline">
+              <span class="block font-semibold text-ink">{user.name}</span>
+              <span class="a-muted block text-xs">{ROLE_LABELS[user.role].label}</span>
+            </a>
+            <form method="post" action="/admin/logout">
+              <button class="btn btn-tertiary btn-sm" type="submit">Sign out</button>
+            </form>
+          </div>
+        </header>
+
+        <main class="a-main">
+          {
+            flash && (
+              <p class={`alert alert-${flash.tone} mb-5`} role="status">
+                {flash.text}
+              </p>
+            )
+          }
+          <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h1 class="a-title">{title}</h1>
+              {subtitle && <p class="a-subtitle">{subtitle}</p>}
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <slot name="actions" />
+            </div>
+          </div>
+          <slot />
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

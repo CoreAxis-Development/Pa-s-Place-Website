@@ -1,0 +1,28 @@
+---
+// A photo from the media library: responsive renditions via srcset, real
+// dimensions (no layout shift) and the photo's average colour while it loads.
+import type { Picture } from '../../server/services/media';
+
+interface Props {
+  image: Picture;
+  sizes: string;
+  class?: string;
+  alt?: string;
+  eager?: boolean;
+}
+const { image, sizes, class: className, alt, eager = false } = Astro.props;
+---
+
+<img
+  src={image.src}
+  srcset={image.srcset}
+  sizes={sizes}
+  width={image.width}
+  height={image.height}
+  alt={alt ?? image.alt}
+  loading={eager ? 'eager' : 'lazy'}
+  fetchpriority={eager ? 'high' : undefined}
+  decoding="async"
+  class={className}
+  style={`background-color:${image.color}`}
+/>
