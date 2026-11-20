@@ -1,139 +1,162 @@
-/* Guest-facing palette. The staff portal keeps the shared operational theme. */
+/* Guest pages use coastal neutrals and a single strong action colour. */
 .public-site {
-  --coast-deep: #123356;
-  --coast-blue: #195183;
-  --coast-paper: #fff9ed;
-  --coast-sand: #f5ebd6;
-  --coast-pool: #c6edf0;
-  --coast-coral: #ffb8a6;
+  --coast-deep: #193635;
+  --coast-blue: #245956;
+  --coast-paper: #faf9f5;
+  --coast-sand: #f1eee6;
+  --coast-pool: #e6f2ef;
 
   --color-page: var(--coast-paper);
-  --color-raised: #fffdf7;
+  --color-raised: #fffefa;
   --color-sunken: var(--coast-sand);
-  --color-ink: #132d47;
-  --color-ink-body: #344b60;
-  --color-ink-muted: #4a6073;
-  --color-line: #ddd1b9;
-  --color-line-strong: #aa9c81;
-  --color-line-field: #847967;
-  --color-sun-50: #fff2d6;
-  --color-sun-100: #ffe5aa;
-  --color-sun-400: #ffd17b;
-  --color-sun-500: #ffba52;
-  --color-sun-600: #f5a63c;
-  --color-sun-700: #844515;
-  --color-canopy-50: #e9f3f5;
-  --color-canopy-100: #d5e9ef;
+  --color-ink: #1c3230;
+  --color-ink-body: #3c504d;
+  --color-ink-muted: #52645f;
+  --color-line: #d9dfd5;
+  --color-line-strong: #a4aea4;
+  --color-line-field: #77857b;
+  --color-sun-50: #fbf3df;
+  --color-sun-100: #f9e9c1;
+  --color-sun-400: #fcce76;
+  --color-sun-500: #ecad45;
+  --color-sun-600: #e3a43c;
+  --color-sun-700: #774b1e;
+  --color-canopy-50: #edf3ed;
+  --color-canopy-100: #dceae0;
   --color-canopy-600: var(--coast-blue);
-  --color-canopy-700: #17436e;
-  --color-canopy-800: #173e63;
+  --color-canopy-700: #1d4643;
+  --color-canopy-800: #1a403d;
   --color-canopy-900: var(--coast-deep);
   --color-pool-100: var(--coast-pool);
-  --color-pool-500: #54aeb8;
-  --color-pool-700: #175965;
-  --color-on-dark: #fff9ed;
-  --color-on-dark-muted: #d7e6f2;
+  --color-pool-500: #78aaa2;
+  --color-pool-700: #275952;
+  --color-on-dark: #faf9f5;
+  --color-on-dark-muted: #d4e2da;
+
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
 }
 
 .public-site .eyebrow {
-  text-transform: none;
+  color: var(--color-canopy-600);
+  font-size: 0.875rem;
+  font-weight: 700;
   letter-spacing: 0.015em;
-  font-size: 0.9375rem;
-  font-weight: 800;
+  text-transform: none;
 }
 
-.public-site .btn {
-  border-radius: 100px;
+.public-site .on-dark .eyebrow {
+  color: var(--color-sun-400);
+}
+
+.public-site .btn-primary {
+  background: var(--coast-blue);
+  color: var(--color-raised);
+}
+
+.public-site .btn-primary:hover {
+  background: var(--color-canopy-700);
+}
+
+.public-site .btn-primary:active {
+  background: var(--coast-deep);
+}
+
+.public-site .on-dark .btn-primary {
+  background: var(--color-sun-500);
+  color: var(--coast-deep);
+}
+
+.public-site .on-dark .btn-primary:hover {
+  background: var(--color-sun-400);
+}
+
+.public-site .btn-primary:disabled,
+.public-site .btn-primary[aria-disabled="true"] {
+  background: var(--color-neutral-bg);
+  color: var(--color-ink-muted);
 }
 
 .public-site .t-h1,
-.public-site .t-h2 {
-  font-weight: 700;
-  font-variation-settings: "SOFT" 65, "WONK" 1;
+.public-site .t-h2,
+.public-site .coast-display {
+  font-weight: 560;
+  font-variation-settings: "SOFT" 30, "WONK" 0;
 }
 
 .coast-masthead {
-  background: var(--coast-deep);
-  color: var(--color-on-dark);
-}
-
-.coast-masthead h1 {
-  color: var(--color-on-dark);
-}
-
-.coast-masthead .t-lead {
-  color: var(--color-on-dark-muted);
-}
-
-.coast-masthead .chip {
-  border-color: rgb(255 249 237 / 0.35);
-  background: transparent;
-  color: var(--color-on-dark);
-}
-
-.coast-masthead .chip svg {
-  color: var(--color-sun-500);
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-page);
 }
 
 .coast-display {
-  font-size: clamp(2.625rem, 5.3vw, 5.5rem);
-  font-weight: 800;
-  font-variation-settings: "SOFT" 76, "WONK" 1;
-  letter-spacing: -0.033em;
-  word-spacing: 0.035em;
-  line-height: 0.98;
-  text-wrap: balance;
+  font-size: clamp(2.5rem, 4.15vw, 4.1rem);
+  letter-spacing: -0.042em;
+  line-height: 1.04;
 }
 
 .coast-print {
-  border: clamp(5px, 0.85vw, 12px) solid var(--coast-paper);
-  border-radius: 5px;
-  background: var(--coast-paper);
-}
-
-.coast-print img {
   display: block;
-  border-radius: 2px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
 }
 
 .coast-route {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2px;
-  background: var(--coast-deep);
+  border-block: 1px solid var(--color-line);
 }
 
 .coast-route a {
   display: grid;
-  min-height: 70px;
+  min-height: 82px;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.5rem;
-  padding: 1rem clamp(0.6rem, 2vw, 1.5rem);
+  gap: 0.6rem;
+  padding: 0.8rem 1.15rem;
   color: var(--coast-deep);
-  background: var(--route-colour);
-  font-weight: 800;
-  line-height: 1.2;
+  font-weight: 750;
+  line-height: 1.25;
 }
 
-.coast-route a:hover span {
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+.coast-route a + a {
+  border-inline-start: 1px solid var(--color-line);
+}
+
+.coast-route a:hover {
+  background: var(--color-canopy-50);
 }
 
 .coast-route a:focus-visible {
-  outline-color: var(--coast-deep);
-  outline-offset: -5px;
+  outline-offset: -4px;
+}
+
+.coast-route small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--color-ink-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
 }
 
 .coast-route a svg {
-  width: clamp(14px, 2.8vw, 22px);
+  width: 18px;
+  color: var(--coast-blue);
 }
 
-@media (max-width: 420px) {
+@media (max-width: 639px) {
   .coast-route a {
+    min-height: 64px;
     grid-template-columns: minmax(0, 1fr);
     align-content: center;
+    gap: 0.25rem;
+    padding: 0.65rem 0.55rem;
     font-size: 0.875rem;
+  }
+
+  .coast-route small {
+    display: none;
   }
 }

@@ -16,7 +16,7 @@ const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.im
   description="How stays and celebrations at Pa's Place in Pennington, KZN help give children their first seaside holiday."
   image={garden?.src}
 >
-  <section class="coast-masthead on-dark" aria-labelledby="story-title">
+  <section class="coast-masthead" aria-labelledby="story-title">
     <div class="container-page story-spread">
       <div>
         <p class="eyebrow">Our story</p>
@@ -27,16 +27,16 @@ const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.im
         </p>
         <div class="mt-7 flex flex-wrap gap-3">
           <a href="#first-holiday" class="btn btn-primary">Come along for the first day</a>
-          <a href="/get-involved" class="btn btn-on-dark">Get involved</a>
+          <a href="/get-involved" class="btn btn-tertiary">Get involved</a>
         </div>
       </div>
-      <figure class="coast-print story-print">
+      <figure class="story-print">
         <Image
           src={firstSea}
           alt="A grandfather and child approach the sea hand in hand"
           widths={[480, 760, 1080]}
           sizes="(min-width: 900px) 480px, 92vw"
-          class="aspect-[5/4] w-full object-cover"
+          class="coast-print aspect-[5/4] object-cover"
           loading="eager"
           fetchpriority="high"
         />
@@ -74,8 +74,8 @@ const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.im
     <div class:list={['container-page grid items-center gap-8 lg:gap-14', garden && 'lg:grid-cols-2']}>
       {
         garden && (
-          <figure class="coast-print garden-print">
-            <Picture image={garden} sizes="(min-width: 1024px) 510px, 92vw" class="aspect-[4/3] w-full object-cover" />
+          <figure class="garden-print">
+            <Picture image={garden} sizes="(min-width: 1024px) 510px, 92vw" class="coast-print aspect-[4/3] object-cover" />
             <figcaption>Pa&rsquo;s Place in Kelso, Pennington</figcaption>
           </figure>
         )
@@ -107,15 +107,10 @@ const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.im
 
   .story-print figcaption,
   .garden-print figcaption {
-    padding: 0.55rem 0.3rem 0.2rem;
+    margin-top: 0.6rem;
     color: var(--color-ink-muted);
-    font-size: 0.875rem;
-    font-weight: 700;
-  }
-
-  .garden-print {
-    border-color: var(--coast-sand);
-    background: var(--coast-sand);
+    font-size: 0.8125rem;
+    font-weight: 500;
   }
 
   .first-day {
@@ -134,7 +129,7 @@ const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.im
     column-gap: 0.8rem;
     row-gap: 0.45rem;
     padding-top: 1rem;
-    border-top: 1px solid var(--color-pool-700);
+    border-top: 1px solid var(--color-pool-500);
   }
 
   .first-day-list li > :global(svg) {
@@ -156,10 +151,6 @@ const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.im
   @media (min-width: 900px) {
     .story-spread {
       grid-template-columns: 1.12fr 1fr;
-    }
-
-    .story-print {
-      transform: rotate(-2deg);
     }
   }
 </style>
