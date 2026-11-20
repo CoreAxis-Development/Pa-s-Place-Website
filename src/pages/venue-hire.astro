@@ -28,7 +28,7 @@ const steps = [
   description={`Hire the lapa, pool, waterslides and gardens at Pa's Place in Pennington, KZN for birthdays and gatherings. ${settings.pricing.venue}.`}
   image={venuePage.image?.src}
 >
-  <section class="bg-canopy-50" aria-label="Venue hire">
+  <section class="coast-masthead on-dark" aria-label="Venue hire">
     <div class="container-page grid items-center gap-10 pb-14 pt-10 lg:grid-cols-2 lg:gap-14 lg:pt-14">
       <div>
         <p class="eyebrow">Venue hire</p>
@@ -40,10 +40,10 @@ const steps = [
         </ul>
         <div class="mt-7 flex flex-wrap gap-3">
           <a href="#book" class="btn btn-primary">Check a date</a>
-          <a href="/contact?about=venue#enquiry" class="btn btn-tertiary">Ask a question</a>
+          <a href="/contact?about=venue#enquiry" class="btn btn-on-dark">Ask a question</a>
         </div>
       </div>
-      {venuePage.image && <Picture image={venuePage.image} sizes="(min-width: 1024px) 540px, 92vw" class="photo aspect-[3/2] !rounded-[20px]" eager />}
+      {venuePage.image && <Picture image={venuePage.image} sizes="(min-width: 1024px) 540px, 92vw" class="coast-print aspect-[3/2] w-full object-cover" eager />}
     </div>
   </section>
 

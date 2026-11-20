@@ -3,139 +3,125 @@ import Layout from '../layouts/Layout.astro';
 import Faqs from '../components/sections/Faqs.astro';
 import MissionBand from '../components/sections/MissionBand.astro';
 import OptionCard from '../components/sections/OptionCard.astro';
-import PlaySection from '../components/sections/PlaySection.astro';
 import Icon from '../components/ui/Icon.astro';
 import Picture from '../components/ui/Picture.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
 import { todaySast } from '../server/lib/dates';
-import { formatRand } from '../server/lib/pricing';
 import { getSite } from '../server/services/content';
 
 const site = await getSite();
-const { settings, homepage, options, amenities, gallery } = site;
+const { settings, homepage, options, amenities } = site;
 
 const stays = options.filter((o) => o.kind === 'stay');
-const lowest = stays.length ? Math.min(...stays.map((o) => o.rate)) : null;
 const today = todaySast();
 
-// the collage: the hero photo plus the first two grounds features that have their own photo
-const tiles = amenities.filter((a) => a.image && a.image.id !== homepage.heroImage?.id).slice(0, 2);
-const galleryPreview = gallery.slice(0, 6);
+const pool = amenities.find((amenity) => amenity.icon === 'pool');
+const grounds = pool ? [pool, ...amenities.filter((amenity) => amenity.id !== pool.id)] : amenities;
+const hero = homepage.heroImage ?? grounds.find((amenity) => amenity.image)?.image;
 ---
 
-<Layout image={homepage.heroImage?.src}>
-  <!-- ============ HERO: the promise, the booking bar, the place ============ -->
-  <section class="bg-canopy-50" aria-label="Welcome">
-    <div class="container-page grid items-center gap-10 pb-14 pt-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 lg:pb-16 lg:pt-12">
+<Layout image={hero?.src}>
+  <section class="coast-masthead on-dark" aria-labelledby="home-title">
+    <div class="container-page hero-spread">
       <div>
         <p class="eyebrow">{homepage.heroEyebrow}</p>
-        <h1 class="t-display mt-3">{homepage.heroTitle}</h1>
-        <p class="t-lead mt-5 max-w-[52ch]">{homepage.heroSubtitle}</p>
-
-        <!-- booking bar: a plain GET form, so it works before any script loads -->
-        <form action="/book-a-stay" method="get" class="mt-8 rounded-[20px] border border-line bg-raised p-3 shadow-lg" aria-label="Check availability">
-          <div class="grid grid-cols-2 gap-3">
-            <div class="bar-cell col-span-2 sm:col-span-1">
-              <label for="hb-option">Stay</label>
-              <select id="hb-option" name="option">
-                {stays.map((o) => <option value={o.slug}>{o.name}</option>)}
-              </select>
-            </div>
-            <div class="bar-cell">
-              <label for="hb-from">Check-in</label>
-              <input id="hb-from" name="from" type="date" min={today} />
-            </div>
-            <div class="bar-cell">
-              <label for="hb-to">Check-out</label>
-              <input id="hb-to" name="to" type="date" min={today} />
-            </div>
-            <div class="bar-cell col-span-2 sm:order-2 sm:col-span-1">
-              <label for="hb-people">People</label>
-              <input id="hb-people" name="people" type="number" min="1" max="40" value="4" inputmode="numeric" />
-            </div>
-          </div>
-          <button type="submit" class="btn btn-primary mt-3 w-full">Check availability</button>
-        </form>
-
-        <ul class="mt-5 flex flex-wrap gap-2">
-          {
-            lowest !== null && (
-              <li class="chip tnum">
-                <Icon name="wallet" />
-                From {formatRand(lowest)} per person per night
-              </li>
-            )
-          }
-          <li class="chip"><Icon name="beach" />2 minutes from the beach</li>
-          <li class="chip"><Icon name="pool" />Pool, slides and mini-golf</li>
-        </ul>
+        <h1 id="home-title" class="coast-display mt-4">{homepage.heroTitle}</h1>
+        <p class="t-lead mt-5 max-w-[43ch]">{homepage.heroSubtitle}</p>
+        <a href="/book-a-stay#book" class="btn btn-primary mt-7">Check availability</a>
       </div>
-
       {
-        homepage.heroImage && (
-          <div class="relative mx-auto w-full max-w-[540px] pb-10 pl-6 sm:pb-14 sm:pl-10 lg:max-w-none">
-            <Picture
-              image={homepage.heroImage}
-              sizes="(min-width: 1024px) 500px, 92vw"
-              class="aspect-[4/3] w-full rounded-[20px] rounded-tl-[56px] object-cover sm:aspect-[4/5] sm:rounded-tl-[88px]"
-              eager
-            />
-            <div class="absolute bottom-0 left-0 flex w-[62%] gap-3 sm:w-[58%] sm:gap-4">
-              {tiles.map((t) => (
-                <Picture
-                  image={t.image!}
-                  sizes="180px"
-                  class="aspect-square w-1/2 rounded-[14px] border-4 border-white object-cover shadow-md"
-                  eager
-                />
-              ))}
-            </div>
-            {
-              lowest !== null && (
-                <p class="roundel tnum" aria-label={`From ${formatRand(lowest)} per person per night`}>
-                  <span class="text-[0.6875rem] font-semibold text-ink-muted">from</span>
-                  <span class="text-xl font-extrabold leading-none text-ink">{formatRand(lowest)}</span>
-                  <span class="text-[0.6875rem] font-semibold leading-tight text-ink-muted">pp / night</span>
-                </p>
-              )
-            }
-          </div>
+        hero && (
+          <figure class="coast-print hero-print">
+            <Picture image={hero} sizes="(min-width: 1024px) 530px, 92vw" class="aspect-[5/4] w-full object-cover" eager />
+            {hero.caption && <figcaption>{hero.caption}</figcaption>}
+          </figure>
         )
       }
     </div>
   </section>
 
-  <!-- ============ WAYS TO BOOK ============ -->
-  <section class="section bg-sunken" id="stay" aria-label="Stays and venue hire">
+  <nav aria-label="Plan your visit" class="coast-route">
+    <a href="#stay" style="--route-colour: var(--color-sun-500)"><span>Stay with us</span><Icon name="arrow" /></a>
+    <a href="/venue-hire" style="--route-colour: var(--coast-coral)"><span>Have a party</span><Icon name="arrow" /></a>
+    <a href={amenities.length > 0 ? '#grounds' : '/gallery'} style="--route-colour: var(--coast-pool)"><span>Explore the grounds</span><Icon name="arrow" /></a>
+  </nav>
+
+  {
+    amenities.length > 0 && (
+      <section id="grounds" class="section grounds" aria-labelledby="grounds-title">
+        <div class="container-page">
+          <div class="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+            <div>
+              <h2 id="grounds-title" class="t-h2">{homepage.groundsTitle}</h2>
+              <p class="t-lead mt-3 max-w-[54ch]">{homepage.groundsIntro}</p>
+            </div>
+            <a href="/gallery" class="btn btn-tertiary">See more photos</a>
+          </div>
+          <div class:list={['grounds-spread mt-8', amenities.length > 2 && 'grounds-spread-feature']}>
+            {
+              grounds.map((amenity, index) => (
+                <article class="ground-entry">
+                  {amenity.image && (
+                    <Picture
+                      image={amenity.image}
+                      sizes={index === 0 ? '(min-width: 1024px) 570px, 92vw' : '(min-width: 1024px) 280px, 46vw'}
+                      class="ground-photo w-full object-cover"
+                    />
+                  )}
+                  <h3 class="ground-title">
+                    <Icon name={amenity.icon} class="h-5 w-5 shrink-0" />
+                    {amenity.title}
+                  </h3>
+                  <p class="ground-description">{amenity.description}</p>
+                </article>
+              ))
+            }
+          </div>
+          <a href="/what-we-do#childrens-holiday" class="link mt-7 inline-block">Follow a day on a children&rsquo;s holiday</a>
+        </div>
+      </section>
+    )
+  }
+
+  <MissionBand title={homepage.missionTitle} text={homepage.missionText} />
+
+  <section class="section" id="stay" aria-label="Stays">
     <div class="container-page">
-      <SectionHeader rays eyebrow="Stay or celebrate" title="Rooms, the whole house, or the venue for a day" lead="Prices are per person. Pick what suits your group and check the calendar." />
-      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {options.map((o) => <OptionCard option={o} />)}
+      <SectionHeader title="Find your kind of stay" lead="Choose a room or bring everyone and book the whole house." />
+      {stays.length > 0 && (
+        <details class="quick-book mb-6">
+          <summary>Check your dates</summary>
+          <form action="/book-a-stay" method="get" class="mt-4" aria-label="Check availability">
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:items-end">
+              <div class="bar-cell col-span-2 md:col-span-1">
+                <label for="hb-option">Stay</label>
+                <select id="hb-option" name="option">
+                  {stays.map((stay) => <option value={stay.slug}>{stay.name}</option>)}
+                </select>
+              </div>
+              <div class="bar-cell">
+                <label for="hb-from">Check-in</label>
+                <input id="hb-from" name="from" type="date" min={today} />
+              </div>
+              <div class="bar-cell">
+                <label for="hb-to">Check-out</label>
+                <input id="hb-to" name="to" type="date" min={today} />
+              </div>
+              <div class="bar-cell col-span-2 md:col-span-1">
+                <label for="hb-people">People</label>
+                <input id="hb-people" name="people" type="number" min="1" max="40" value="4" inputmode="numeric" />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-4">Check availability</button>
+          </form>
+        </details>
+      )}
+      {stays.length === 0 && <p><a href="/contact?about=stay" class="link">Contact us about staying</a></p>}
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {stays.map((stay) => <OptionCard option={stay} />)}
       </div>
     </div>
   </section>
-
-  <!-- ============ THE GROUNDS ============ -->
-  <PlaySection id="grounds" label="The grounds">
-    <SectionHeader rays eyebrow="The grounds" title={homepage.groundsTitle} lead={homepage.groundsIntro} />
-    <div class="grid gap-x-5 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
-      {
-        amenities.map((a) => (
-          <article class="grounds-card">
-            {a.image && <Picture image={a.image} sizes="(min-width: 1024px) 250px, (min-width: 640px) 44vw, 85vw" class="photo aspect-[4/3]" />}
-            <div class="px-2 pb-2 pt-3">
-              <h3 class="t-h4 flex items-center gap-2">
-                <Icon name={a.icon} class="h-5 w-5 flex-none text-pool-700" />
-                {a.title}
-              </h3>
-              <p class="mt-1.5 text-[0.9375rem]">{a.description}</p>
-            </div>
-          </article>
-        ))
-      }
-    </div>
-    <a href="/what-we-do#childrens-holiday" class="link mt-6 inline-block">See a day on a children&rsquo;s holiday</a>
-  </PlaySection>
 
   <!-- ============ VENUE HIRE ============ -->
   <section class="section bg-sunken" aria-label="Venue hire">
@@ -152,32 +138,8 @@ const galleryPreview = gallery.slice(0, 6);
     </div>
   </section>
 
-  <!-- ============ GALLERY PREVIEW ============ -->
-  {
-    galleryPreview.length > 0 && (
-      <section class="section" aria-label="Photos">
-        <div class="container-page">
-          <div class="flex flex-wrap items-end justify-between gap-4">
-            <SectionHeader eyebrow="Photos" title="See the place for yourself" class="!mb-0" />
-            <a href="/gallery" class="btn btn-tertiary">View all photos</a>
-          </div>
-          <ul class="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-            {galleryPreview.map((g) => (
-              <li>
-                <a href="/gallery" class="block">
-                  <Picture image={g.image} sizes="(min-width: 640px) 31vw, 46vw" class="photo aspect-square" />
-                </a>
-                {g.caption && <p class="t-caption mt-2">{g.caption}</p>}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-    )
-  }
-
   <!-- ============ FINDING US ============ -->
-  <section class="section bg-sunken" aria-label="Where to find us">
+  <section class="section" aria-label="Where to find us">
     <div class="container-page grid items-center gap-8 md:grid-cols-[1fr_auto]">
       <div>
         <SectionHeader eyebrow="Finding us" title="Kelso, Pennington, on the KZN South Coast" class="!mb-4" />
@@ -194,71 +156,147 @@ const galleryPreview = gallery.slice(0, 6);
     </div>
   </section>
 
-  <MissionBand title={homepage.missionTitle} text={homepage.missionText} />
-
   <Faqs faqs={site.faqs.filter((f) => f.topic !== 'venue').slice(0, 6)} />
 </Layout>
 
 <style>
-  .grounds-card {
-    padding: 8px;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-xl);
+  .hero-spread {
+    display: grid;
+    align-items: center;
+    gap: clamp(1.8rem, 4vw, 4rem);
+    padding-block: clamp(2.2rem, 5vw, 4.8rem);
+  }
+
+  .hero-print {
+    position: relative;
+    min-width: 0;
+  }
+
+  .hero-print figcaption {
+    position: absolute;
+    right: 0.45rem;
+    bottom: 0.45rem;
+    max-width: calc(100% - 0.9rem);
+    padding: 0.45rem 0.65rem;
+    overflow-wrap: anywhere;
+    background: var(--coast-coral);
+    color: var(--coast-deep);
+    font-size: 0.875rem;
+    font-weight: 800;
+  }
+
+  .grounds {
+    background: var(--coast-pool);
+  }
+
+  .grounds-spread {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.8rem, 2.6vw, 1.75rem);
+    align-items: start;
+  }
+
+  .grounds-spread-feature .ground-entry:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .ground-entry {
+    min-width: 0;
+  }
+
+  .ground-entry :global(.ground-photo) {
+    display: block;
+    aspect-ratio: 4 / 3;
+    border-radius: 4px;
+  }
+
+  .ground-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: fit-content;
+    max-width: calc(100% - 0.45rem);
+    margin: -0.65rem 0 0 0.45rem;
+    padding: 0.3rem 0.55rem;
+    position: relative;
+    background: var(--color-sun-500);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.25;
+    text-wrap: wrap;
+  }
+
+  .ground-entry:nth-child(3n + 2) .ground-title {
+    background: var(--coast-coral);
+  }
+
+  .ground-entry:nth-child(3n + 3) .ground-title {
+    background: var(--coast-paper);
+  }
+
+  .ground-description {
+    margin-top: 0.55rem;
+    font-size: 0.9375rem;
+  }
+
+  .quick-book {
+    border-block: 1px solid var(--color-line);
     background: var(--color-raised);
+    padding: 0.75rem clamp(0.75rem, 2vw, 1.25rem);
+  }
+
+  .quick-book summary {
+    width: fit-content;
+    cursor: pointer;
+    color: var(--color-canopy-600);
+    font-weight: 800;
   }
 
   .bar-cell {
-    border: 1px solid var(--color-line);
-    border-radius: 10px;
-    padding: 8px 12px 6px;
-    background: #fff;
-    transition:
-      border-color 120ms,
-      box-shadow 120ms;
-  }
-  .bar-cell:focus-within {
-    border-color: var(--color-canopy-600);
-    box-shadow: 0 0 0 3px rgb(44 98 57 / 0.2);
-  }
-  .bar-cell label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--color-ink-muted);
-  }
-  .bar-cell input,
-  .bar-cell select {
-    display: block;
-    width: 100%;
-    min-height: 28px;
-    border: 0;
-    padding: 0;
-    background: transparent;
-    font: 600 1rem var(--font-body);
-    color: var(--color-ink);
-    font-variant-numeric: tabular-nums;
-  }
-  .bar-cell input:focus,
-  .bar-cell select:focus {
-    outline: none;
+    min-width: 0;
+    display: grid;
+    gap: 0.25rem;
   }
 
-  /* the Ring: price roundel */
-  .roundel {
-    position: absolute;
-    top: 16px;
-    right: -6px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    width: 96px;
-    height: 96px;
-    border-radius: 999px;
-    background: #fff;
-    border: 2px solid var(--color-sun-500);
-    box-shadow: var(--shadow-md);
+  .bar-cell label {
+    color: var(--color-ink);
+    font-weight: 700;
+    font-size: 0.875rem;
+  }
+
+  .bar-cell :is(input, select) {
+    min-width: 0;
+    width: 100%;
+    min-height: 44px;
+    padding-inline: 0.55rem;
+    border: 1px solid var(--color-line-field);
+    border-radius: 6px;
+    background: white;
+    color: var(--color-ink);
+    font-size: 1rem;
+  }
+
+  @media (min-width: 900px) {
+    .hero-spread {
+      grid-template-columns: 1.05fr 1fr;
+    }
+
+    .hero-print {
+      transform: rotate(2deg);
+    }
+
+    .grounds-spread-feature {
+      grid-template-columns: 2fr 1fr 1fr;
+    }
+
+    .grounds-spread-feature .ground-entry:first-child {
+      grid-column: auto;
+    }
+
+    .grounds-spread-feature .ground-entry:first-child :global(.ground-photo) {
+      aspect-ratio: 16 / 10;
+    }
   }
 </style>
 

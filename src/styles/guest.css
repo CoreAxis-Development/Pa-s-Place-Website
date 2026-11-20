@@ -1,0 +1,139 @@
+/* Guest-facing palette. The staff portal keeps the shared operational theme. */
+.public-site {
+  --coast-deep: #123356;
+  --coast-blue: #195183;
+  --coast-paper: #fff9ed;
+  --coast-sand: #f5ebd6;
+  --coast-pool: #c6edf0;
+  --coast-coral: #ffb8a6;
+
+  --color-page: var(--coast-paper);
+  --color-raised: #fffdf7;
+  --color-sunken: var(--coast-sand);
+  --color-ink: #132d47;
+  --color-ink-body: #344b60;
+  --color-ink-muted: #4a6073;
+  --color-line: #ddd1b9;
+  --color-line-strong: #aa9c81;
+  --color-line-field: #847967;
+  --color-sun-50: #fff2d6;
+  --color-sun-100: #ffe5aa;
+  --color-sun-400: #ffd17b;
+  --color-sun-500: #ffba52;
+  --color-sun-600: #f5a63c;
+  --color-sun-700: #844515;
+  --color-canopy-50: #e9f3f5;
+  --color-canopy-100: #d5e9ef;
+  --color-canopy-600: var(--coast-blue);
+  --color-canopy-700: #17436e;
+  --color-canopy-800: #173e63;
+  --color-canopy-900: var(--coast-deep);
+  --color-pool-100: var(--coast-pool);
+  --color-pool-500: #54aeb8;
+  --color-pool-700: #175965;
+  --color-on-dark: #fff9ed;
+  --color-on-dark-muted: #d7e6f2;
+}
+
+.public-site .eyebrow {
+  text-transform: none;
+  letter-spacing: 0.015em;
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+.public-site .btn {
+  border-radius: 100px;
+}
+
+.public-site .t-h1,
+.public-site .t-h2 {
+  font-weight: 700;
+  font-variation-settings: "SOFT" 65, "WONK" 1;
+}
+
+.coast-masthead {
+  background: var(--coast-deep);
+  color: var(--color-on-dark);
+}
+
+.coast-masthead h1 {
+  color: var(--color-on-dark);
+}
+
+.coast-masthead .t-lead {
+  color: var(--color-on-dark-muted);
+}
+
+.coast-masthead .chip {
+  border-color: rgb(255 249 237 / 0.35);
+  background: transparent;
+  color: var(--color-on-dark);
+}
+
+.coast-masthead .chip svg {
+  color: var(--color-sun-500);
+}
+
+.coast-display {
+  font-size: clamp(2.625rem, 5.3vw, 5.5rem);
+  font-weight: 800;
+  font-variation-settings: "SOFT" 76, "WONK" 1;
+  letter-spacing: -0.033em;
+  word-spacing: 0.035em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.coast-print {
+  border: clamp(5px, 0.85vw, 12px) solid var(--coast-paper);
+  border-radius: 5px;
+  background: var(--coast-paper);
+}
+
+.coast-print img {
+  display: block;
+  border-radius: 2px;
+}
+
+.coast-route {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  background: var(--coast-deep);
+}
+
+.coast-route a {
+  display: grid;
+  min-height: 70px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem clamp(0.6rem, 2vw, 1.5rem);
+  color: var(--coast-deep);
+  background: var(--route-colour);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.coast-route a:hover span {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.coast-route a:focus-visible {
+  outline-color: var(--coast-deep);
+  outline-offset: -5px;
+}
+
+.coast-route a svg {
+  width: clamp(14px, 2.8vw, 22px);
+}
+
+@media (max-width: 420px) {
+  .coast-route a {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    font-size: 0.875rem;
+  }
+}
