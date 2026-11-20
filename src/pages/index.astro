@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Faqs from '../components/sections/Faqs.astro';
 import MissionBand from '../components/sections/MissionBand.astro';
 import OptionCard from '../components/sections/OptionCard.astro';
+import PlaySection from '../components/sections/PlaySection.astro';
 import Icon from '../components/ui/Icon.astro';
 import Picture from '../components/ui/Picture.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
@@ -24,7 +25,7 @@ const galleryPreview = gallery.slice(0, 6);
 
 <Layout image={homepage.heroImage?.src}>
   <!-- ============ HERO: the promise, the booking bar, the place ============ -->
-  <section class="bg-page" aria-label="Welcome">
+  <section class="bg-canopy-50" aria-label="Welcome">
     <div class="container-page grid items-center gap-10 pb-14 pt-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 lg:pb-16 lg:pt-12">
       <div>
         <p class="eyebrow">{homepage.heroEyebrow}</p>
@@ -76,7 +77,7 @@ const galleryPreview = gallery.slice(0, 6);
             <Picture
               image={homepage.heroImage}
               sizes="(min-width: 1024px) 500px, 92vw"
-              class="aspect-[4/3] w-full rounded-[20px] object-cover sm:aspect-[4/5]"
+              class="aspect-[4/3] w-full rounded-[20px] rounded-tl-[56px] object-cover sm:aspect-[4/5] sm:rounded-tl-[88px]"
               eager
             />
             <div class="absolute bottom-0 left-0 flex w-[62%] gap-3 sm:w-[58%] sm:gap-4">
@@ -115,25 +116,26 @@ const galleryPreview = gallery.slice(0, 6);
   </section>
 
   <!-- ============ THE GROUNDS ============ -->
-  <section class="section" id="grounds" aria-label="The grounds">
-    <div class="container-page">
-      <SectionHeader rays eyebrow="The grounds" title={homepage.groundsTitle} lead={homepage.groundsIntro} />
-      <div class="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-        {
-          amenities.map((a) => (
-            <article class="reveal">
-              {a.image && <Picture image={a.image} sizes="(min-width: 1024px) 270px, (min-width: 640px) 45vw, 92vw" class="photo aspect-[4/3]" />}
-              <h3 class="t-h4 mt-4 flex items-center gap-2">
-                <Icon name={a.icon} class="h-5 w-5 flex-none text-canopy-600" />
+  <PlaySection id="grounds" label="The grounds">
+    <SectionHeader rays eyebrow="The grounds" title={homepage.groundsTitle} lead={homepage.groundsIntro} />
+    <div class="grid gap-x-5 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        amenities.map((a) => (
+          <article class="grounds-card">
+            {a.image && <Picture image={a.image} sizes="(min-width: 1024px) 250px, (min-width: 640px) 44vw, 85vw" class="photo aspect-[4/3]" />}
+            <div class="px-2 pb-2 pt-3">
+              <h3 class="t-h4 flex items-center gap-2">
+                <Icon name={a.icon} class="h-5 w-5 flex-none text-pool-700" />
                 {a.title}
               </h3>
               <p class="mt-1.5 text-[0.9375rem]">{a.description}</p>
-            </article>
-          ))
-        }
-      </div>
+            </div>
+          </article>
+        ))
+      }
     </div>
-  </section>
+    <a href="/what-we-do#childrens-holiday" class="link mt-6 inline-block">See a day on a children&rsquo;s holiday</a>
+  </PlaySection>
 
   <!-- ============ VENUE HIRE ============ -->
   <section class="section bg-sunken" aria-label="Venue hire">
@@ -198,6 +200,13 @@ const galleryPreview = gallery.slice(0, 6);
 </Layout>
 
 <style>
+  .grounds-card {
+    padding: 8px;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-xl);
+    background: var(--color-raised);
+  }
+
   .bar-cell {
     border: 1px solid var(--color-line);
     border-radius: 10px;

@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import MissionBand from '../components/sections/MissionBand.astro';
+import PlaySection from '../components/sections/PlaySection.astro';
 import Icon from '../components/ui/Icon.astro';
 import Picture from '../components/ui/Picture.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
@@ -44,8 +45,8 @@ const day = [
 ---
 
 <Layout title="What we do" description="Pa's Place gives children their first seaside holiday, funded by affordable family stays and venue hire in Pennington, KZN.">
-  <section class="bg-page" aria-label="What we do">
-    <div class="container-page pb-4 pt-10 lg:pt-14">
+  <section class="bg-canopy-50" aria-label="What we do">
+    <div class="container-page py-10 lg:py-14">
       <p class="eyebrow">What we do</p>
       <h1 class="t-h1 mt-2 max-w-3xl">One garden, three kinds of work</h1>
       <p class="t-lead mt-4 max-w-[62ch]">
@@ -73,22 +74,79 @@ const day = [
     </div>
   </section>
 
-  <section class="section bg-sunken" aria-label="A day on a children's holiday">
-    <div class="container-page">
-      <SectionHeader eyebrow="A children’s holiday" title="What a day looks like" lead="Every group is different, but the shape of the day is much the same." />
-      <ol class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {
-          day.map((d) => (
-            <li class="card card-pad">
-              <Icon name={d.icon} class="h-6 w-6 text-canopy-600" />
-              <h3 class="t-h4 mt-3">{d.time}</h3>
+  <PlaySection id="childrens-holiday" label="A day on a children's holiday">
+    <SectionHeader rays title="A day by the sea" lead="Every group is different. Here’s how a day might go." />
+    <ol class="holiday-day">
+      {
+        day.map((d) => (
+          <li>
+            <span class="holiday-day-icon"><Icon name={d.icon} class="h-6 w-6" /></span>
+            <div>
+              <h3 class="t-h4">{d.time}</h3>
               <p class="mt-1 text-[0.9375rem]">{d.text}</p>
-            </li>
-          ))
-        }
-      </ol>
-    </div>
-  </section>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </PlaySection>
 
   <MissionBand title={homepage.missionTitle} text={homepage.missionText} sponsor />
 </Layout>
+
+<style>
+  .holiday-day {
+    --trail: var(--color-pool-700);
+    --stop-size: 48px;
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .holiday-day > li {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--stop-size) minmax(0, 1fr);
+    align-items: start;
+    gap: 0.875rem;
+  }
+
+  .holiday-day > li:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    top: var(--stop-size);
+    bottom: -1.25rem;
+    left: calc(var(--stop-size) / 2);
+    border-left: 2px dashed var(--trail);
+  }
+
+  .holiday-day-icon {
+    display: grid;
+    width: var(--stop-size);
+    height: var(--stop-size);
+    place-items: center;
+    border: 2px solid var(--trail);
+    border-radius: 50%;
+    color: var(--trail);
+    background: var(--color-raised);
+  }
+
+  @media (min-width: 900px) {
+    .holiday-day {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .holiday-day > li {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: var(--stop-size) auto;
+    }
+
+    .holiday-day > li:not(:last-child)::before {
+      top: calc(var(--stop-size) / 2);
+      right: -1.25rem;
+      bottom: auto;
+      left: var(--stop-size);
+      border-top: 2px dashed var(--trail);
+      border-left: 0;
+    }
+  }
+</style>

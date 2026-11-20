@@ -1,99 +1,151 @@
 ---
-// The one page where the storybook lives: handwriting, taped keepsakes and
-// illustrated scenes. It sits behind the standard header and footer so a
-// reader can always get to "Book a stay". Its images are illustration, not
-// photographs of the property.
 import '@fontsource-variable/caveat';
-import '@fontsource-variable/fraunces/full-italic.css';
-import '../styles/story.css';
 import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
-import StoryNight from '../components/story/scenes/StoryNight.astro';
-import StoryDream from '../components/story/scenes/StoryDream.astro';
-import StoryJourney from '../components/story/scenes/StoryJourney.astro';
-import NotebookSpread from '../components/story/scenes/NotebookSpread.astro';
-import StoryEnd from '../components/story/scenes/StoryEnd.astro';
-import coastline from '../assets/images/story/coastline.webp';
+import PlaySection from '../components/sections/PlaySection.astro';
+import Picture from '../components/ui/Picture.astro';
+import RayMark from '../components/ui/RayMark.astro';
+import Sunrise from '../components/ui/Sunrise.astro';
 import firstSea from '../assets/images/story/hero-first-sea.webp';
-import house from '../assets/images/story/the-house.webp';
+import { getSite } from '../server/services/content';
+
+const { homepage, amenities } = await getSite();
+const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.image)?.image ?? homepage.heroImage;
+const gardenSizes = '(min-width: 1024px) 510px, 92vw';
 ---
 
 <Layout
   title="Our story"
-  description="The story of Pa's Place: a non-profit in Pennington, KZN giving children who have never seen the sea their first seaside holiday."
+  description="The story of Pa's Place, a non-profit in Pennington, KZN that gives children their first seaside holiday."
+  image={garden?.src}
 >
-  <div id="storybook">
-    <StoryNight />
-    <StoryDream />
-    <StoryJourney />
-    <NotebookSpread
-      photo={firstSea}
-      photoAlt="A grandfather and child walking hand in hand through the dunes toward the sea"
-    />
-
-    <!-- ============ THE STORY, TOLD ============ -->
-    <section class="relative bg-paper" aria-label="What Pa's Place is">
-      <div class="mx-auto grid max-w-6xl gap-14 px-5 py-14 sm:py-20 lg:grid-cols-[1.2fr_1fr]">
-        <div class="max-w-xl space-y-6 text-lg text-cocoa">
-          <p class="hand !-mb-2 text-2xl text-marigold-600">so, plainly then:</p>
-          <p class="reveal drop-cap">
-            Pa&rsquo;s Place Non-Profit Company was founded with a simple mission: <strong class="text-bark-900">giving coastal, fun-filled holidays to disadvantaged children.</strong> Based in Kelso,
-            Pennington, on KwaZulu-Natal&rsquo;s south coast, we provide affordable, comfortable,
-            peaceful and activity-filled beachside accommodation.
-          </p>
-          <p class="reveal">
-            But Pa&rsquo;s Place is more than accommodation. It&rsquo;s a retreat, one that lifts children out of
-            buildings, classrooms and familiar concerns. With attention to communication, care with questions
-            and energy toward activities, we&rsquo;ve learned how deeply a real holiday can settle a young mind.
-          </p>
-          <p class="reveal">
-            Our days move with the tides, through the noisiest and the quietest hours. Beach going, trail
-            walking, nature seeking, sports playing, team building, music and arts creating, unique foods
-            preparing. And woven through all of it: learning. Whether it&rsquo;s a piece of marine life in a rock
-            pool or a fruit hanging from a tree, children leave Pa&rsquo;s Place knowing something they didn&rsquo;t
-            know before.
-          </p>
-          <p class="reveal">
-            The holidays are funded by sponsors, and by the ordinary paying guests who book the house for
-            their own family holidays. That&rsquo;s the whole machine: <strong class="text-bark-900">every stay helps fund the next child&rsquo;s first look at the sea.</strong>
-          </p>
-
-          <blockquote class="reveal !mt-10 border-l-4 border-marigold-400 pl-5">
-            <p class="font-display text-2xl font-semibold italic text-bark-900">
-              Every stay carries a little learning, and a lot of sea air.
-            </p>
-          </blockquote>
+  <section class="story-intro" aria-labelledby="story-title">
+    <div class="container-page grid items-center gap-8 py-10 sm:py-14 lg:grid-cols-2 lg:gap-16 lg:py-20">
+      <div>
+        <p class="eyebrow">Our story</p>
+        <h1 id="story-title" class="t-display mt-3">A first look at the sea</h1>
+        <p class="t-lead mt-5 max-w-[47ch]">
+          Pa&rsquo;s Place is a non-profit in Kelso, Pennington, on KwaZulu-Natal&rsquo;s South Coast.
+          We give children who have never had a seaside holiday the chance to have their first.
+        </p>
+        <div class="mt-7 flex flex-wrap gap-3">
+          <a href="#first-holiday" class="btn btn-primary">Come along for the first day</a>
+          <a href="/get-involved" class="btn btn-tertiary">Get involved</a>
         </div>
-
-        <aside class="reveal self-start lg:sticky lg:top-28">
-          <figure class="keepsake mx-auto max-w-sm rotate-1">
-            <Image
-              src={house}
-              alt="An illustration of a beach house with a wide veranda among coastal trees"
-              widths={[480, 760]}
-              sizes="(min-width: 1024px) 30vw, 90vw"
-              class="aspect-[4/3] w-full object-cover"
-            />
-            <figcaption class="hand pt-3 text-center text-[1.4rem] text-cocoa">home base, a short walk from the waves</figcaption>
-          </figure>
-          <figure class="keepsake mx-auto mt-12 max-w-sm -rotate-1">
-            <Image
-              src={coastline}
-              alt="An illustration of a golden beach with an old bench facing the sea"
-              widths={[480, 760]}
-              sizes="(min-width: 1024px) 30vw, 90vw"
-              class="aspect-[4/3] w-full object-cover"
-            />
-            <figcaption class="hand pt-3 text-center text-[1.4rem] text-cocoa">our stretch of the Indian Ocean</figcaption>
-          </figure>
-        </aside>
       </div>
-    </section>
 
-    <StoryEnd />
-  </div>
+      {
+        garden ? (
+          <figure class="story-cover">
+            <Picture image={garden} sizes={gardenSizes} class="aspect-[4/3] w-full object-cover" eager />
+            <figcaption class="t-caption mt-3">Pa&rsquo;s Place in Kelso, Pennington</figcaption>
+          </figure>
+        ) : (
+          <figure class="story-cover">
+            <Image
+              src={firstSea}
+              alt="An illustration of a grandfather and child walking through the dunes toward the sea"
+              widths={[480, 760, 1080]}
+              sizes={gardenSizes}
+              class="aspect-[4/3] w-full object-cover"
+              loading="eager"
+              fetchpriority="high"
+            />
+            <figcaption class="t-caption mt-3">An illustrated scene from a first seaside holiday</figcaption>
+          </figure>
+        )
+      }
+    </div>
+  </section>
+
+  <PlaySection id="first-holiday" labelledBy="first-holiday-title">
+    <div class="grid items-center gap-8 lg:grid-cols-2 lg:gap-14">
+      <figure class="story-postcard">
+        <Image
+          src={firstSea}
+          alt="A grandfather and child walk hand in hand through the dunes toward the sea"
+          widths={[480, 760, 1080]}
+          sizes={gardenSizes}
+          class="aspect-[4/3] w-full rounded-[14px] object-cover"
+        />
+        <figcaption class="story-note px-3 pt-2 text-center">A first seaside holiday, illustrated</figcaption>
+      </figure>
+
+      <div>
+        <h2 id="first-holiday-title" class="t-h2">The first day by the sea</h2>
+        <p class="t-lead mt-4 max-w-[48ch]">
+          Imagine packing your favourite cap and heading off to see the ocean for the first time.
+          What will you notice first? The sound of the waves, the sand between your toes, or the little things
+          moving in a rock pool?
+        </p>
+        <p class="mt-4 max-w-[52ch]">
+          Back at the garden there&rsquo;s time for slides, mini-golf and games on the lawn. Some days bring
+          music, art or cooking together. There&rsquo;s room for the quiet moments, too.
+        </p>
+        <a href="/what-we-do#childrens-holiday" class="link mt-5 inline-block">See a day on a children&rsquo;s holiday</a>
+      </div>
+    </div>
+  </PlaySection>
+
+  <section class="section" aria-labelledby="support-title">
+    <div class="container-page grid items-start gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+      <div>
+        <RayMark class="mb-3" />
+        <h2 id="support-title" class="t-h2">How the holidays happen</h2>
+      </div>
+      <div class="max-w-[60ch] space-y-4">
+        <p>
+          Sponsors and paying guests help fund the children&rsquo;s holidays. When you bring your family
+          for a stay or hire the venue for a celebration, you help make the next trip possible.
+        </p>
+        <p>
+          We spend those days exploring the coast, noticing what lives in rock pools, playing team games
+          and making things together. There&rsquo;s time to try something new and space to take it all in.
+        </p>
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3 pt-2">
+          <a href="/book-a-stay" class="btn btn-secondary">Book a stay</a>
+          <a href="/venue-hire" class="link">Hire the venue</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="on-dark relative overflow-hidden bg-canopy-900 py-16 text-on-dark" aria-labelledby="sponsor-title">
+    <Sunrise class="pointer-events-none absolute -right-40 -top-40 h-[420px] w-[420px]" />
+    <div class="container-page relative">
+      <h2 id="sponsor-title" class="t-h2 !text-on-dark">Help a child get to the sea</h2>
+      <p class="mt-3 max-w-[52ch] text-on-dark-muted">A sponsorship helps cover a child&rsquo;s stay, meals and activities.</p>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href="/contact?about=sponsor#enquiry" class="btn btn-primary">Sponsor a child&rsquo;s holiday</a>
+        <a href="/get-involved" class="btn btn-on-dark">More ways to help</a>
+      </div>
+    </div>
+  </section>
 </Layout>
 
-<script>
-  import '../scripts/storybook';
-</script>
+<style>
+  .story-intro {
+    background: var(--color-canopy-50);
+  }
+
+  .story-cover :global(img) {
+    border-radius: clamp(42px, 9vw, 112px) var(--radius-xl) var(--radius-xl) var(--radius-xl);
+    background-color: var(--color-canopy-100);
+  }
+
+  .story-postcard {
+    padding: clamp(8px, 2vw, 14px);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-xl);
+    background: var(--color-raised);
+    box-shadow: var(--shadow-md);
+  }
+
+  .story-note {
+    color: var(--color-canopy-700);
+    font-family: var(--font-hand);
+    font-size: clamp(1.35rem, 3vw, 1.8rem);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+</style>

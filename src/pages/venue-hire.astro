@@ -4,6 +4,7 @@ import BookingEngine from '../components/booking/BookingEngine.tsx';
 import { engineProps } from '../components/booking/engine-props';
 import Faqs from '../components/sections/Faqs.astro';
 import MissionBand from '../components/sections/MissionBand.astro';
+import PlaySection from '../components/sections/PlaySection.astro';
 import Icon from '../components/ui/Icon.astro';
 import Picture from '../components/ui/Picture.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
@@ -27,7 +28,7 @@ const steps = [
   description={`Hire the lapa, pool, waterslides and gardens at Pa's Place in Pennington, KZN for birthdays and gatherings. ${settings.pricing.venue}.`}
   image={venuePage.image?.src}
 >
-  <section class="bg-page" aria-label="Venue hire">
+  <section class="bg-canopy-50" aria-label="Venue hire">
     <div class="container-page grid items-center gap-10 pb-14 pt-10 lg:grid-cols-2 lg:gap-14 lg:pt-14">
       <div>
         <p class="eyebrow">Venue hire</p>
@@ -46,8 +47,8 @@ const steps = [
     </div>
   </section>
 
-  <section class="section bg-sunken" aria-label="What is included">
-    <div class="container-page grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
+  <PlaySection tone="sun" label="What is included">
+    <div class="grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
       <div>
         <SectionHeader rays eyebrow="What you get" title="Everything for a long, easy day" class="!mb-6" />
         <ul class="ray-list space-y-2.5">
@@ -67,7 +68,7 @@ const steps = [
         )
       }
     </div>
-  </section>
+  </PlaySection>
 
   <section class="section" id="book" aria-label="Booking form">
     <div class="container-page">

@@ -1,0 +1,30 @@
+---
+interface Props {
+  id?: string;
+  label?: string;
+  labelledBy?: string;
+  tone?: 'pool' | 'sun';
+}
+
+const { id, label, labelledBy, tone = 'pool' } = Astro.props;
+---
+
+<section id={id} aria-label={label} aria-labelledby={labelledBy} class:list={['section play-section', tone]}>
+  <div class="container-page">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .play-section {
+    --play-surface: var(--color-pool-100);
+    --play-stripe: var(--color-pool-500);
+    background: var(--play-surface);
+    border-block-start: 4px solid var(--play-stripe);
+  }
+
+  .sun {
+    --play-surface: var(--color-sun-50);
+    --play-stripe: var(--color-sun-400);
+  }
+</style>
