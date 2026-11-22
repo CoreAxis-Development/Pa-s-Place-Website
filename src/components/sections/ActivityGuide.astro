@@ -12,7 +12,7 @@ interface Props {
 const { amenities, title, intro } = Astro.props;
 ---
 
-<section id="grounds" class="section" data-coast-wash="leaf" aria-labelledby="grounds-title">
+<section id="grounds" class="section" data-coast-art="garden" data-coast-wash="leaf" aria-labelledby="grounds-title">
   <div class="container-page activity-layout">
     <div>
       <h2 id="grounds-title" class="t-h2">{title}</h2>
@@ -23,7 +23,7 @@ const { amenities, title, intro } = Astro.props;
     </div>
 
     <div class="activity-board">
-      <h3 class="activity-question">What shall we do first?</h3>
+      <h3 class="activity-question">See what&rsquo;s around the garden</h3>
       {
         amenities.map((amenity, index) => (
           <details name="grounds-activities" open={index === 0}>

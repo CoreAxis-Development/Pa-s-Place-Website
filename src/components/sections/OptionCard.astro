@@ -1,30 +1,83 @@
 ---
-// A bookable option as a photo card. Stay and venue cards carry equal weight.
 import Picture from '../ui/Picture.astro';
+import Icon from '../ui/Icon.astro';
 import type { PublicOption } from '../../server/services/content';
 
 interface Props {
   option: PublicOption;
 }
 const { option } = Astro.props;
-const href = `${option.kind === 'venue' ? '/venue-hire' : '/book-a-stay'}?option=${option.slug}#book`;
+const href = `${option.kind === 'venue' ? '/venue-hire' : '/book-a-stay'}?option=${encodeURIComponent(option.slug)}#book`;
 ---
 
-<a href={href} class="card card-link flex flex-col overflow-hidden">
+<a href={href} class="stay-option">
+  <span class="stay-option-body">
+    <span class="t-h4">{option.name}</span>
+    <span class="stay-meta">{option.capacityLabel}</span>
+    <span class="stay-blurb">{option.blurb}</span>
+  </span>
   {
-    option.image ? (
-      <Picture image={option.image} sizes="(min-width: 1024px) 270px, (min-width: 640px) 45vw, 92vw" class="aspect-[4/3] w-full object-cover" />
-    ) : (
-      <span class="grid aspect-[4/3] w-full place-items-center bg-sunken text-sm font-semibold text-ink-muted">Photo coming soon</span>
+    option.image && (
+      <Picture image={option.image} sizes="96px" class="stay-thumbnail" />
     )
   }
-  <span class="flex flex-1 flex-col p-5">
-    <span class="t-h4">{option.name}</span>
-    <span class="mt-1 block flex-1 text-[0.9375rem]">{option.blurb}</span>
-    <span class="mt-4 flex flex-wrap items-center justify-between gap-2">
-      <span class="tag tag-price">{option.rateLabel}</span>
-      <span class="t-caption">{option.capacityLabel}</span>
-    </span>
-    <span class="link mt-4 text-[0.9375rem]">{option.kind === 'venue' ? 'Check a date' : 'Check availability'}</span>
+  <span class="stay-option-foot">
+    <span class="tnum">{option.rateLabel}</span>
+    <Icon name="arrow" class="h-5 w-5 shrink-0" />
   </span>
 </a>
+
+<style>
+  .stay-option {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 1fr auto;
+    gap: 0.9rem 0.6rem;
+    height: 100%;
+    padding: 1.15rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 12px;
+    background: var(--color-raised);
+  }
+
+  .stay-option:hover .t-h4 {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  .stay-option-body {
+    display: grid;
+    align-content: start;
+    gap: 0.25rem;
+  }
+
+  .stay-option :global(.stay-thumbnail) {
+    width: clamp(58px, 6vw, 86px);
+    aspect-ratio: 1;
+    border-radius: 7px;
+    object-fit: cover;
+  }
+
+  .stay-meta {
+    color: var(--color-canopy-600);
+    font-weight: 650;
+    font-size: 0.875rem;
+  }
+
+  .stay-blurb {
+    font-size: 0.9375rem;
+  }
+
+  .stay-option-foot {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--color-line);
+    color: var(--color-canopy-600);
+    font-weight: 750;
+    font-size: 0.875rem;
+  }
+</style>

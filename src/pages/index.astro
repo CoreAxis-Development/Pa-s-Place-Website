@@ -1,8 +1,9 @@
 ---
+import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
 import ActivityGuide from '../components/sections/ActivityGuide.astro';
 import Faqs from '../components/sections/Faqs.astro';
-import MissionBand from '../components/sections/MissionBand.astro';
+import firstSea from '../assets/images/story/hero-first-sea.webp';
 import OptionCard from '../components/sections/OptionCard.astro';
 import Icon from '../components/ui/Icon.astro';
 import Picture from '../components/ui/Picture.astro';
@@ -57,11 +58,11 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
       <div class="coast-route">
         <a href="#stay">
           <Icon name="bed" />
-          <span>Find a room<small>Come solo or bring your crew</small></span>
+          <span>Find a room<small>Compare rooms and rates</small></span>
         </a>
         <a href={amenities.length > 0 ? '#grounds' : '/gallery'}>
           <Icon name="pool" />
-          <span>Find the fun<small>Slides, mini-golf and lawn games</small></span>
+          <span>Things to do<small>Pool, waterslides and mini-golf</small></span>
         </a>
         <a href="/venue-hire#kids-parties">
           <Icon name="lapa" />
@@ -71,11 +72,9 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
     </div>
   </nav>
 
-  {grounds.length > 0 && <ActivityGuide amenities={grounds} title={homepage.groundsTitle} intro={homepage.groundsIntro} />}
-
   <section class="section" id="stay" aria-label="Stays">
     <div class="container-page">
-      <SectionHeader title="A place to drop your bags" lead="Travelling light or bringing everyone? Pick a simple room for your South Coast stopover or book the whole house for your group." />
+      <SectionHeader title="Find a room that fits" lead="Compare bunks, family rooms and whole-house stays, then pick your dates." class="!mb-6" />
       {stays.length > 0 && (
         <details class="quick-book mb-6">
           <summary>Check your dates</summary>
@@ -111,39 +110,61 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
     </div>
   </section>
 
-  <!-- ============ VENUE HIRE ============ -->
-  <section class="section" data-coast-wash="sand" aria-label="Venue hire">
-    <div class="container-page grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-      {homepage.venueImage && <Picture image={homepage.venueImage} sizes="(min-width: 1024px) 540px, 92vw" class="photo aspect-[3/2]" />}
+  {grounds.length > 0 && <ActivityGuide amenities={grounds} title={homepage.groundsTitle} intro={homepage.groundsIntro} />}
+
+  <section class="section" data-coast-art="party" data-coast-wash="sand" aria-labelledby="home-venue-title">
+    <div class:list={['container-page home-venue', homepage.venueImage && 'home-venue-photo']}>
+      {homepage.venueImage && <Picture image={homepage.venueImage} sizes="(min-width: 900px) 510px, 92vw" class="coast-print aspect-[3/2] object-cover" />}
       <div>
-        <SectionHeader rays eyebrow="Venue hire" title={homepage.venueTitle} lead={homepage.venueIntro} class="!mb-6" />
-        <ul class="ray-list grid gap-2 sm:grid-cols-2">
-          {site.venuePage.occasions.map((o) => <li>{o}</li>)}
-        </ul>
-        {settings.pricing.venue && <p class="mt-6"><span class="tag tag-price !h-auto py-1.5">{settings.pricing.venue}</span></p>}
-        <div class="mt-6 flex flex-wrap items-center gap-4">
-          <a href="/venue-hire" class="btn btn-secondary">Hire the venue</a>
+        <p class="eyebrow">Come for the day</p>
+        <h2 class="t-h2 mt-2" id="home-venue-title">{homepage.venueTitle}</h2>
+        <p class="t-lead mt-3 max-w-[43ch]">{homepage.venueIntro}</p>
+        {settings.pricing.venue && <p class="mt-3 tnum font-semibold text-ink">{settings.pricing.venue}</p>}
+        <div class="mt-5 flex flex-wrap items-center gap-4">
+          <a href="/venue-hire" class="btn btn-secondary">See the venue</a>
           <a href="/venue-hire#kids-parties" class="link">Plan a kids&rsquo; party</a>
         </div>
       </div>
     </div>
   </section>
 
-  <MissionBand title={homepage.missionTitle} text={homepage.missionText} />
+  <section class="section home-story" data-coast-art="shore" aria-labelledby="home-story-title">
+    <div class="container-page home-story-spread">
+      <div>
+        <p class="eyebrow">Why Pa&rsquo;s Place exists</p>
+        <h2 class="t-h2 mt-2" id="home-story-title">{homepage.missionTitle}</h2>
+        <p class="t-lead mt-3 max-w-[48ch]">{homepage.missionText}</p>
+        <a class="btn btn-tertiary mt-5" href="/our-story">Read our story</a>
+      </div>
+      <figure class="story-preview">
+        {
+          homepage.missionImage ? (
+            <Picture image={homepage.missionImage} sizes="(min-width: 900px) 465px, 92vw" class="coast-print aspect-[16/10] object-cover" />
+          ) : (
+            <Image src={firstSea} alt="A child and an adult walk towards the sea" widths={[400, 660, 920]} sizes="(min-width: 900px) 465px, 92vw" class="coast-print aspect-[16/10] object-cover" />
+          )
+        }
+        {
+          homepage.missionImage?.caption ? <figcaption class="t-caption mt-2">{homepage.missionImage.caption}</figcaption>
+            : !homepage.missionImage && <figcaption class="t-caption mt-2">Illustration of a first seaside holiday</figcaption>
+        }
+      </figure>
+    </div>
+  </section>
 
   <!-- ============ FINDING US ============ -->
-  <section class="section" data-coast-art="shore" data-coast-wash="sea" aria-label="Where to find us">
+  <section class="home-directions" data-coast-wash="sea" aria-labelledby="directions-title">
     <div class="container-page grid items-center gap-8 md:grid-cols-[1fr_auto]">
       <div>
-        <SectionHeader eyebrow="Finding us" title="Kelso, Pennington, on the KZN South Coast" class="!mb-4" />
+        <h2 id="directions-title" class="t-h3 mb-2">Getting here</h2>
         <p class="flex max-w-xl items-start gap-2.5">
           <Icon name="pin" class="mt-1 h-5 w-5 flex-none text-canopy-600" />
           <span class="whitespace-pre-line">{settings.contact.address}</span>
         </p>
-        <p class="mt-2 max-w-xl">About an hour south of Durban, and two minutes on foot from the beach.</p>
+        <p class="mt-2 max-w-xl">In Kelso, Pennington, about an hour south of Durban and a two-minute walk from the beach.</p>
       </div>
       <div class="flex flex-wrap gap-3 md:flex-col">
-        {settings.contact.mapUrl && <a href={settings.contact.mapUrl} target="_blank" rel="noopener" class="btn btn-tertiary bg-raised">Open the map</a>}
+        {settings.contact.mapUrl && <a href={settings.contact.mapUrl} target="_blank" rel="noopener" class="btn btn-tertiary bg-raised">Get directions</a>}
         <a href="/contact" class="btn btn-tertiary bg-raised">Contact us</a>
       </div>
     </div>
@@ -219,6 +240,32 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
   .visit-nav {
     border-block: 1px solid var(--color-line);
     background: var(--color-raised);
+  }
+
+  .home-venue,
+  .home-story-spread {
+    display: grid;
+    align-items: center;
+    gap: clamp(1.5rem, 5vw, 4.25rem);
+  }
+
+  .home-story {
+    border-block: 1px solid var(--color-line);
+  }
+
+  .story-preview {
+    min-width: 0;
+  }
+
+  .home-directions {
+    padding-block: clamp(1.4rem, 4vw, 3rem);
+  }
+
+  @media (min-width: 900px) {
+    .home-venue-photo,
+    .home-story-spread {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   .quick-book {

@@ -4,11 +4,9 @@ import BookingEngine from '../components/booking/BookingEngine.tsx';
 import { engineProps } from '../components/booking/engine-props';
 import Faqs from '../components/sections/Faqs.astro';
 import MissionBand from '../components/sections/MissionBand.astro';
-import PlaySection from '../components/sections/PlaySection.astro';
 import PartyPlaybook from '../components/sections/PartyPlaybook.astro';
 import Icon from '../components/ui/Icon.astro';
 import Picture from '../components/ui/Picture.astro';
-import SectionHeader from '../components/ui/SectionHeader.astro';
 import { formatRand } from '../server/lib/pricing';
 import { getSite } from '../server/services/content';
 
@@ -16,7 +14,10 @@ const site = await getSite();
 const { settings, venuePage, homepage } = site;
 const tel = settings.contact.phoneLink || settings.contact.phone;
 const venue = site.options.find((o) => o.kind === 'venue');
-const poolPhoto = site.amenities.find((amenity) => amenity.icon === 'pool' && amenity.image)?.image;
+const groundPhotos = ['pool', 'golf'].flatMap((icon) => {
+  const image = site.amenities.find((amenity) => amenity.icon === icon && amenity.image)?.image;
+  return image ? [image] : [];
+});
 
 const steps = [
   { title: 'Send your date', text: 'Choose the day and tell us how many guests. The date is held as soon as you send it.' },
@@ -30,88 +31,241 @@ const steps = [
   description={`Hire the lapa, pool, waterslides and gardens at Pa's Place in Pennington, KZN for birthdays and gatherings. ${settings.pricing.venue}.`}
   image={venuePage.image?.src}
 >
-  <section class="coast-masthead" data-coast-art="garden" aria-label="Venue hire">
-    <div class="container-page grid items-center gap-10 pb-14 pt-10 lg:grid-cols-2 lg:gap-14 lg:pt-14">
+  <section class="coast-masthead" data-coast-art="garden" aria-labelledby="venue-title">
+    <div class:list={['container-page venue-opening', venuePage.image && 'venue-opening-photo']}>
       <div>
-        <p class="eyebrow">Venue hire</p>
-        <h1 class="t-h1 mt-2">{venuePage.title}</h1>
-        <p class="t-lead mt-4 max-w-[52ch]">{venuePage.intro}</p>
-        <ul class="mt-5 flex flex-wrap gap-2">
-          {settings.pricing.venue && <li class="chip tnum"><Icon name="wallet" />{settings.pricing.venue}</li>}
-          {venue?.capacityLabel && <li class="chip tnum"><Icon name="users" />{venue.capacityLabel}</li>}
-        </ul>
-        <div class="mt-7 flex flex-wrap gap-3">
+        <p class="eyebrow">Day hire in Kelso, Pennington</p>
+        <h1 id="venue-title" class="coast-display mt-3">{venuePage.title}</h1>
+        <p class="t-lead mt-4 max-w-[48ch]">{venuePage.intro}</p>
+        <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
           <a href="#book" class="btn btn-primary">Check a date</a>
-          <a href="#kids-parties" class="btn btn-tertiary">Plan a kids&rsquo; party</a>
+          <a href="#venue-included" class="link">See what&rsquo;s included</a>
         </div>
       </div>
-      {venuePage.image && <Picture image={venuePage.image} sizes="(min-width: 1024px) 540px, 92vw" class="coast-print aspect-[3/2] w-full object-cover" eager />}
+      {
+        venuePage.image && (
+          <figure class="venue-photo">
+            <Picture image={venuePage.image} sizes="(min-width: 900px) 590px, 92vw" class="aspect-[8/5] w-full object-cover" eager />
+          </figure>
+        )
+      }
+    </div>
+  </section>
+
+  <div class="venue-summary">
+    <div class="container-page">
+      <ul class="venue-facts" aria-label="Venue at a glance">
+        {settings.pricing.venue && <li><Icon name="wallet" /><span>{settings.pricing.venue}</span></li>}
+        {venue?.capacityLabel && <li><Icon name="users" /><span>{venue.capacityLabel}</span></li>}
+        <li><Icon name="lapa" /><a class="link" href="#kids-parties">Kids&rsquo; birthday playbook</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <section class="section" id="venue-included" data-coast-wash="leaf" aria-labelledby="venue-included-title">
+    <div class:list={['container-page venue-grounds', groundPhotos.length > 0 && 'venue-grounds-photo']}>
+      <div>
+        <h2 class="t-h2" id="venue-included-title">What comes with the venue</h2>
+        <p class="mt-3 max-w-[46ch]">Set up under the lapa and let people drift between the pool, the lawns and the braai.</p>
+        <ul class="venue-inclusions">
+          {venuePage.included.map((item) => <li><Icon name="check" class="h-5 w-5 shrink-0" />{item}</li>)}
+        </ul>
+        {
+          venuePage.occasions.length > 0 && (
+            <p class="venue-occasions"><strong>Good for</strong> {venuePage.occasions.join(' · ')}</p>
+          )
+        }
+      </div>
+      {
+        groundPhotos.length > 0 && (
+          <div class:list={['venue-photos', groundPhotos.length > 1 && 'venue-photos-pair']}>
+            {groundPhotos.map((photo) => (
+              <figure>
+                <Picture image={photo} sizes="(min-width: 900px) 340px, 90vw" class="w-full object-cover" />
+                {photo.caption && <figcaption class="t-caption mt-2">{photo.caption}</figcaption>}
+              </figure>
+            ))}
+          </div>
+        )
+      }
     </div>
   </section>
 
   <PartyPlaybook photo={venuePage.secondaryImage} canBook={Boolean(venue)} />
 
-  <PlaySection tone="sun" label="What is included">
-    <div class="grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
-      <div>
-        <SectionHeader rays eyebrow="What you get" title="Everything for a long, easy day" class="!mb-6" />
-        <ul class="ray-list space-y-2.5">
-          {venuePage.included.map((item) => <li>{item}</li>)}
-        </ul>
-        <h3 class="t-h4 mt-8">Good for</h3>
-        <ul class="mt-3 flex flex-wrap gap-2">
-          {venuePage.occasions.map((o) => <li class="tag !h-7 !px-2.5 !text-[0.8125rem]">{o}</li>)}
-        </ul>
-      </div>
-      {
-        poolPhoto && (
-          <figure>
-            <Picture image={poolPhoto} sizes="(min-width: 1024px) 540px, 92vw" class="photo aspect-[4/3]" />
-            {poolPhoto.caption && <figcaption class="t-caption mt-2">{poolPhoto.caption}</figcaption>}
-          </figure>
-        )
-      }
-    </div>
-  </PlaySection>
-
-  <section class="section" id="book" aria-label="Booking form">
+  <section class="section" id="book" aria-labelledby="venue-book-title">
     <div class="container-page">
-      <SectionHeader eyebrow="Book the venue" title="Pick your day" />
-      {
-        venue ? (
-          <BookingEngine client:load {...engineProps(site)} kinds={['venue']} defaultOption={venue.slug} />
-        ) : (
-          <p class="alert alert-info">Online venue booking is not open at the moment. Please call us to book.</p>
-        )
-      }
-      {
-        settings.contact.phone && (
-          <p class="mt-5 text-center text-[0.9375rem]">
-            Rather book by phone? Call {settings.contact.person || 'us'} on <a class="link tnum" href={`tel:${tel}`}>{settings.contact.phone}</a>.
-          </p>
-        )
-      }
-    </div>
-  </section>
-
-  <section class="section" data-coast-wash="leaf" aria-label="How booking works">
-    <div class="container-page">
-      <SectionHeader eyebrow="How it works" title="Booking in three steps" />
-      <ol class="grid gap-6 md:grid-cols-3">
+      <h2 class="t-h2" id="venue-book-title">Pick your date</h2>
+      <p class="t-lead mt-3 mb-7 max-w-[55ch]">Start with a date and your guest count. Here&rsquo;s how we turn your request into a booking.</p>
+      <ol class="venue-booking-steps">
         {
-          steps.map((s, i) => (
-            <li class="card card-pad">
-              <span class="ring">{i + 1}</span>
-              <h3 class="t-h4 mt-4">{s.title}</h3>
-              <p class="mt-1.5 text-[0.9375rem]">{s.text}</p>
+          steps.map((step, index) => (
+            <li>
+              <span class="ring" aria-hidden="true">{index + 1}</span>
+              <div>
+                <h3 class="t-h4">{step.title}</h3>
+                <p class="mt-1 text-[0.9375rem]">{step.text}</p>
+              </div>
             </li>
           ))
         }
       </ol>
-      <p class="mt-8 text-[0.9375rem]">Want to make a weekend of it? <a class="link" href="/book-a-stay">Book a stay as well</a>.</p>
+      {
+        venue ? (
+          <BookingEngine client:load {...engineProps(site)} kinds={['venue']} defaultOption={venue.slug} />
+        ) : (
+          <p class="alert alert-info">Online venue booking is not open at the moment. <a href="/contact?about=venue#enquiry" class="link">Contact us to book.</a></p>
+        )
+      }
+      <div class="venue-booking-help">
+        {
+          settings.contact.phone && (
+            <p>Prefer to call? <a class="link tnum" href={`tel:${tel}`}>{settings.contact.phone}</a></p>
+          )
+        }
+        <p>Making a weekend of it? <a class="link" href="/book-a-stay">Find a room</a>.</p>
+      </div>
     </div>
   </section>
 
   <Faqs faqs={site.faqs.filter((f) => f.topic === 'venue')} title="About hiring the venue" />
   <MissionBand title={homepage.missionTitle} text={homepage.missionText} />
 </Layout>
+
+<style>
+  .venue-opening,
+  .venue-grounds {
+    display: grid;
+    gap: clamp(1.65rem, 4vw, 4rem);
+    align-items: center;
+  }
+
+  .venue-opening {
+    padding-block: clamp(2.25rem, 5vw, 4.5rem);
+  }
+
+  .venue-photo {
+    min-width: 0;
+    padding: 0.4rem;
+    border: 1px solid var(--color-line);
+    border-radius: 4rem 12px 12px;
+    background: var(--color-raised);
+  }
+
+  .venue-photo :global(img) {
+    display: block;
+    border-radius: inherit;
+  }
+
+  .venue-summary {
+    background: var(--color-raised);
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .venue-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2rem;
+    align-items: center;
+    padding-block: 0.85rem;
+  }
+
+  .venue-facts li {
+    display: flex;
+    min-height: 32px;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--coast-deep);
+    font-weight: 650;
+    font-size: 0.9375rem;
+  }
+
+  .venue-facts li > :global(svg),
+  .venue-inclusions li > :global(svg) {
+    flex: none;
+    color: var(--coast-blue);
+  }
+
+  .venue-inclusions {
+    margin-top: 1rem;
+    border-top: 1px solid var(--color-line-strong);
+  }
+
+  .venue-inclusions li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-block: 0.6rem;
+    border-bottom: 1px solid var(--color-line-strong);
+  }
+
+  .venue-occasions {
+    margin-top: 0.8rem;
+    color: var(--color-ink-muted);
+    font-size: 0.875rem;
+  }
+
+  .venue-occasions strong {
+    display: block;
+    color: var(--color-ink);
+  }
+
+  .venue-photos {
+    display: grid;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .venue-photos-pair {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+
+  .venue-photos :global(img) {
+    display: block;
+    aspect-ratio: 4 / 5;
+    border-radius: 1rem;
+  }
+
+  .venue-photos-pair figure:nth-child(2) {
+    margin-top: 17%;
+  }
+
+  .venue-photos-pair figure:nth-child(2) :global(img) {
+    aspect-ratio: 3 / 4;
+  }
+
+  .venue-booking-steps {
+    display: grid;
+    gap: 0.85rem 1.5rem;
+    margin-bottom: 1.65rem;
+    padding-block: 1rem;
+    border-block: 1px solid var(--color-line);
+  }
+
+  .venue-booking-steps > li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .venue-booking-help {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin-top: 1.4rem;
+    font-size: 0.9375rem;
+  }
+
+  @media (min-width: 760px) {
+    .venue-booking-steps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 900px) {
+    .venue-opening-photo,
+    .venue-grounds-photo {
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    }
+  }
+</style>
