@@ -1,25 +1,27 @@
 ---
+import type { VenuePage } from '../../server/services/documents';
 import type { Picture as VenuePhoto } from '../../server/services/media';
 import Picture from '../ui/Picture.astro';
 
 interface Props {
   photo?: VenuePhoto | null;
   canBook: boolean;
+  copy: VenuePage['birthday'];
 }
 
-const { photo, canBook } = Astro.props;
+const { photo, canBook, copy } = Astro.props;
 const scenes = [
-  { art: 'cake', title: 'Cake this way!', text: 'Meet your friends under the lapa. Where should the birthday cake go?' },
-  { art: 'golf', title: 'Your turn to play', text: 'Try for a hole-in-one or bring a ball for a game on the lawn.' },
-  { art: 'slide', title: 'Ready, set, splash', text: 'Bring your towel if you want a turn on the waterslides. Grown-ups keep watch at the pool.' },
+  { art: 'cake', ...copy.cake },
+  { art: 'golf', ...copy.golf },
+  { art: 'slide', ...copy.slide },
 ] as const;
 ---
 
 <section id="kids-parties" class="section party-playbook" data-coast-art="party" data-coast-wash="sand" aria-labelledby="kids-parties-title">
   <div class="container-page">
     <p class="eyebrow">The birthday playbook</p>
-    <h2 id="kids-parties-title" class="t-h2 mt-2">A birthday under the big trees</h2>
-    <p class="t-lead mt-3 max-w-[49ch]">Where do we start? Here&rsquo;s one way to play the day.</p>
+    <h2 id="kids-parties-title" class="t-h2 mt-2">{copy.title}</h2>
+    <p class="t-lead mt-3 max-w-[49ch]">{copy.intro}</p>
 
     <div class="party-book">
       {
@@ -47,8 +49,8 @@ const scenes = [
         )
       }
       <div>
-        <h3 class="t-h3">Planning for the grown-ups</h3>
-        <p class="mt-2 max-w-[49ch]">Pick a date and work out how many guests you&rsquo;ll invite. Ask us about anything you need for the day, from setting up the lapa to planning pool time.</p>
+        <h3 class="t-h3">{copy.planningTitle}</h3>
+        <p class="mt-2 max-w-[49ch]">{copy.planningText}</p>
         <div class="party-actions">
           {canBook && <a href="#book" class="btn btn-primary">Check a party date</a>}
           <a href="/contact?about=venue#enquiry" class:list={['btn', canBook ? 'btn-tertiary' : 'btn-primary']}>Ask about your party</a>

@@ -207,6 +207,21 @@
   }
 }
 
+[data-coast-art="mini-golf"] {
+  --coast-art: url("../assets/images/mini-golf-ink.webp");
+  --coast-art-size: clamp(350px, 44vw, 660px);
+  --coast-art-position: left max(-85px, calc((100vw - 90rem) / 2)) bottom -0.5rem;
+  --coast-art-opacity: 0.24;
+}
+
+@media (max-width: 899px) {
+  [data-coast-art="mini-golf"] {
+    --coast-art-size: clamp(300px, 64vw, 450px);
+    --coast-art-position: right -3rem top 0;
+    --coast-art-opacity: 0.12;
+  }
+}
+
 /* Quiet, opt-in shifts on selected sections as they come into view. */
 [data-coast-wash] {
   background-color: var(--coast-wash);

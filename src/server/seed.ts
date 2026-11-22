@@ -157,11 +157,7 @@ async function seedContent() {
         address: '35b Umdoni Road, Kelso, Pennington, KwaZulu-Natal, South Africa',
         mapUrl: 'https://www.google.com/maps/search/?api=1&query=35b+Umdoni+Road+Kelso+Pennington+KwaZulu-Natal',
       },
-      pricing: {
-        accommodation: 'R200 per person per night (minimum 4 people)',
-        venue: 'R80 per person (minimum 10 people, R500 deposit)',
-      },
-      booking: {
+        booking: {
         stayDepositPercent: 50,
         venueDeposit: 500,
         checkIn: '14:00',
@@ -178,7 +174,7 @@ async function seedContent() {
       heroEyebrow: 'Kelso, Pennington · KZN South Coast',
       heroTitle: 'A holiday garden, two minutes from the sea',
       heroSubtitle:
-        'Pool, waterslides, mini-golf and room for the whole family, under some of the biggest trees on the South Coast. R200 per person per night.',
+        'Pool, waterslides, mini-golf and room for the whole family, under some of the biggest trees on the South Coast. {{stay_price}}.',
       heroImageId: img('bigTree'),
       groundsTitle: 'A garden built for long days outside',
       groundsIntro:
@@ -347,11 +343,11 @@ async function seedContent() {
 
   await db.insert(schema.faqs).values(
     [
-      ['stays', 'How much does it cost to stay?', 'Stays are priced per person per night, from R160 in the bunk room to R200 in the family room or the whole house. The price for your dates is shown before you send your request.'],
+      ['stays', 'How much does it cost to stay?', '{{stay_price}}. The price for your dates is shown before you send your request.'],
       ['stays', 'How do I pay?', 'Send a booking request and we hold your dates. We then confirm with you and send the details for paying the deposit by EFT. The balance is paid on arrival.'],
       ['stays', 'How far is the beach?', 'About two minutes on foot from the gate.'],
       ['stays', 'Can we use the pool, slides and mini-golf?', 'Yes. They are included for everyone staying with us.'],
-      ['venue', 'What does venue hire cost?', 'R80 per person for the day, with a minimum of 10 people. A R500 deposit secures your date.'],
+      ['venue', 'What does venue hire cost?', '{{venue_price}}. Check a date to see the total before you send your request.'],
       ['venue', 'What is included with the venue?', 'The covered lapa with tables, chairs and a braai, plus the pool and waterslides, the mini-golf course and the lawns.'],
       ['venue', 'Can we bring our own food and decorations?', 'Yes. Most groups bring their own catering and decorate the lapa themselves.'],
       ['general', "Where does the money go?", "Pa's Place is a non-profit company. Income from stays and venue hire helps fund seaside holidays for children who have never had one."],

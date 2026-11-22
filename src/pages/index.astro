@@ -97,11 +97,11 @@ const grounds = amenities.map((amenity) => ({
 
   <section class="section" id="stay" aria-labelledby="plan-title">
     <div class="container-page">
-      <h2 class="t-h2 mb-6" id="plan-title">Come for the day or stay the night</h2>
+      <h2 class="t-h2 mb-6" id="plan-title">{homepage.planTitle}</h2>
       <div class="visit-plans">
         <div>
-          <h3 class="t-h3">Find a room that fits</h3>
-          <p class="mt-2 mb-4 max-w-[44ch]">Bunks, family rooms or the whole house. Choose what suits your group and check your dates.</p>
+          <h3 class="t-h3">{homepage.roomsTitle}</h3>
+          <p class="mt-2 mb-4 max-w-[44ch]">{homepage.roomsIntro}</p>
           {stays.length > 0 && (
             <details class="quick-book mb-6">
               <summary>Check your dates</summary>
@@ -175,12 +175,12 @@ const grounds = amenities.map((amenity) => ({
   <section class="home-directions" data-coast-wash="sea" aria-labelledby="directions-title">
     <div class="container-page grid items-center gap-8 md:grid-cols-[1fr_auto]">
       <div>
-        <h2 id="directions-title" class="t-h3 mb-2">Getting here</h2>
+        <h2 id="directions-title" class="t-h3 mb-2">{homepage.directionsTitle}</h2>
         <p class="flex max-w-xl items-start gap-2.5">
           <Icon name="pin" class="mt-1 h-5 w-5 flex-none text-canopy-600" />
           <span class="whitespace-pre-line">{settings.contact.address}</span>
         </p>
-        <p class="mt-2 max-w-xl">In Kelso, Pennington, about an hour south of Durban and a two-minute walk from the beach.</p>
+        <p class="mt-2 max-w-xl">{homepage.directionsIntro}</p>
       </div>
       <div class="flex flex-wrap gap-3 md:flex-col">
         {settings.contact.mapUrl && <a href={settings.contact.mapUrl} target="_blank" rel="noopener" class="btn btn-tertiary bg-raised">Get directions</a>}

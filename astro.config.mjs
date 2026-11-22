@@ -12,7 +12,17 @@ export default defineConfig({
   output: 'server',
 
   // Reject cross-site form posts (CSRF) on every non-GET request.
-  security: { checkOrigin: true },
+  security: {
+    checkOrigin: true,
+    // Railway terminates HTTPS before forwarding requests to the Node server.
+    allowedDomains: [
+      { hostname: 'beta.pasplace.co.za', protocol: 'https' },
+      { hostname: 'pasplace.co.za', protocol: 'https' },
+      { hostname: 'www.pasplace.co.za', protocol: 'https' },
+      { hostname: 'localhost', protocol: 'http' },
+      { hostname: '127.0.0.1', protocol: 'http' },
+    ],
+  },
 
   vite: {
     plugins: [tailwindcss()],

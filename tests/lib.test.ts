@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { addDays, daysBetween, eachDate, isIsoDate, todaySast } from '../src/server/lib/dates';
 import { newRef, slugify } from '../src/server/lib/ids';
-import { formatRand, quote } from '../src/server/lib/pricing';
+import { describePrices, formatRand, quote } from '../src/server/lib/pricing';
 import { rateLimit, resetRateLimits } from '../src/server/lib/rate-limit';
 import { hashPassword, passwordProblem, verifyPassword } from '../src/server/auth/password';
 import { can, canManageRole } from '../src/server/auth/session';
@@ -26,6 +26,22 @@ describe('dates', () => {
 });
 
 describe('pricing', () => {
+  it('uses published options and the configured deposit in public prices', () => {
+    expect(describePrices([
+      { kind: 'stay', rate: 225, minPeople: 2 },
+      { kind: 'stay', rate: 175, minPeople: 2 },
+      { kind: 'venue', rate: 90, minPeople: 12 },
+    ], 600)).toEqual({
+      accommodation: 'From R175 per person per night',
+      venue: 'R90 per person (minimum 12 people, deposit R600)',
+    });
+    expect(describePrices([{ kind: 'venue', rate: 40, minPeople: 1 }], 75)).toEqual({
+      accommodation: '',
+      venue: 'R40 per person (minimum 1 person, deposit up to R75)',
+    });
+    expect(describePrices([], 0)).toEqual({ accommodation: '', venue: '' });
+  });
+
   it('prices a stay per person per night with a rounded-up deposit', () => {
     expect(quote({ kind: 'stay', rate: 200, people: 4, nights: 3 })).toEqual({ nights: 3, total: 2400, deposit: 1200, balance: 1200 });
     // 50% of R480 is R240, rounded up to the next R50

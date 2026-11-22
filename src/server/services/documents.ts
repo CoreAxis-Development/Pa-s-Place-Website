@@ -72,6 +72,11 @@ export const homepageSchema = z.object({
   heroImageId: mediaRef(),
   groundsTitle: text(''),
   groundsIntro: text(''),
+  planTitle: text('Come for the day or stay the night'),
+  roomsTitle: text('Find a room that fits'),
+  roomsIntro: text('Bunks, family rooms or the whole house. Choose what suits your group and check your dates.'),
+  directionsTitle: text('Getting here'),
+  directionsIntro: text('In Kelso, Pennington, about an hour south of Durban and a two-minute walk from the beach.'),
   venueTitle: text(''),
   venueIntro: text(''),
   venueImageId: mediaRef(),
@@ -87,6 +92,21 @@ export const stayPageSchema = z.object({
   included: lines(),
 });
 
+const partyScene = (title: string, description: string) => z.object({
+  title: text(title),
+  text: text(description),
+}).prefault({});
+
+const birthdaySchema = z.object({
+  title: text('A birthday under the big trees'),
+  intro: text('Where do we start? Here’s one way to play the day.'),
+  cake: partyScene('Cake this way!', 'Meet your friends under the lapa. Where should the birthday cake go?'),
+  golf: partyScene('Your turn to play', 'Try for a hole-in-one or bring a ball for a game on the lawn.'),
+  slide: partyScene('Ready, set, splash', 'Bring your towel if you want a turn on the waterslides. Grown-ups keep watch at the pool.'),
+  planningTitle: text('Planning for the grown-ups'),
+  planningText: text('Pick a date and work out how many guests you’ll invite. Ask us about anything you need for the day, from setting up the lapa to planning pool time.'),
+}).prefault({});
+
 export const venuePageSchema = z.object({
   title: text(''),
   intro: text(''),
@@ -94,6 +114,7 @@ export const venuePageSchema = z.object({
   secondaryImageId: mediaRef(),
   included: lines(),
   occasions: lines(),
+  birthday: birthdaySchema,
 });
 
 export type Settings = z.infer<typeof settingsSchema>;
@@ -133,7 +154,7 @@ export const DOCUMENTS = {
   settings: {
     key: 'settings',
     title: 'Site settings',
-    description: 'Contact details, pricing lines, deposit rules and the announcement bar.',
+    description: 'Contact details, deposit rules and the announcement bar.',
     preview: '/',
     schema: settingsSchema,
     groups: [
@@ -159,15 +180,8 @@ export const DOCUMENTS = {
         ],
       },
       {
-        title: 'Pricing lines',
-        description: 'Short summaries shown beside booking buttons. Actual rates are set on each booking option.',
-        fields: [
-          { name: 'pricing.accommodation', label: 'Accommodation', type: 'text', help: 'e.g. R200 per person per night (minimum 4 people)' },
-          { name: 'pricing.venue', label: 'Venue hire', type: 'text', help: 'e.g. R80 per person (minimum 10 people, R500 deposit)' },
-        ],
-      },
-      {
         title: 'Booking rules',
+        description: 'Change room and venue rates or guest limits in Booking options. Prices displayed to visitors use those values and the deposit set here.',
         fields: [
           { name: 'booking.stayDepositPercent', label: 'Deposit for stays (%)', type: 'number', help: 'Share of the total asked for up front. Rounded up to the next R50.' },
           { name: 'booking.venueDeposit', label: 'Deposit for venue hire (Rand)', type: 'number' },
@@ -212,7 +226,7 @@ export const DOCUMENTS = {
         fields: [
           { name: 'heroEyebrow', label: 'Small line above the headline', type: 'text' },
           { name: 'heroTitle', label: 'Headline', type: 'text' },
-          { name: 'heroSubtitle', label: 'Supporting text', type: 'textarea' },
+          { name: 'heroSubtitle', label: 'Supporting text', type: 'textarea', help: 'Use {{stay_price}} or {{venue_price}} to show the current rates.' },
           { name: 'heroImageId', label: 'Hero photo', type: 'image' },
         ],
       },
@@ -221,6 +235,16 @@ export const DOCUMENTS = {
         fields: [
           { name: 'groundsTitle', label: 'Heading', type: 'text' },
           { name: 'groundsIntro', label: 'Introduction', type: 'textarea' },
+        ],
+      },
+      {
+        title: 'Planning a visit',
+        fields: [
+          { name: 'planTitle', label: 'Section heading', type: 'text' },
+          { name: 'roomsTitle', label: 'Room options heading', type: 'text' },
+          { name: 'roomsIntro', label: 'Room options introduction', type: 'textarea' },
+          { name: 'directionsTitle', label: 'Directions heading', type: 'text' },
+          { name: 'directionsIntro', label: 'Directions introduction', type: 'textarea' },
         ],
       },
       {
@@ -265,7 +289,7 @@ export const DOCUMENTS = {
   venuePage: {
     key: 'venuePage',
     title: 'Venue hire page',
-    description: 'Heading, introduction, inclusions and the occasions list.',
+    description: 'Venue wording, inclusions, occasions and the kids’ birthday playbook.',
     preview: '/venue-hire',
     schema: venuePageSchema,
     groups: [
@@ -275,7 +299,7 @@ export const DOCUMENTS = {
           { name: 'title', label: 'Heading', type: 'text' },
           { name: 'intro', label: 'Introduction', type: 'textarea' },
           { name: 'imageId', label: 'Main photo', type: 'image' },
-          { name: 'secondaryImageId', label: 'Second photo', type: 'image' },
+          { name: 'secondaryImageId', label: 'Birthday playbook photo', type: 'image' },
         ],
       },
       {
@@ -285,6 +309,21 @@ export const DOCUMENTS = {
       {
         title: 'Occasions',
         fields: [{ name: 'occasions', label: 'One occasion per line', type: 'lines' }],
+      },
+      {
+        title: 'Birthday playbook',
+        fields: [
+          { name: 'birthday.title', label: 'Heading', type: 'text' },
+          { name: 'birthday.intro', label: 'Introduction', type: 'textarea' },
+          { name: 'birthday.cake.title', label: 'Lapa scene heading', type: 'text' },
+          { name: 'birthday.cake.text', label: 'Lapa scene text', type: 'textarea' },
+          { name: 'birthday.golf.title', label: 'Games scene heading', type: 'text' },
+          { name: 'birthday.golf.text', label: 'Games scene text', type: 'textarea' },
+          { name: 'birthday.slide.title', label: 'Pool scene heading', type: 'text' },
+          { name: 'birthday.slide.text', label: 'Pool scene text', type: 'textarea' },
+          { name: 'birthday.planningTitle', label: 'Planning notes heading', type: 'text' },
+          { name: 'birthday.planningText', label: 'Planning notes text', type: 'textarea' },
+        ],
       },
     ],
   },

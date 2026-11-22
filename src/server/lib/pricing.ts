@@ -32,3 +32,29 @@ export function quote(
 
 /** R1 200 — a space as the thousands separator, the South African convention. */
 export const formatRand = (n: number) => `R${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')}`;
+
+interface PublicRate {
+  kind: 'stay' | 'venue';
+  rate: number;
+  minPeople: number;
+}
+
+export function describePrices(options: PublicRate[], venueDeposit: number) {
+  const stays = options.filter((option) => option.kind === 'stay');
+  const lowestStay = Math.min(...stays.map((option) => option.rate));
+  const accommodation = stays.length
+    ? `${stays.some((option) => option.rate > lowestStay) ? 'From ' : ''}${formatRand(lowestStay)} per person per night`
+    : '';
+
+  const venue = options.find((option) => option.kind === 'venue');
+  if (!venue) return { accommodation, venue: '' };
+  const qualification = [`minimum ${venue.minPeople} ${venue.minPeople === 1 ? 'person' : 'people'}`];
+  if (venueDeposit > 0) {
+    const depositLabel = venueDeposit > venue.rate * venue.minPeople ? 'deposit up to ' : 'deposit ';
+    qualification.push(depositLabel + formatRand(venueDeposit));
+  }
+  return {
+    accommodation,
+    venue: `${formatRand(venue.rate)} per person (${qualification.join(', ')})`,
+  };
+}

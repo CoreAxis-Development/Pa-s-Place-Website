@@ -174,7 +174,7 @@ export const COLLECTIONS: Record<string, CollectionDef> = {
     schema: faqInput,
     fields: [
       { name: 'question', label: 'Question', type: 'text', wide: true, required: true },
-      { name: 'answer', label: 'Answer', type: 'textarea', wide: true, required: true },
+      { name: 'answer', label: 'Answer', type: 'textarea', help: 'Use {{stay_price}} or {{venue_price}} to insert the current public price.', wide: true, required: true },
       { name: 'topic', label: 'Shown on', type: 'select', initial: 'general', options: FAQ_TOPICS },
       position,
       published,

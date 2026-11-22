@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { getDb, schema } from '../db/client';
 import type { Amenity, Faq, StayOption } from '../db/schema';
 import { newId, slugify } from '../lib/ids';
-import { formatRand } from '../lib/pricing';
+import { describePrices, formatRand } from '../lib/pricing';
 import { bumpContentVersion, cached } from './cache';
 import { getDocument, type Homepage, type Settings, type StayPage, type VenuePage } from './documents';
 import { toPicture, type Picture } from './media';
@@ -298,6 +298,23 @@ export const toPublicOption = (o: StayOption & { image: Parameters<typeof toPict
   image: o.image ? toPicture(o.image) : null,
 });
 
+type PriceSummaries = ReturnType<typeof describePrices>;
+
+const originalPriceCopy: Record<string, string> = {
+  'Pool, waterslides, mini-golf and room for the whole family, under some of the biggest trees on the South Coast. R200 per person per night.':
+    'Pool, waterslides, mini-golf and room for the whole family, under some of the biggest trees on the South Coast. {{stay_price}}.',
+  'Stays are priced per person per night, from R160 in the bunk room to R200 in the family room or the whole house. The price for your dates is shown before you send your request.':
+    '{{stay_price}}. The price for your dates is shown before you send your request.',
+  'R80 per person for the day, with a minimum of 10 people. A R500 deposit secures your date.':
+    '{{venue_price}}. Check a date to see the total before you send your request.',
+};
+
+function withCurrentPrices(copy: string, prices: PriceSummaries) {
+  const template = Object.hasOwn(originalPriceCopy, copy) ? originalPriceCopy[copy] : copy;
+  return template.replaceAll('{{stay_price}}', prices.accommodation || 'Contact us for room rates')
+    .replaceAll('{{venue_price}}', prices.venue || 'Contact us for venue pricing');
+}
+
 async function loadSite(): Promise<SiteContent> {
   const db = await getDb();
   const [settings, homepage, stayPage, venuePage, options, amenities, gallery, faqs] = await Promise.all([
@@ -332,11 +349,13 @@ async function loadSite(): Promise<SiteContent> {
   }));
 
   const digits = settings.contact.phoneLink.replace(/\D/g, '');
+  const pricing = describePrices(options, settings.booking.venueDeposit);
 
   return {
-    settings,
+    settings: { ...settings, pricing },
     homepage: {
       ...homepage,
+      heroSubtitle: withCurrentPrices(homepage.heroSubtitle, pricing),
       heroImage: pic(homepage.heroImageId),
       venueImage: pic(homepage.venueImageId),
       missionImage: pic(homepage.missionImageId),
@@ -356,7 +375,7 @@ async function loadSite(): Promise<SiteContent> {
       ...c,
       count: galleryItems.filter((g) => g.category === c.value).length,
     })).filter((c) => c.count > 0),
-    faqs: faqs.map((f) => ({ id: f.id, question: f.question, answer: f.answer, topic: f.topic })),
+    faqs: faqs.map((f) => ({ id: f.id, question: f.question, answer: withCurrentPrices(f.answer, pricing), topic: f.topic })),
     whatsappUrl: digits ? `https://wa.me/${digits}` : null,
   };
 }
