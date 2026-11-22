@@ -195,15 +195,25 @@
   --coast-art-opacity: 0.22;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 899px) {
   [data-coast-art="garden"] {
-    --coast-art-position: right -70px top 3rem;
-    --coast-art-opacity: 0.12;
+    --coast-art-size: clamp(300px, 55vw, 480px);
+    --coast-art-position: right -5rem top -1rem;
+    --coast-art-opacity: 0.13;
+  }
+
+  [data-coast-art="garden"]::before {
+    mask-image: radial-gradient(ellipse 78% 15rem at right top, #000 15%, transparent 100%);
   }
 
   [data-coast-art="shore"] {
-    --coast-art-position: right -4rem bottom;
-    --coast-art-opacity: 0.16;
+    --coast-art-size: clamp(420px, 80vw, 750px);
+    --coast-art-position: right -2rem bottom -1rem;
+    --coast-art-opacity: 0.14;
+  }
+
+  [data-coast-art="shore"]::before {
+    mask-image: linear-gradient(to left, #000 22%, transparent 97%);
   }
 }
 
@@ -215,10 +225,8 @@
 }
 
 @media (max-width: 899px) {
-  [data-coast-art="mini-golf"] {
-    --coast-art-size: clamp(300px, 64vw, 450px);
-    --coast-art-position: right -3rem top 0;
-    --coast-art-opacity: 0.12;
+  [data-coast-art="mini-golf"]::before {
+    display: none;
   }
 }
 
@@ -271,6 +279,10 @@
   [data-coast-art="party"] {
     --coast-art-position: right -7rem top 0;
     --coast-art-opacity: 0.12;
+  }
+
+  [data-coast-art="party"]::before {
+    mask-image: linear-gradient(to left, #000 25%, transparent 95%);
   }
 }
 

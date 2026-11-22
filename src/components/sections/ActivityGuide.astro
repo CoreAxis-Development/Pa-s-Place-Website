@@ -18,9 +18,12 @@ const featuredAmenity = amenities.find((amenity) => amenity.image) ?? amenities[
     <div>
       <h2 id="grounds-title" class="t-h2">{title}</h2>
       <p class="t-lead mt-4 max-w-[42ch]">{intro}</p>
-      <a class="link mt-5 inline-flex items-center gap-2" href="/gallery">
-        See the gallery <Icon name="arrow" class="h-4 w-4" />
-      </a>
+      <div class="activity-links">
+        <a class="link inline-flex items-center gap-2" href="/gallery">
+          See the gallery <Icon name="arrow" class="h-4 w-4 shrink-0" />
+        </a>
+        <span aria-hidden="true" class="activity-ink"></span>
+      </div>
     </div>
 
     <div class="activity-board">
@@ -51,6 +54,37 @@ const featuredAmenity = amenities.find((amenity) => amenity.image) ?? amenities[
     display: grid;
     gap: clamp(1.5rem, 5vw, 4.5rem);
     align-items: start;
+  }
+
+  .activity-links {
+    margin-top: 1rem;
+  }
+
+  .activity-ink {
+    display: none;
+  }
+
+  @media (max-width: 899px) {
+    .activity-layout {
+      gap: 1rem;
+    }
+
+    .activity-links {
+      display: flex;
+      min-height: 52px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.55rem;
+    }
+
+    .activity-ink {
+      display: block;
+      width: min(52%, 12rem);
+      aspect-ratio: 2;
+      flex: none;
+      background: var(--coast-art) center / contain no-repeat;
+      opacity: 0.28;
+    }
   }
 
   .activity-board {
