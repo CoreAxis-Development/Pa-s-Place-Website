@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import ActivityGuide from '../components/sections/ActivityGuide.astro';
 import Faqs from '../components/sections/Faqs.astro';
 import MissionBand from '../components/sections/MissionBand.astro';
 import OptionCard from '../components/sections/OptionCard.astro';
@@ -17,7 +18,9 @@ const today = todaySast();
 
 const pool = amenities.find((amenity) => amenity.icon === 'pool');
 const grounds = pool ? [pool, ...amenities.filter((amenity) => amenity.id !== pool.id)] : amenities;
-const hero = homepage.heroImage ?? grounds.find((amenity) => amenity.image)?.image;
+const hero = pool?.image ?? homepage.heroImage ?? grounds.find((amenity) => amenity.image)?.image;
+const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.image)]
+  .find((photo) => photo && photo.id !== hero?.id);
 ---
 
 <Layout image={hero?.src}>
@@ -25,78 +28,54 @@ const hero = homepage.heroImage ?? grounds.find((amenity) => amenity.image)?.ima
     <div class:list={['container-page hero-spread', hero && 'hero-with-photo']}>
       <div>
         <p class="eyebrow">{homepage.heroEyebrow}</p>
-        <h1 id="home-title" class="coast-display mt-4">{homepage.heroTitle}</h1>
-        <p class="t-lead mt-5 max-w-[43ch]">{homepage.heroSubtitle}</p>
-        <a href="/book-a-stay#book" class="btn btn-primary mt-7">Check availability</a>
+        <h1 id="home-title" class="coast-display mt-3">{homepage.heroTitle}</h1>
+        <p class="t-lead mt-4 max-w-[42ch]">{homepage.heroSubtitle}</p>
+        <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+          <a href="/book-a-stay#book" class="btn btn-primary">Check availability</a>
+          <a href={amenities.length > 0 ? '#spot-it-trail' : '/gallery'} class="link">{amenities.length > 0 ? 'Try the spot-it trail' : 'See the gallery'}</a>
+        </div>
       </div>
       {
         hero && (
-          <figure class="hero-print">
-            <Picture image={hero} sizes="(min-width: 900px) 620px, 92vw" class="aspect-[4/3] w-full object-cover" eager />
-            {hero.caption && <figcaption>{hero.caption}</figcaption>}
-          </figure>
+          <div class:list={['holiday-photos', secondPhoto && 'holiday-photos-pair']}>
+            <figure class="holiday-main">
+              <Picture image={hero} sizes="(min-width: 900px) 440px, 84vw" class="holiday-photo" eager />
+            </figure>
+            {secondPhoto && (
+              <figure class="holiday-side">
+                <Picture image={secondPhoto} sizes="(min-width: 900px) 185px, 35vw" class="holiday-photo" />
+              </figure>
+            )}
+          </div>
         )
       }
     </div>
   </section>
 
   <nav aria-label="Plan your visit" class="visit-nav">
-    <div class="container-page pb-10">
+    <div class="container-page">
       <div class="coast-route">
         <a href="#stay">
-          <span>Stay<small>Rooms and whole-house stays</small></span><Icon name="arrow" />
-        </a>
-        <a href="/venue-hire">
-          <span>Celebrate<small>Hire the lapa and grounds</small></span><Icon name="arrow" />
+          <Icon name="bed" />
+          <span>Find a room<small>Come solo or bring your crew</small></span>
         </a>
         <a href={amenities.length > 0 ? '#grounds' : '/gallery'}>
-          <span>Explore<small>Pool, slides and mini-golf</small></span><Icon name="arrow" />
+          <Icon name="pool" />
+          <span>Find the fun<small>Slides, mini-golf and lawn games</small></span>
+        </a>
+        <a href="/venue-hire">
+          <Icon name="lapa" />
+          <span>Host a party<small>Book the lapa and grounds</small></span>
         </a>
       </div>
     </div>
   </nav>
 
-  {
-    amenities.length > 0 && (
-      <section id="grounds" class="section grounds" aria-labelledby="grounds-title">
-        <div class="container-page grounds-layout">
-          <div>
-            <p class="eyebrow">Around the grounds</p>
-            <h2 id="grounds-title" class="t-h2 mt-2">{homepage.groundsTitle}</h2>
-            <p class="t-lead mt-4 max-w-[50ch]">{homepage.groundsIntro}</p>
-            <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
-              <a href="/gallery" class="btn btn-tertiary">See the gallery</a>
-              <a href="/what-we-do#childrens-holiday" class="link">Follow a holiday by the sea</a>
-            </div>
-          </div>
-          <div class="grounds-spread">
-            {
-              grounds.map((amenity) => (
-                <article class="ground-entry">
-                  {amenity.image && (
-                    <Picture
-                      image={amenity.image}
-                      sizes="(min-width: 900px) 315px, 45vw"
-                      class="ground-photo w-full object-cover"
-                    />
-                  )}
-                  <h3 class="ground-title">
-                    <Icon name={amenity.icon} class="h-5 w-5 shrink-0" />
-                    {amenity.title}
-                  </h3>
-                  <p class="ground-description">{amenity.description}</p>
-                </article>
-              ))
-            }
-          </div>
-        </div>
-      </section>
-    )
-  }
+  {grounds.length > 0 && <ActivityGuide amenities={grounds} title={homepage.groundsTitle} intro={homepage.groundsIntro} />}
 
   <section class="section" id="stay" aria-label="Stays">
     <div class="container-page">
-      <SectionHeader title="Find your kind of stay" lead="Choose a room or bring everyone and book the whole house." />
+      <SectionHeader title="A place to drop your bags" lead="Travelling light or bringing everyone? Pick a simple room for your South Coast stopover or book the whole house for your group." />
       {stays.length > 0 && (
         <details class="quick-book mb-6">
           <summary>Check your dates</summary>
@@ -171,90 +150,72 @@ const hero = homepage.heroImage ?? grounds.find((amenity) => amenity.image)?.ima
 </Layout>
 
 <style>
-  .hero-spread {
-    display: grid;
-    align-items: center;
-    gap: clamp(1.7rem, 4.4vw, 4.5rem);
-    padding-block: clamp(2rem, 4vw, 4.25rem);
-  }
-
-  .hero-print {
-    min-width: 0;
-  }
-
-  .hero-print :global(img) {
-    display: block;
-    border-radius: var(--radius-lg);
-    object-position: center 60%;
-  }
-
-  .hero-print figcaption {
-    margin-top: 0.6rem;
-    color: var(--color-ink-muted);
-    font-size: 0.8125rem;
-  }
-
-  .visit-nav {
+  .home-masthead {
+    overflow: clip;
     background: var(--color-page);
   }
 
-  .grounds {
-    background: var(--coast-pool);
-  }
-
-  .grounds-layout {
+  .hero-spread {
     display: grid;
-    align-items: start;
-    gap: clamp(1.8rem, 5vw, 4rem);
-  }
-
-  .grounds-spread {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-    gap: clamp(1rem, 2.75vw, 2rem);
-  }
-
-  .ground-entry {
-    min-width: 0;
-  }
-
-  .ground-entry :global(.ground-photo) {
-    display: block;
-    aspect-ratio: 4 / 3;
-    border-radius: var(--radius-md);
-  }
-
-  .ground-title {
-    display: flex;
     align-items: center;
-    gap: 0.45rem;
-    margin-top: 0.7rem;
-    font-family: var(--font-body);
-    font-size: 1rem;
-    font-weight: 750;
-    line-height: 1.25;
-    text-wrap: wrap;
+    gap: clamp(1.5rem, 4vw, 3.75rem);
+    padding-block: clamp(2.1rem, 4.5vw, 4.4rem);
   }
 
-  .ground-title :global(svg) {
-    color: var(--color-pool-700);
+  .holiday-photos {
+    position: relative;
+    display: grid;
+    align-items: end;
+    isolation: isolate;
+    min-width: 0;
+    padding: 0.6rem 0.7rem 0.8rem 0;
   }
 
-  .ground-description {
-    margin-top: 0.4rem;
-    font-size: 0.9375rem;
+  .holiday-photos-pair {
+    grid-template-columns: minmax(0, 2.35fr) minmax(0, 1fr);
+    gap: clamp(5px, 1.1vw, 12px);
   }
 
-  @media (max-width: 359px) {
-    .ground-title {
-      align-items: flex-start;
-    }
+  .holiday-photos::before {
+    position: absolute;
+    z-index: -1;
+    inset: 18% 0 0 8%;
+    border-radius: 40% 20% 1.25rem 1.25rem;
+    content: "";
+    background: var(--color-sunken);
+  }
 
-    .ground-title :global(svg) {
-      width: 1rem;
-      height: 1rem;
-    }
+  .holiday-main,
+  .holiday-side {
+    min-width: 0;
+    overflow: hidden;
+    border: 3px solid var(--color-raised);
+  }
+
+  .holiday-main {
+    border-radius: clamp(2rem, 6vw, 6rem) 0.8rem 0.8rem;
+  }
+
+  .holiday-side {
+    align-self: end;
+    margin-bottom: 7%;
+    border-radius: 0.85rem 0.85rem 3rem 0.85rem;
+  }
+
+  .holiday-photos :global(.holiday-photo) {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+
+  .holiday-side :global(.holiday-photo) {
+    aspect-ratio: 2 / 3;
+  }
+
+  .visit-nav {
+    border-block: 1px solid var(--color-line);
+    background: var(--color-raised);
   }
 
   .quick-book {
@@ -296,11 +257,7 @@ const hero = homepage.heroImage ?? grounds.find((amenity) => amenity.image)?.ima
 
   @media (min-width: 900px) {
     .hero-with-photo {
-      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-    }
-
-    .grounds-layout {
-      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.6fr);
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     }
   }
 </style>

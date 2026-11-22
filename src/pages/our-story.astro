@@ -63,7 +63,7 @@ const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.im
         <li>
           <Icon name="heart" />
           <h3 class="t-h3">Make something together</h3>
-          <p>Some days bring music, art or cooking together. There&rsquo;s time to slow down, too.</p>
+          <p>Some days bring music, art or cooking together. What would you make to remember your day?</p>
         </li>
       </ol>
       <a href="/what-we-do#childrens-holiday" class="link mt-7 inline-block">See the whole day</a>
@@ -114,7 +114,7 @@ const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.im
   }
 
   .first-day {
-    background: var(--coast-pool);
+    background: var(--color-sunken);
   }
 
   .first-day-list {
@@ -126,15 +126,20 @@ const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.im
     display: grid;
     grid-template-columns: 2.5rem minmax(0, 1fr);
     align-content: start;
+    align-items: center;
     column-gap: 0.8rem;
     row-gap: 0.45rem;
     padding-top: 1rem;
-    border-top: 1px solid var(--color-pool-500);
+    border-top: 1px solid var(--color-line-strong);
   }
 
   .first-day-list li > :global(svg) {
-    width: 2rem;
-    height: 2rem;
+    border: 1px solid var(--color-line-strong);
+    width: 2.4rem;
+    height: 2.4rem;
+    padding: 0.45rem;
+    border-radius: 50%;
+    background: var(--color-raised);
     color: var(--coast-deep);
   }
 

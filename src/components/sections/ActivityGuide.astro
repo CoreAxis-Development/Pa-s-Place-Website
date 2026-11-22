@@ -1,0 +1,157 @@
+---
+import type { PublicAmenity } from '../../server/services/content';
+import Icon from '../ui/Icon.astro';
+import SpotItTrail from './SpotItTrail.astro';
+import Picture from '../ui/Picture.astro';
+
+interface Props {
+  amenities: PublicAmenity[];
+  title: string;
+  intro: string;
+}
+
+const { amenities, title, intro } = Astro.props;
+---
+
+<section id="grounds" class="section activity-guide" aria-labelledby="grounds-title">
+  <div class="container-page activity-layout">
+    <div>
+      <h2 id="grounds-title" class="t-h2">{title}</h2>
+      <p class="t-lead mt-4 max-w-[42ch]">{intro}</p>
+      <a class="link mt-5 inline-flex items-center gap-2" href="/gallery">
+        See the gallery <Icon name="arrow" class="h-4 w-4" />
+      </a>
+      <SpotItTrail />
+    </div>
+
+    <div class="activity-board">
+      <h3 class="activity-question">What shall we do first?</h3>
+      {
+        amenities.map((amenity, index) => (
+          <details name="grounds-activities" open={index === 0}>
+            <summary>
+              <span class="activity-icon"><Icon name={amenity.icon} /></span>
+              <span>{amenity.title}</span>
+              <span class="activity-toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="activity-content">
+              {amenity.image && (
+                <Picture image={amenity.image} sizes="(min-width: 900px) 600px, 90vw" class="activity-photo" />
+              )}
+              <p>{amenity.description}</p>
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .activity-guide {
+    background: var(--color-sunken);
+  }
+
+  .activity-layout {
+    display: grid;
+    gap: clamp(1.5rem, 5vw, 4.5rem);
+    align-items: start;
+  }
+
+  .activity-board {
+    min-width: 0;
+    padding: clamp(0.85rem, 3vw, 1.6rem);
+    background: var(--color-raised);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 24px 24px 24px 6px;
+  }
+
+  .activity-question {
+    margin-bottom: 0.75rem;
+    font-size: clamp(1.35rem, 3vw, 1.7rem);
+    font-weight: 650;
+    line-height: 1.15;
+  }
+
+  details {
+    border-top: 1px solid var(--color-line);
+  }
+
+  summary {
+    display: grid;
+    min-height: 56px;
+    grid-template-columns: 34px minmax(0, 1fr) 1rem;
+    align-items: center;
+    gap: 0.65rem;
+    cursor: pointer;
+    list-style: none;
+    font-weight: 750;
+    color: var(--color-ink);
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary:hover {
+    color: var(--color-pool-700);
+  }
+
+  .activity-icon {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid var(--color-line-strong);
+  }
+
+  .activity-toggle {
+    position: relative;
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .activity-toggle::before,
+  .activity-toggle::after {
+    position: absolute;
+    top: calc(50% - 1px);
+    left: 0;
+    width: 100%;
+    height: 2px;
+    content: "";
+    background: currentColor;
+  }
+
+  .activity-toggle::after {
+    transform: rotate(90deg);
+  }
+
+  details[open] .activity-toggle::after {
+    display: none;
+  }
+
+  .activity-content {
+    padding-bottom: 0.9rem;
+  }
+
+  .activity-content :global(.activity-photo) {
+    display: block;
+    width: 100%;
+    aspect-ratio: 2 / 1;
+    object-fit: cover;
+    object-position: center 45%;
+    border-radius: var(--radius-lg);
+  }
+
+  .activity-content p {
+    margin-top: 0.6rem;
+    font-size: 0.9375rem;
+  }
+
+  @media (min-width: 900px) {
+    .activity-layout {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    }
+  }
+</style>
