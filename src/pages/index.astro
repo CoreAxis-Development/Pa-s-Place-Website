@@ -1,13 +1,10 @@
 ---
-import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
 import ActivityGuide from '../components/sections/ActivityGuide.astro';
 import Faqs from '../components/sections/Faqs.astro';
-import firstSea from '../assets/images/story/hero-first-sea.webp';
 import OptionCard from '../components/sections/OptionCard.astro';
 import Icon from '../components/ui/Icon.astro';
 import Picture from '../components/ui/Picture.astro';
-import SectionHeader from '../components/ui/SectionHeader.astro';
 import { todaySast } from '../server/lib/dates';
 import { getSite } from '../server/services/content';
 
@@ -58,7 +55,7 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
       <div class="coast-route">
         <a href="#stay">
           <Icon name="bed" />
-          <span>Find a room<small>Compare rooms and rates</small></span>
+          <span>Find a room<small>Bunks, rooms and whole-house stays</small></span>
         </a>
         <a href={amenities.length > 0 ? '#grounds' : '/gallery'}>
           <Icon name="pool" />
@@ -72,83 +69,81 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
     </div>
   </nav>
 
-  <section class="section" id="stay" aria-label="Stays">
-    <div class="container-page">
-      <SectionHeader title="Find a room that fits" lead="Compare bunks, family rooms and whole-house stays, then pick your dates." class="!mb-6" />
-      {stays.length > 0 && (
-        <details class="quick-book mb-6">
-          <summary>Check your dates</summary>
-          <form action="/book-a-stay" method="get" class="mt-4" aria-label="Check availability">
-            <div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:items-end">
-              <div class="bar-cell col-span-2 md:col-span-1">
-                <label for="hb-option">Stay</label>
-                <select id="hb-option" name="option">
-                  {stays.map((stay) => <option value={stay.slug}>{stay.name}</option>)}
-                </select>
-              </div>
-              <div class="bar-cell">
-                <label for="hb-from">Check-in</label>
-                <input id="hb-from" name="from" type="date" min={today} />
-              </div>
-              <div class="bar-cell">
-                <label for="hb-to">Check-out</label>
-                <input id="hb-to" name="to" type="date" min={today} />
-              </div>
-              <div class="bar-cell col-span-2 md:col-span-1">
-                <label for="hb-people">People</label>
-                <input id="hb-people" name="people" type="number" min="1" max="40" value="4" inputmode="numeric" />
-              </div>
-            </div>
-            <button type="submit" class="btn btn-primary mt-4">Check availability</button>
-          </form>
-        </details>
-      )}
-      {stays.length === 0 && <p><a href="/contact?about=stay" class="link">Contact us about staying</a></p>}
-      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {stays.map((stay) => <OptionCard option={stay} />)}
-      </div>
-    </div>
-  </section>
-
   {grounds.length > 0 && <ActivityGuide amenities={grounds} title={homepage.groundsTitle} intro={homepage.groundsIntro} />}
 
-  <section class="section" data-coast-art="party" data-coast-wash="sand" aria-labelledby="home-venue-title">
-    <div class:list={['container-page home-venue', homepage.venueImage && 'home-venue-photo']}>
-      {homepage.venueImage && <Picture image={homepage.venueImage} sizes="(min-width: 900px) 510px, 92vw" class="coast-print aspect-[3/2] object-cover" />}
-      <div>
-        <p class="eyebrow">Come for the day</p>
-        <h2 class="t-h2 mt-2" id="home-venue-title">{homepage.venueTitle}</h2>
-        <p class="t-lead mt-3 max-w-[43ch]">{homepage.venueIntro}</p>
-        {settings.pricing.venue && <p class="mt-3 tnum font-semibold text-ink">{settings.pricing.venue}</p>}
-        <div class="mt-5 flex flex-wrap items-center gap-4">
-          <a href="/venue-hire" class="btn btn-secondary">See the venue</a>
-          <a href="/venue-hire#kids-parties" class="link">Plan a kids&rsquo; party</a>
+  <section class="section" id="stay" aria-labelledby="plan-title">
+    <div class="container-page">
+      <h2 class="t-h2 mb-6" id="plan-title">Come for the day or stay the night</h2>
+      <div class="visit-plans">
+        <div>
+          <h3 class="t-h3">Find a room that fits</h3>
+          <p class="mt-2 mb-4 max-w-[44ch]">Bunks, family rooms or the whole house. Choose what suits your group and check your dates.</p>
+          {stays.length > 0 && (
+            <details class="quick-book mb-6">
+              <summary>Check your dates</summary>
+              <form action="/book-a-stay" method="get" class="mt-4" aria-label="Check availability">
+                <div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:items-end">
+                  <div class="bar-cell col-span-2 md:col-span-1">
+                    <label for="hb-option">Stay</label>
+                    <select id="hb-option" name="option">
+                      {stays.map((stay) => <option value={stay.slug}>{stay.name}</option>)}
+                    </select>
+                  </div>
+                  <div class="bar-cell">
+                    <label for="hb-from">Check-in</label>
+                    <input id="hb-from" name="from" type="date" min={today} />
+                  </div>
+                  <div class="bar-cell">
+                    <label for="hb-to">Check-out</label>
+                    <input id="hb-to" name="to" type="date" min={today} />
+                  </div>
+                  <div class="bar-cell col-span-2 md:col-span-1">
+                    <label for="hb-people">People</label>
+                    <input id="hb-people" name="people" type="number" min="1" max="40" value="4" inputmode="numeric" />
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-4">Check availability</button>
+              </form>
+            </details>
+          )}
+          {stays.length === 0 && <p><a href="/contact?about=stay" class="link">Contact us about staying</a></p>}
+          <div class="grid gap-3">
+            {stays.map((stay) => <OptionCard option={stay} />)}
+          </div>
         </div>
+        <aside class="day-plan" aria-labelledby="home-venue-title">
+          {homepage.venueImage && <Picture image={homepage.venueImage} sizes="(min-width: 900px) 440px, 92vw" class="coast-print aspect-[16/10] object-cover" />}
+          <div class="day-plan-copy">
+            <p class="eyebrow">Day hire</p>
+            <h3 class="t-h3 mt-1" id="home-venue-title">{homepage.venueTitle}</h3>
+            <p class="mt-2 max-w-[43ch]">{homepage.venueIntro}</p>
+            {settings.pricing.venue && <p class="mt-3 tnum font-semibold text-ink">{settings.pricing.venue}</p>}
+            <div class="mt-4 flex flex-wrap items-center gap-4">
+              <a href="/venue-hire" class="btn btn-secondary">See the venue</a>
+              <a href="/venue-hire#kids-parties" class="link">Plan a kids&rsquo; party</a>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   </section>
 
-  <section class="section home-story" data-coast-art="shore" aria-labelledby="home-story-title">
-    <div class="container-page home-story-spread">
+  <section class="section home-story" data-coast-art="shore" data-coast-wash="sea" aria-labelledby="home-story-title">
+    <div class:list={['container-page home-story-spread', homepage.missionImage && 'has-story-image']}>
       <div>
         <p class="eyebrow">Why Pa&rsquo;s Place exists</p>
         <h2 class="t-h2 mt-2" id="home-story-title">{homepage.missionTitle}</h2>
-        <p class="t-lead mt-3 max-w-[48ch]">{homepage.missionText}</p>
-        <a class="btn btn-tertiary mt-5" href="/our-story">Read our story</a>
+        <p class="t-lead mt-3 max-w-[51ch]">{homepage.missionText}</p>
+        <a class="btn btn-tertiary mt-5 bg-raised" href="/our-story">Read our story</a>
       </div>
-      <figure class="story-preview">
-        {
-          homepage.missionImage ? (
+      {
+        homepage.missionImage && (
+          <figure class="story-preview">
             <Picture image={homepage.missionImage} sizes="(min-width: 900px) 465px, 92vw" class="coast-print aspect-[16/10] object-cover" />
-          ) : (
-            <Image src={firstSea} alt="A child and an adult walk towards the sea" widths={[400, 660, 920]} sizes="(min-width: 900px) 465px, 92vw" class="coast-print aspect-[16/10] object-cover" />
-          )
-        }
-        {
-          homepage.missionImage?.caption ? <figcaption class="t-caption mt-2">{homepage.missionImage.caption}</figcaption>
-            : !homepage.missionImage && <figcaption class="t-caption mt-2">Illustration of a first seaside holiday</figcaption>
-        }
-      </figure>
+            {homepage.missionImage.caption && <figcaption class="t-caption mt-2">{homepage.missionImage.caption}</figcaption>}
+          </figure>
+        )
+      }
     </div>
   </section>
 
@@ -242,19 +237,26 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
     background: var(--color-raised);
   }
 
-  .home-venue,
+  .visit-plans,
   .home-story-spread {
     display: grid;
-    align-items: center;
+    align-items: start;
     gap: clamp(1.5rem, 5vw, 4.25rem);
+  }
+
+  .day-plan {
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background: var(--color-sunken);
+  }
+
+  .day-plan-copy {
+    padding: clamp(1rem, 3vw, 1.65rem);
   }
 
   .home-story {
     border-block: 1px solid var(--color-line);
-  }
-
-  .story-preview {
-    min-width: 0;
   }
 
   .home-directions {
@@ -262,8 +264,11 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
   }
 
   @media (min-width: 900px) {
-    .home-venue-photo,
-    .home-story-spread {
+    .visit-plans {
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    }
+
+    .home-story-spread.has-story-image {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }

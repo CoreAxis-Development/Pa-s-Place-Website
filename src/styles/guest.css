@@ -258,3 +258,18 @@
     --coast-art-opacity: 0.12;
   }
 }
+
+/* One illustrated sheet, cropped to the three individual scenes. */
+.party-doodle {
+  display: block;
+  width: 3.2rem;
+  aspect-ratio: 1;
+  flex: none;
+  background-image: url("../assets/images/birthday-playbook-scenes.webp");
+  background-repeat: no-repeat;
+  background-size: 300% 100%;
+}
+
+.party-doodle[data-doodle="cake"] { background-position: left center; }
+.party-doodle[data-doodle="golf"] { background-position: center; }
+.party-doodle[data-doodle="slide"] { background-position: right center; }

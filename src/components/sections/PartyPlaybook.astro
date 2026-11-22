@@ -1,6 +1,5 @@
 ---
 import type { Picture as VenuePhoto } from '../../server/services/media';
-import Icon from '../ui/Icon.astro';
 import Picture from '../ui/Picture.astro';
 
 interface Props {
@@ -9,112 +8,122 @@ interface Props {
 }
 
 const { photo, canBook } = Astro.props;
-const partyPlan = [
-  { title: 'Meet at the lapa', icon: 'lapa', text: 'Start under cover. Pick a spot for the cake, make space for snacks and let everyone find their friends.' },
-  { title: 'Choose a game', icon: 'golf', text: 'Try a round of mini-golf or bring a ball for the lawn. Let the birthday child pick what comes first.' },
-  { title: 'Make a splash', icon: 'pool', text: 'Bring towels if the pool and waterslides are on your list, and decide which adults will supervise at the water.' },
-];
+const scenes = [
+  { art: 'cake', title: 'Cake this way!', text: 'Meet your friends under the lapa. Where should the birthday cake go?' },
+  { art: 'golf', title: 'Your turn to play', text: 'Try for a hole-in-one or bring a ball for a game on the lawn.' },
+  { art: 'slide', title: 'Ready, set, splash', text: 'Bring your towel if you want a turn on the waterslides. Grown-ups keep watch at the pool.' },
+] as const;
 ---
 
 <section id="kids-parties" class="section party-playbook" data-coast-art="party" data-coast-wash="sand" aria-labelledby="kids-parties-title">
   <div class="container-page">
-    <div class="party-intro">
-      <p class="eyebrow">The birthday playbook</p>
-      <h2 id="kids-parties-title" class="t-h2 mt-2">A birthday under the big trees</h2>
-      <p class="t-lead mt-3 max-w-[55ch]">Cake at the lapa, games on the lawn and a splash in the pool. Pick the bits your birthday crew will love.</p>
+    <p class="eyebrow">The birthday playbook</p>
+    <h2 id="kids-parties-title" class="t-h2 mt-2">A birthday under the big trees</h2>
+    <p class="t-lead mt-3 max-w-[49ch]">Where do we start? Here&rsquo;s one way to play the day.</p>
+
+    <div class="party-book">
+      {
+        scenes.map((scene) => (
+          <article class="party-page">
+            <div class="party-scene" data-scene={scene.art}>
+              <span class="party-doodle" data-doodle={scene.art} aria-hidden="true"></span>
+            </div>
+            <div class="party-story">
+              <h3 class="t-h3">{scene.title}</h3>
+              <p>{scene.text}</p>
+            </div>
+          </article>
+        ))
+      }
     </div>
 
-    <div class:list={['party-spread', photo && 'party-spread-with-photo']}>
-      <ol class="party-pages">
-        {
-          partyPlan.map((play, index) => (
-            <li>
-              <span class="party-step" aria-hidden="true">{index + 1}</span>
-              <div>
-                <h3 class="t-h3">{play.title}</h3>
-                <p class="mt-1">{play.text}</p>
-              </div>
-              <Icon name={play.icon} class="party-icon" />
-            </li>
-          ))
-        }
-      </ol>
-
-      {photo && (
-        <figure class="party-photo">
-          <Picture image={photo} sizes="(min-width: 900px) 425px, 90vw" class="aspect-[4/3] w-full object-cover" />
-          {photo.caption && <figcaption class="t-caption mt-2">{photo.caption}</figcaption>}
-        </figure>
-      )}
-    </div>
-
-    <div class="party-actions">
-      {canBook && <a href="#book" class="btn btn-primary">Check a party date</a>}
-      <a href="/contact?about=venue#enquiry" class:list={['btn', canBook ? 'btn-tertiary' : 'btn-primary']}>Ask about your party</a>
+    <div class:list={['party-plan', photo && 'has-party-photo']}>
+      {
+        photo && (
+          <figure class="party-photo">
+            <Picture image={photo} sizes="(min-width: 900px) 250px, 85vw" class="aspect-[16/10] w-full object-cover" />
+            {photo.caption && <figcaption class="t-caption mt-2">{photo.caption}</figcaption>}
+          </figure>
+        )
+      }
+      <div>
+        <h3 class="t-h3">Planning for the grown-ups</h3>
+        <p class="mt-2 max-w-[49ch]">Pick a date and work out how many guests you&rsquo;ll invite. Ask us about anything you need for the day, from setting up the lapa to planning pool time.</p>
+        <div class="party-actions">
+          {canBook && <a href="#book" class="btn btn-primary">Check a party date</a>}
+          <a href="/contact?about=venue#enquiry" class:list={['btn', canBook ? 'btn-tertiary' : 'btn-primary']}>Ask about your party</a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 <style>
-  .party-intro {
-    max-width: 38rem;
+  .party-playbook[data-coast-art] {
+    --coast-art-opacity: 0.075;
   }
 
-  .party-spread {
+  .party-book {
     display: grid;
-    gap: clamp(1.1rem, 3vw, 2.25rem);
-    align-items: start;
-    margin-top: clamp(1.5rem, 3.5vw, 2.5rem);
-  }
-
-  .party-pages {
-    min-width: 0;
-    padding: 0.25rem clamp(0.8rem, 2.4vw, 1.5rem);
+    margin-top: clamp(1.3rem, 3vw, 2.25rem);
     border: 1px solid var(--color-line-strong);
-    border-inline-start: 4px double var(--color-line-strong);
-    border-radius: 4px 14px 14px 4px;
+    border-radius: 12px;
     background: var(--color-raised);
+    box-shadow: 0 4px 0 -1px var(--color-sunken), 0 5px 0 -1px var(--color-line-strong);
   }
 
-  .party-pages > li {
+  .party-page {
     display: grid;
-    grid-template-columns: 1.8rem minmax(0, 1fr) 1.4rem;
-    align-items: start;
-    gap: clamp(0.55rem, 1.8vw, 1rem);
-    padding-block: 1rem;
+    grid-template-columns: minmax(0, 5.5rem) minmax(0, 1fr);
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+    padding: clamp(0.85rem, 2.6vw, 1.65rem);
   }
 
-  .party-pages > li + li {
+  .party-page + .party-page {
     border-top: 1px dashed var(--color-line-strong);
   }
 
-  .party-step {
-    display: grid;
-    width: 1.8rem;
-    height: 1.8rem;
-    place-items: center;
-    border: 1px solid var(--color-sun-600);
-    border-radius: 50%;
-    font-family: var(--font-display);
-    color: var(--color-sun-700);
-    line-height: 1;
+  .party-scene {
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    aspect-ratio: 1;
   }
 
-  .party-pages p {
+  .party-scene::before {
+    position: absolute;
+    z-index: -1;
+    inset: 10% 4% 4%;
+    border-radius: 53% 45% 51% 46%;
+    background: var(--party-paint);
+    content: "";
+  }
+
+  .party-scene[data-scene="cake"] { --party-paint: #f8e0d3; }
+  .party-scene[data-scene="golf"] { --party-paint: #e4efd6; }
+  .party-scene[data-scene="slide"] { --party-paint: #dceef1; }
+
+  .party-scene .party-doodle {
+    width: 100%;
+  }
+
+  .party-story p {
+    margin-top: 0.4rem;
     font-size: 0.9375rem;
   }
 
-  .party-pages li > :global(.party-icon) {
-    width: 1.4rem;
-    height: 1.4rem;
-    margin-top: 0.15rem;
-    color: var(--coast-blue);
+  .party-plan {
+    display: grid;
+    gap: 1.15rem;
+    align-items: center;
+    margin-top: clamp(1.5rem, 4vw, 2.75rem);
   }
 
   .party-photo {
-    margin: 0;
     min-width: 0;
-    padding: 0.55rem;
+    padding: 0.45rem;
     border: 1px solid var(--color-line);
     border-radius: var(--radius-lg);
     background: var(--color-raised);
@@ -133,17 +142,37 @@ const partyPlan = [
   .party-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
+    gap: 0.65rem;
+    margin-top: 1rem;
   }
 
   .party-actions .btn-tertiary {
     background: var(--color-raised);
   }
 
-  @media (min-width: 900px) {
-    .party-spread-with-photo {
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  @media (min-width: 720px) {
+    .party-book {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .party-page {
+      grid-template-columns: minmax(0, 1fr);
+      align-content: start;
+    }
+
+    .party-page + .party-page {
+      border-top: 0;
+      border-inline-start: 1px solid var(--color-line);
+    }
+
+    .party-scene {
+      width: min(100%, 11rem);
+      margin-inline: auto;
+    }
+
+    .party-plan.has-party-photo {
+      grid-template-columns: minmax(0, 13rem) minmax(0, 1fr);
+      gap: 1.75rem;
     }
   }
 </style>
