@@ -16,7 +16,7 @@ const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.im
   description="How stays and celebrations at Pa's Place in Pennington, KZN help give children their first seaside holiday."
   image={garden?.src}
 >
-  <section class="coast-masthead" aria-labelledby="story-title">
+  <section class="coast-masthead" data-coast-art="shore" aria-labelledby="story-title">
     <div class="container-page story-spread">
       <div>
         <p class="eyebrow">Our story</p>
@@ -45,7 +45,7 @@ const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.im
     </div>
   </section>
 
-  <section id="first-holiday" class="section first-day" aria-labelledby="first-day-title">
+  <section id="first-holiday" class="section" data-coast-wash="sea" aria-labelledby="first-day-title">
     <div class="container-page">
       <h2 id="first-day-title" class="t-h2 max-w-[28ch]">What would you notice first?</h2>
       <p class="t-lead mt-3 max-w-[55ch]">Pack your favourite cap. There&rsquo;s a whole day ahead of us.</p>
@@ -111,10 +111,6 @@ const garden = amenities.find((amenity) => amenity.icon === 'tree' && amenity.im
     color: var(--color-ink-muted);
     font-size: 0.8125rem;
     font-weight: 500;
-  }
-
-  .first-day {
-    background: var(--color-sunken);
   }
 
   .first-day-list {

@@ -5,6 +5,7 @@ import { engineProps } from '../components/booking/engine-props';
 import Faqs from '../components/sections/Faqs.astro';
 import MissionBand from '../components/sections/MissionBand.astro';
 import PlaySection from '../components/sections/PlaySection.astro';
+import PartyPlaybook from '../components/sections/PartyPlaybook.astro';
 import Icon from '../components/ui/Icon.astro';
 import Picture from '../components/ui/Picture.astro';
 import SectionHeader from '../components/ui/SectionHeader.astro';
@@ -15,6 +16,7 @@ const site = await getSite();
 const { settings, venuePage, homepage } = site;
 const tel = settings.contact.phoneLink || settings.contact.phone;
 const venue = site.options.find((o) => o.kind === 'venue');
+const poolPhoto = site.amenities.find((amenity) => amenity.icon === 'pool' && amenity.image)?.image;
 
 const steps = [
   { title: 'Send your date', text: 'Choose the day and tell us how many guests. The date is held as soon as you send it.' },
@@ -28,7 +30,7 @@ const steps = [
   description={`Hire the lapa, pool, waterslides and gardens at Pa's Place in Pennington, KZN for birthdays and gatherings. ${settings.pricing.venue}.`}
   image={venuePage.image?.src}
 >
-  <section class="coast-masthead" aria-label="Venue hire">
+  <section class="coast-masthead" data-coast-art="garden" aria-label="Venue hire">
     <div class="container-page grid items-center gap-10 pb-14 pt-10 lg:grid-cols-2 lg:gap-14 lg:pt-14">
       <div>
         <p class="eyebrow">Venue hire</p>
@@ -40,12 +42,14 @@ const steps = [
         </ul>
         <div class="mt-7 flex flex-wrap gap-3">
           <a href="#book" class="btn btn-primary">Check a date</a>
-          <a href="/contact?about=venue#enquiry" class="btn btn-tertiary">Ask a question</a>
+          <a href="#kids-parties" class="btn btn-tertiary">Plan a kids&rsquo; party</a>
         </div>
       </div>
       {venuePage.image && <Picture image={venuePage.image} sizes="(min-width: 1024px) 540px, 92vw" class="coast-print aspect-[3/2] w-full object-cover" eager />}
     </div>
   </section>
+
+  <PartyPlaybook photo={venuePage.secondaryImage} canBook={Boolean(venue)} />
 
   <PlaySection tone="sun" label="What is included">
     <div class="grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
@@ -60,10 +64,10 @@ const steps = [
         </ul>
       </div>
       {
-        venuePage.secondaryImage && (
+        poolPhoto && (
           <figure>
-            <Picture image={venuePage.secondaryImage} sizes="(min-width: 1024px) 540px, 92vw" class="photo aspect-[4/3]" />
-            {venuePage.secondaryImage.caption && <figcaption class="t-caption mt-2">{venuePage.secondaryImage.caption}</figcaption>}
+            <Picture image={poolPhoto} sizes="(min-width: 1024px) 540px, 92vw" class="photo aspect-[4/3]" />
+            {poolPhoto.caption && <figcaption class="t-caption mt-2">{poolPhoto.caption}</figcaption>}
           </figure>
         )
       }
@@ -90,7 +94,7 @@ const steps = [
     </div>
   </section>
 
-  <section class="section bg-sunken" aria-label="How booking works">
+  <section class="section" data-coast-wash="leaf" aria-label="How booking works">
     <div class="container-page">
       <SectionHeader eyebrow="How it works" title="Booking in three steps" />
       <ol class="grid gap-6 md:grid-cols-3">

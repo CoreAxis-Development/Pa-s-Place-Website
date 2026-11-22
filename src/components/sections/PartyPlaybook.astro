@@ -1,0 +1,149 @@
+---
+import type { Picture as VenuePhoto } from '../../server/services/media';
+import Icon from '../ui/Icon.astro';
+import Picture from '../ui/Picture.astro';
+
+interface Props {
+  photo?: VenuePhoto | null;
+  canBook: boolean;
+}
+
+const { photo, canBook } = Astro.props;
+const partyPlan = [
+  { title: 'Meet at the lapa', icon: 'lapa', text: 'Start under cover. Pick a spot for the cake, make space for snacks and let everyone find their friends.' },
+  { title: 'Choose a game', icon: 'golf', text: 'Try a round of mini-golf or bring a ball for the lawn. Let the birthday child pick what comes first.' },
+  { title: 'Make a splash', icon: 'pool', text: 'Bring towels if the pool and waterslides are on your list, and decide which adults will supervise at the water.' },
+];
+---
+
+<section id="kids-parties" class="section party-playbook" data-coast-art="party" data-coast-wash="sand" aria-labelledby="kids-parties-title">
+  <div class="container-page">
+    <div class="party-intro">
+      <p class="eyebrow">The birthday playbook</p>
+      <h2 id="kids-parties-title" class="t-h2 mt-2">A birthday under the big trees</h2>
+      <p class="t-lead mt-3 max-w-[55ch]">Cake at the lapa, games on the lawn and a splash in the pool. Pick the bits your birthday crew will love.</p>
+    </div>
+
+    <div class:list={['party-spread', photo && 'party-spread-with-photo']}>
+      <ol class="party-pages">
+        {
+          partyPlan.map((play, index) => (
+            <li>
+              <span class="party-step" aria-hidden="true">{index + 1}</span>
+              <div>
+                <h3 class="t-h3">{play.title}</h3>
+                <p class="mt-1">{play.text}</p>
+              </div>
+              <Icon name={play.icon} class="party-icon" />
+            </li>
+          ))
+        }
+      </ol>
+
+      {photo && (
+        <figure class="party-photo">
+          <Picture image={photo} sizes="(min-width: 900px) 425px, 90vw" class="aspect-[4/3] w-full object-cover" />
+          {photo.caption && <figcaption class="t-caption mt-2">{photo.caption}</figcaption>}
+        </figure>
+      )}
+    </div>
+
+    <div class="party-actions">
+      {canBook && <a href="#book" class="btn btn-primary">Check a party date</a>}
+      <a href="/contact?about=venue#enquiry" class:list={['btn', canBook ? 'btn-tertiary' : 'btn-primary']}>Ask about your party</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .party-intro {
+    max-width: 38rem;
+  }
+
+  .party-spread {
+    display: grid;
+    gap: clamp(1.1rem, 3vw, 2.25rem);
+    align-items: start;
+    margin-top: clamp(1.5rem, 3.5vw, 2.5rem);
+  }
+
+  .party-pages {
+    min-width: 0;
+    padding: 0.25rem clamp(0.8rem, 2.4vw, 1.5rem);
+    border: 1px solid var(--color-line-strong);
+    border-inline-start: 4px double var(--color-line-strong);
+    border-radius: 4px 14px 14px 4px;
+    background: var(--color-raised);
+  }
+
+  .party-pages > li {
+    display: grid;
+    grid-template-columns: 1.8rem minmax(0, 1fr) 1.4rem;
+    align-items: start;
+    gap: clamp(0.55rem, 1.8vw, 1rem);
+    padding-block: 1rem;
+  }
+
+  .party-pages > li + li {
+    border-top: 1px dashed var(--color-line-strong);
+  }
+
+  .party-step {
+    display: grid;
+    width: 1.8rem;
+    height: 1.8rem;
+    place-items: center;
+    border: 1px solid var(--color-sun-600);
+    border-radius: 50%;
+    font-family: var(--font-display);
+    color: var(--color-sun-700);
+    line-height: 1;
+  }
+
+  .party-pages p {
+    font-size: 0.9375rem;
+  }
+
+  .party-pages li > :global(.party-icon) {
+    width: 1.4rem;
+    height: 1.4rem;
+    margin-top: 0.15rem;
+    color: var(--coast-blue);
+  }
+
+  .party-photo {
+    margin: 0;
+    min-width: 0;
+    padding: 0.55rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background: var(--color-raised);
+  }
+
+  .party-photo :global(img) {
+    display: block;
+    border-radius: 4px;
+    object-position: center 76%;
+  }
+
+  .party-photo figcaption {
+    margin-inline: 0.15rem;
+  }
+
+  .party-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .party-actions .btn-tertiary {
+    background: var(--color-raised);
+  }
+
+  @media (min-width: 900px) {
+    .party-spread-with-photo {
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    }
+  }
+</style>

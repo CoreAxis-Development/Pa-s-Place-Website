@@ -24,7 +24,7 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
 ---
 
 <Layout image={hero?.src}>
-  <section class="home-masthead" aria-labelledby="home-title">
+  <section class="home-masthead" data-coast-art="garden" aria-labelledby="home-title">
     <div class:list={['container-page hero-spread', hero && 'hero-with-photo']}>
       <div>
         <p class="eyebrow">{homepage.heroEyebrow}</p>
@@ -32,7 +32,7 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
         <p class="t-lead mt-4 max-w-[42ch]">{homepage.heroSubtitle}</p>
         <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
           <a href="/book-a-stay#book" class="btn btn-primary">Check availability</a>
-          <a href={amenities.length > 0 ? '#spot-it-trail' : '/gallery'} class="link">{amenities.length > 0 ? 'Try the spot-it trail' : 'See the gallery'}</a>
+          <a href={amenities.length > 0 ? '#grounds' : '/gallery'} class="link">{amenities.length > 0 ? 'Explore the grounds' : 'See the gallery'}</a>
         </div>
       </div>
       {
@@ -63,9 +63,9 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
           <Icon name="pool" />
           <span>Find the fun<small>Slides, mini-golf and lawn games</small></span>
         </a>
-        <a href="/venue-hire">
+        <a href="/venue-hire#kids-parties">
           <Icon name="lapa" />
-          <span>Host a party<small>Book the lapa and grounds</small></span>
+          <span>Host a party<small>See the birthday playbook</small></span>
         </a>
       </div>
     </div>
@@ -112,7 +112,7 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
   </section>
 
   <!-- ============ VENUE HIRE ============ -->
-  <section class="section bg-sunken" aria-label="Venue hire">
+  <section class="section" data-coast-wash="sand" aria-label="Venue hire">
     <div class="container-page grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
       {homepage.venueImage && <Picture image={homepage.venueImage} sizes="(min-width: 1024px) 540px, 92vw" class="photo aspect-[3/2]" />}
       <div>
@@ -121,7 +121,10 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
           {site.venuePage.occasions.map((o) => <li>{o}</li>)}
         </ul>
         {settings.pricing.venue && <p class="mt-6"><span class="tag tag-price !h-auto py-1.5">{settings.pricing.venue}</span></p>}
-        <a href="/venue-hire" class="btn btn-secondary mt-6">Hire the venue</a>
+        <div class="mt-6 flex flex-wrap items-center gap-4">
+          <a href="/venue-hire" class="btn btn-secondary">Hire the venue</a>
+          <a href="/venue-hire#kids-parties" class="link">Plan a kids&rsquo; party</a>
+        </div>
       </div>
     </div>
   </section>
@@ -129,7 +132,7 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
   <MissionBand title={homepage.missionTitle} text={homepage.missionText} />
 
   <!-- ============ FINDING US ============ -->
-  <section class="section" aria-label="Where to find us">
+  <section class="section" data-coast-art="shore" data-coast-wash="sea" aria-label="Where to find us">
     <div class="container-page grid items-center gap-8 md:grid-cols-[1fr_auto]">
       <div>
         <SectionHeader eyebrow="Finding us" title="Kelso, Pennington, on the KZN South Coast" class="!mb-4" />

@@ -163,3 +163,98 @@
     display: none;
   }
 }
+
+/* Pen-and-ink scenes sit behind the content and let real photography lead. */
+[data-coast-art] {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+}
+
+[data-coast-art]::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background: var(--coast-art) var(--coast-art-position) / var(--coast-art-size) no-repeat;
+  opacity: var(--coast-art-opacity);
+}
+
+[data-coast-art="garden"] {
+  --coast-art: url("../assets/images/grounds-field-guide.webp");
+  --coast-art-size: clamp(340px, 64vw, 1000px);
+  --coast-art-position: left max(-100px, calc((100vw - 84rem) / 2)) bottom -2rem;
+  --coast-art-opacity: 0.16;
+}
+
+[data-coast-art="shore"] {
+  --coast-art: url("../assets/images/shoreline-ink.webp");
+  --coast-art-size: clamp(500px, 82vw, 1260px);
+  --coast-art-position: right bottom;
+  --coast-art-opacity: 0.22;
+}
+
+@media (max-width: 640px) {
+  [data-coast-art="garden"] {
+    --coast-art-position: right -70px top 3rem;
+    --coast-art-opacity: 0.12;
+  }
+
+  [data-coast-art="shore"] {
+    --coast-art-position: right -4rem bottom;
+    --coast-art-opacity: 0.16;
+  }
+}
+
+/* Quiet, opt-in shifts on selected sections as they come into view. */
+[data-coast-wash] {
+  background-color: var(--coast-wash);
+}
+
+[data-coast-wash="sea"] {
+  --coast-wash-start: #f6f6ef;
+  --coast-wash: #e8f1ee;
+}
+
+[data-coast-wash="sand"] {
+  --coast-wash-start: #f6f5ee;
+  --coast-wash: #f0eadd;
+}
+
+[data-coast-wash="leaf"] {
+  --coast-wash-start: #f4f2ea;
+  --coast-wash: #e9eee4;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) and (animation-range: entry 0% cover 50%) {
+    [data-coast-wash] {
+      animation: coast-wash 1ms linear both;
+    }
+
+    .public-site [data-coast-wash] {
+      animation-timeline: view();
+      animation-range: entry 0% cover 50%;
+    }
+
+    @keyframes coast-wash {
+      from { background-color: var(--coast-wash-start); }
+      to { background-color: var(--coast-wash); }
+    }
+  }
+}
+
+[data-coast-art="party"] {
+  --coast-art: url("../assets/images/party-bunting-ink.webp");
+  --coast-art-size: clamp(570px, 68vw, 1050px);
+  --coast-art-position: right max(-95px, calc((100vw - 86rem) / 2)) top -0.25rem;
+  --coast-art-opacity: 0.15;
+}
+
+@media (max-width: 640px) {
+  [data-coast-art="party"] {
+    --coast-art-position: right -7rem top 0;
+    --coast-art-opacity: 0.12;
+  }
+}

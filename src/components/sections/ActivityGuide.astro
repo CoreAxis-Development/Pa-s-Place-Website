@@ -1,7 +1,6 @@
 ---
 import type { PublicAmenity } from '../../server/services/content';
 import Icon from '../ui/Icon.astro';
-import SpotItTrail from './SpotItTrail.astro';
 import Picture from '../ui/Picture.astro';
 
 interface Props {
@@ -13,7 +12,7 @@ interface Props {
 const { amenities, title, intro } = Astro.props;
 ---
 
-<section id="grounds" class="section activity-guide" aria-labelledby="grounds-title">
+<section id="grounds" class="section" data-coast-wash="leaf" aria-labelledby="grounds-title">
   <div class="container-page activity-layout">
     <div>
       <h2 id="grounds-title" class="t-h2">{title}</h2>
@@ -21,7 +20,6 @@ const { amenities, title, intro } = Astro.props;
       <a class="link mt-5 inline-flex items-center gap-2" href="/gallery">
         See the gallery <Icon name="arrow" class="h-4 w-4" />
       </a>
-      <SpotItTrail />
     </div>
 
     <div class="activity-board">
@@ -48,10 +46,6 @@ const { amenities, title, intro } = Astro.props;
 </section>
 
 <style>
-  .activity-guide {
-    background: var(--color-sunken);
-  }
-
   .activity-layout {
     display: grid;
     gap: clamp(1.5rem, 5vw, 4.5rem);
