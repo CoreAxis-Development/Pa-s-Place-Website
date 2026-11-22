@@ -6,19 +6,43 @@ import OptionCard from '../components/sections/OptionCard.astro';
 import Icon from '../components/ui/Icon.astro';
 import Picture from '../components/ui/Picture.astro';
 import { todaySast } from '../server/lib/dates';
+import type { Picture as SitePhoto } from '../server/services/media';
 import { getSite } from '../server/services/content';
 
 const site = await getSite();
-const { settings, homepage, options, amenities } = site;
-
-const stays = options.filter((o) => o.kind === 'stay');
+const { settings, homepage, options, amenities, gallery } = site;
 const today = todaySast();
 
+const usedPhotos = new Set<string>();
+function takePhoto(...choices: (SitePhoto | null | undefined)[]) {
+  const photo = choices.find((choice) => choice && !usedPhotos.has(choice.id));
+  if (!photo) return null;
+  usedPhotos.add(photo.id);
+  return photo;
+}
+
+const photosFor = (category: string) => gallery.filter((item) => item.category === category).map((item) => item.image);
 const pool = amenities.find((amenity) => amenity.icon === 'pool');
-const grounds = pool ? [pool, ...amenities.filter((amenity) => amenity.id !== pool.id)] : amenities;
-const hero = pool?.image ?? homepage.heroImage ?? grounds.find((amenity) => amenity.image)?.image;
-const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.image)]
-  .find((photo) => photo && photo.id !== hero?.id);
+const hero = takePhoto(pool?.image, homepage.heroImage, ...amenities.map((amenity) => amenity.image));
+const venuePhoto = takePhoto(homepage.venueImage, ...photosFor('venue'), ...photosFor('celebrations'));
+const missionPhoto = takePhoto(homepage.missionImage);
+const stays = options.filter((option) => option.kind === 'stay').map((stay) => ({ ...stay, image: takePhoto(stay.image) }));
+const secondPhoto = takePhoto(homepage.heroImage, ...photosFor('grounds'));
+
+const amenityCategories: Record<string, string> = {
+  pool: 'pool',
+  golf: 'mini-golf',
+  lapa: 'venue',
+  tree: 'grounds',
+};
+const grounds = amenities.map((amenity) => ({
+  ...amenity,
+  image: takePhoto(
+    amenity.image,
+    ...photosFor(amenityCategories[amenity.icon] ?? ''),
+    ...(amenity.icon === 'lapa' ? photosFor('celebrations') : []),
+  ),
+}));
 ---
 
 <Layout image={hero?.src}>
@@ -112,7 +136,7 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
           </div>
         </div>
         <aside class="day-plan" aria-labelledby="home-venue-title">
-          {homepage.venueImage && <Picture image={homepage.venueImage} sizes="(min-width: 900px) 440px, 92vw" class="coast-print aspect-[16/10] object-cover" />}
+          {venuePhoto && <Picture image={venuePhoto} sizes="(min-width: 900px) 440px, 92vw" class="coast-print aspect-[16/10] object-cover" />}
           <div class="day-plan-copy">
             <p class="eyebrow">Day hire</p>
             <h3 class="t-h3 mt-1" id="home-venue-title">{homepage.venueTitle}</h3>
@@ -129,7 +153,7 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
   </section>
 
   <section class="section home-story" data-coast-art="shore" data-coast-wash="sea" aria-labelledby="home-story-title">
-    <div class:list={['container-page home-story-spread', homepage.missionImage && 'has-story-image']}>
+    <div class:list={['container-page home-story-spread', missionPhoto && 'has-story-image']}>
       <div>
         <p class="eyebrow">Why Pa&rsquo;s Place exists</p>
         <h2 class="t-h2 mt-2" id="home-story-title">{homepage.missionTitle}</h2>
@@ -137,10 +161,10 @@ const secondPhoto = [homepage.heroImage, ...grounds.map((amenity) => amenity.ima
         <a class="btn btn-tertiary mt-5 bg-raised" href="/our-story">Read our story</a>
       </div>
       {
-        homepage.missionImage && (
+        missionPhoto && (
           <figure class="story-preview">
-            <Picture image={homepage.missionImage} sizes="(min-width: 900px) 465px, 92vw" class="coast-print aspect-[16/10] object-cover" />
-            {homepage.missionImage.caption && <figcaption class="t-caption mt-2">{homepage.missionImage.caption}</figcaption>}
+            <Picture image={missionPhoto} sizes="(min-width: 900px) 465px, 92vw" class="coast-print aspect-[16/10] object-cover" />
+            {missionPhoto.caption && <figcaption class="t-caption mt-2">{missionPhoto.caption}</figcaption>}
           </figure>
         )
       }
