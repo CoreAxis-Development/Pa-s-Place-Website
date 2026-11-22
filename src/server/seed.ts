@@ -5,13 +5,14 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 import { eq } from 'drizzle-orm';
+import { passwordProblem } from './auth/password';
 import { getDb, schema } from './db/client';
 import { newId } from './lib/ids';
 import { logActivity } from './services/activity';
 import { bumpContentVersion } from './services/cache';
 import { saveDocument } from './services/documents';
 import { importImage } from './services/media';
-import { createUser, userCount } from './services/users';
+import { createUser, userCount, userInput } from './services/users';
 
 interface SeedPhoto {
   key: string;
@@ -367,7 +368,12 @@ async function bootstrapOwner() {
   const email = process.env.ADMIN_EMAIL;
   const password = process.env.ADMIN_PASSWORD;
   if (email && password) {
-    await createUser({ name: process.env.ADMIN_NAME || 'Site owner', email, role: 'owner', password }, null);
+    const owner = userInput.safeParse({ name: process.env.ADMIN_NAME || 'Site owner', email, role: 'owner' });
+    if (!owner.success || passwordProblem(password)) {
+      console.warn('[seed] owner account setup skipped because ADMIN_EMAIL, ADMIN_NAME or ADMIN_PASSWORD is invalid.');
+      return;
+    }
+    await createUser({ ...owner.data, password }, null);
     console.info(`[seed] owner account created for ${email}`);
     return;
   }
