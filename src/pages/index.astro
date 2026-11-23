@@ -199,17 +199,24 @@ const grounds = amenities.map((amenity) => ({
   }
 
   .home-masthead[data-coast-art] {
-    --coast-art-opacity: 0.125;
+    --coast-art-position: left bottom;
+    --coast-art-opacity: 0.14;
   }
 
   .home-masthead[data-coast-art="garden"]::before {
-    inset-inline: -1.1rem auto;
+    inset: 0 auto 0.4rem -1rem;
+    width: clamp(27rem, calc(50vw - 10rem), 53rem);
+    mask-image: radial-gradient(ellipse 91% 62% at 2% 92%, #000 31%, transparent 100%);
     transform: none;
   }
 
   @media (max-width: 899px) {
     .home-masthead[data-coast-art] {
-      --coast-art-opacity: 0.10;
+      --coast-art-opacity: 0.12;
+    }
+
+    .home-masthead[data-coast-art="garden"]::before {
+      width: clamp(18rem, 60vw, 30rem);
     }
   }
 

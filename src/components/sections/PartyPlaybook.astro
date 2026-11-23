@@ -19,16 +19,17 @@ const scenes = [
 
 <section id="kids-parties" class="section" data-coast-wash="sand" aria-labelledby="kids-parties-title">
   <div class="container-page">
-    <p class="eyebrow">The birthday playbook</p>
-    <h2 id="kids-parties-title" class="t-h2 mt-2">{copy.title}</h2>
-    <p class="t-lead mt-3 max-w-[49ch]">{copy.intro}</p>
-
     <div class="party-book">
+      <header class="party-cover">
+        <p class="party-kicker">The birthday playbook</p>
+        <h2 id="kids-parties-title" class="t-h2">{copy.title}</h2>
+        <p class="party-intro">{copy.intro}</p>
+      </header>
       {
         scenes.map((scene) => (
-          <article class="party-page">
-            <div class="party-scene" data-scene={scene.art}>
-              <span class="party-doodle" data-doodle={scene.art} aria-hidden="true"></span>
+          <article class="party-page" data-scene={scene.art}>
+            <div class="party-scene" aria-hidden="true">
+              <span class="party-doodle" data-doodle={scene.art}></span>
             </div>
             <div class="party-story">
               <h3 class="t-h3">{scene.title}</h3>
@@ -62,54 +63,115 @@ const scenes = [
 
 <style>
   .party-book {
+    --paper: #fffdf5;
+    --paper-edge: #ded3bc;
+    --gutter: clamp(1rem, 3vw, 2.25rem);
     display: grid;
-    margin-top: clamp(1.3rem, 3vw, 2.25rem);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 12px;
-    background: var(--color-raised);
-    box-shadow: 0 4px 0 -1px var(--color-sunken), 0 5px 0 -1px var(--color-line-strong);
+    padding: var(--gutter);
+    border: 1px solid var(--paper-edge);
+    border-radius: 0.45rem 1.65rem 1.4rem 0.7rem / 0.55rem 1.2rem 0.9rem 0.85rem;
+    background: var(--paper);
+    box-shadow:
+      0 3px 0 -1px var(--paper), 0 4px 0 -1px var(--paper-edge),
+      0 7px 0 -2px #adc1b3, 0 10px 19px -13px rgb(58 48 26 / 0.32);
+  }
+
+  .party-cover {
+    padding-bottom: 0.45rem;
+  }
+
+  .party-kicker {
+    width: fit-content;
+    margin-bottom: 0.7rem;
+    padding-bottom: 0.22rem;
+    border-bottom: 2px solid #daba8e;
+    color: #894d37;
+    font: italic 600 1.05rem / 1.25 var(--font-display);
+  }
+
+  .party-cover h2 {
+    max-width: 15ch;
+    font-size: clamp(1.95rem, 4vw, 3.25rem);
+    line-height: 1.03;
+    text-wrap: balance;
+  }
+
+  .party-intro {
+    max-width: 34ch;
+    margin-top: 0.65rem;
   }
 
   .party-page {
     display: grid;
-    grid-template-columns: minmax(0, 5.5rem) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
     align-items: center;
-    gap: 0.85rem;
+    gap: clamp(0.65rem, 2vw, 1.25rem);
     min-width: 0;
-    padding: clamp(0.85rem, 2.6vw, 1.65rem);
+    padding-block: 0.55rem;
+  }
+
+  .party-page[data-scene="cake"] {
+    --party-paint: #f7ded2;
+    --party-accent: #894d37;
+  }
+
+  .party-page[data-scene="golf"] {
+    --party-paint: #e6edd2;
+    --party-accent: #45643c;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  }
+
+  .party-page[data-scene="golf"] .party-scene {
+    grid-area: 1 / 2;
+  }
+
+  .party-page[data-scene="slide"] {
+    --party-paint: #d9ecef;
+    --party-accent: #275e67;
   }
 
   .party-page + .party-page {
-    border-top: 1px dashed var(--color-line-strong);
+    border-top: 1px dashed var(--paper-edge);
   }
 
   .party-scene {
     position: relative;
     isolation: isolate;
-    width: 100%;
+    width: min(100%, 10.75rem);
     aspect-ratio: 1;
+    margin-inline: auto;
   }
 
   .party-scene::before {
     position: absolute;
     z-index: -1;
-    inset: 10% 4% 4%;
-    border-radius: 53% 45% 51% 46%;
+    inset: 14% 6% 9% 3%;
+    border-radius: 58% 42% 50% 44% / 44% 58% 42% 56%;
     background: var(--party-paint);
     content: "";
+    transform: rotate(-9deg);
   }
 
-  .party-scene[data-scene="cake"] { --party-paint: #f8e0d3; }
-  .party-scene[data-scene="golf"] { --party-paint: #e4efd6; }
-  .party-scene[data-scene="slide"] { --party-paint: #dceef1; }
+  [data-scene="golf"] .party-scene::before { transform: rotate(14deg); }
+  [data-scene="slide"] .party-scene::before { transform: rotate(5deg); }
 
   .party-scene .party-doodle {
     width: 100%;
   }
 
+  .party-story h3 {
+    color: var(--party-accent);
+    font-size: clamp(1.15rem, 2.4vw, 1.7rem);
+    font-weight: 580;
+    font-style: italic;
+    line-height: 1.12;
+    text-wrap: balance;
+  }
+
   .party-story p {
-    margin-top: 0.4rem;
+    margin-top: 0.35rem;
     font-size: 0.9375rem;
+    overflow-wrap: anywhere;
   }
 
   .party-plan {
@@ -120,11 +182,25 @@ const scenes = [
   }
 
   .party-photo {
+    position: relative;
     min-width: 0;
     padding: 0.45rem;
     border: 1px solid var(--color-line);
-    border-radius: var(--radius-lg);
+    border-radius: 0.2rem;
     background: var(--color-raised);
+  }
+
+  .party-photo::before {
+    position: absolute;
+    z-index: 1;
+    inset: -0.45rem auto auto 50%;
+    width: 3.6rem;
+    height: 0.95rem;
+    background: rgb(226 196 135 / 0.76);
+    clip-path: polygon(2% 0, 99% 5%, 95% 27%, 100% 51%, 96% 73%, 99% 100%, 2% 96%, 6% 70%, 0 51%, 5% 24%);
+    content: "";
+    pointer-events: none;
+    transform: translateX(-50%) rotate(-7deg);
   }
 
   .party-photo :global(img) {
@@ -148,24 +224,39 @@ const scenes = [
     background: var(--color-raised);
   }
 
-  @media (min-width: 720px) {
+  @media (min-width: 780px) {
     .party-book {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      position: relative;
+      grid-template-columns: minmax(0, 44fr) minmax(0, 56fr);
+      grid-template-areas: "cover golf" "cake slide";
+      column-gap: calc(var(--gutter) * 2);
+    }
+
+    .party-book::before {
+      position: absolute;
+      inset: 0 calc(56% - var(--gutter) * 0.12) 0 auto;
+      width: 2rem;
+      background: linear-gradient(to right, transparent, rgb(109 80 39 / 0.09) 49%, rgb(109 80 39 / 0.2) 50%, rgb(109 80 39 / 0.06) 55%, transparent);
+      content: "";
+      pointer-events: none;
+      transform: translateX(50%);
+    }
+
+    .party-cover {
+      grid-area: cover;
+      align-self: center;
     }
 
     .party-page {
-      grid-template-columns: minmax(0, 1fr);
-      align-content: start;
+      padding-block: 0.25rem;
     }
 
-    .party-page + .party-page {
+    .party-page[data-scene="cake"] { grid-area: cake; }
+    .party-page[data-scene="golf"] { grid-area: golf; }
+    .party-page[data-scene="slide"] { grid-area: slide; }
+
+    .party-page + .party-page[data-scene="golf"] {
       border-top: 0;
-      border-inline-start: 1px solid var(--color-line);
-    }
-
-    .party-scene {
-      width: min(100%, 11rem);
-      margin-inline: auto;
     }
 
     .party-plan.has-party-photo {
