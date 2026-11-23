@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import miniGolfInk from '../assets/images/mini-golf-ink.webp';
 import MissionBand from '../components/sections/MissionBand.astro';
 import PlaySection from '../components/sections/PlaySection.astro';
 import Icon from '../components/ui/Icon.astro';
@@ -75,7 +76,10 @@ const day = [
   </section>
 
   <PlaySection id="childrens-holiday" label="A day on a children's holiday">
-    <SectionHeader rays title="A day by the sea" lead="Every group is different. Here’s how a day might go." />
+    <div class="holiday-opening">
+      <SectionHeader rays title="A day by the sea" lead="Every group is different. Here’s how a day might go." class="!mb-0" />
+      <img src={miniGolfInk.src} width={miniGolfInk.width} height={miniGolfInk.height} alt="" class="holiday-ink" loading="lazy" decoding="async" />
+    </div>
     <ol class="holiday-day">
       {
         day.map((d) => (
@@ -95,6 +99,27 @@ const day = [
 </Layout>
 
 <style>
+  .holiday-opening {
+    display: grid;
+    align-items: center;
+    gap: 0.75rem 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .holiday-ink {
+    justify-self: end;
+    width: clamp(125px, 27vw, 235px);
+    height: auto;
+    opacity: 0.34;
+    mask-image: linear-gradient(145deg, transparent 9%, #000 47%);
+  }
+
+  @media (min-width: 640px) {
+    .holiday-opening {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+  }
+
   .holiday-day {
     --trail: var(--color-pool-700);
     --stop-size: 48px;

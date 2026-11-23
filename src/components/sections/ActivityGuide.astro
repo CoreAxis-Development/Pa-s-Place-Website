@@ -1,5 +1,4 @@
 ---
-import miniGolfInk from '../../assets/images/mini-golf-ink.webp';
 import type { PublicAmenity } from '../../server/services/content';
 import Icon from '../ui/Icon.astro';
 import Picture from '../ui/Picture.astro';
@@ -15,19 +14,16 @@ const featured = amenities.find((amenity) => amenity.image);
 const others = amenities.filter((amenity) => amenity.id !== featured?.id);
 ---
 
-<section id="grounds" class="grounds-guide" data-coast-wash="leaf" aria-labelledby="grounds-title">
+<section id="grounds" class="grounds-guide" aria-labelledby="grounds-title">
   <div class="container-page">
     <div class="grounds-intro">
       <div>
         <h2 id="grounds-title" class="t-h2">{title}</h2>
         <p class="t-lead mt-3 max-w-[52ch]">{intro}</p>
       </div>
-      <div class="grounds-margin">
-        <img src={miniGolfInk.src} width={miniGolfInk.width} height={miniGolfInk.height} alt="" loading="lazy" decoding="async" />
-        <a class="link inline-flex items-center gap-2" href="/gallery">
-          See the gallery <Icon name="arrow" class="h-4 w-4 shrink-0" />
-        </a>
-      </div>
+      <a class="link grounds-gallery inline-flex items-center gap-2" href="/gallery">
+        See the gallery <Icon name="arrow" class="h-4 w-4 shrink-0" />
+      </a>
     </div>
 
     <div class:list={['grounds-spread', featured?.image && others.length > 0 && 'grounds-spread-paired']}>
@@ -71,56 +67,8 @@ const others = amenities.filter((amenity) => amenity.id !== featured?.id);
 
 <style>
   .grounds-guide {
-    position: relative;
-    isolation: isolate;
-    overflow: clip;
-    padding-block: clamp(2.9rem, 6vw, 5.25rem);
-  }
-
-  .grounds-guide::before {
-    position: absolute;
-    inset-block-start: -3rem;
-    inset-inline-end: -1.15rem;
-    z-index: -1;
-    width: clamp(34rem, 102%, 110rem);
-    aspect-ratio: 3 / 1;
-    background: url('../../assets/images/garden-canopy-ink.webp') right top / contain no-repeat;
-    opacity: 0.13;
-    pointer-events: none;
-    transform-origin: right 15%;
-    content: "";
-  }
-
-  @media (max-width: 640px) {
-    .grounds-guide::before {
-      inset-block-start: -1rem;
-      width: clamp(29rem, 133%, 54rem);
-      opacity: 0.12;
-    }
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    @supports (animation-timeline: view()) and (view-timeline-name: --grounds-canopy) {
-      .grounds-guide {
-        view-timeline-name: --grounds-canopy;
-      }
-
-      .grounds-guide::before {
-        animation: garden-breeze 1ms ease-in-out both;
-      }
-
-      /* Keep the timeline separate so the production minifier preserves it. */
-      .grounds-guide[aria-labelledby]::before {
-        animation-timeline: --grounds-canopy;
-        animation-range: entry 0% cover 48%;
-      }
-
-      @keyframes garden-breeze {
-        0% { transform: rotate(-0.65deg); }
-        55% { transform: rotate(0.45deg); }
-        100% { transform: rotate(0); }
-      }
-    }
+    padding-block: clamp(2.65rem, 6vw, 5.25rem);
+    background: var(--color-canopy-50);
   }
 
   .grounds-intro {
@@ -130,19 +78,8 @@ const others = amenities.filter((amenity) => amenity.id !== featured?.id);
     margin-bottom: clamp(1.2rem, 3vw, 2rem);
   }
 
-  .grounds-margin {
-    display: flex;
-    flex-direction: row-reverse;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.7rem;
-  }
-
-  .grounds-margin img {
-    width: min(49%, 9.5rem);
-    height: auto;
-    opacity: 0.34;
-    mask-image: linear-gradient(145deg, transparent 9%, #000 47%);
+  .grounds-gallery {
+    width: fit-content;
   }
 
   .grounds-spread {
@@ -225,16 +162,6 @@ const others = amenities.filter((amenity) => amenity.id !== featured?.id);
   @media (min-width: 900px) {
     .grounds-intro {
       grid-template-columns: minmax(0, 1fr) auto;
-    }
-
-    .grounds-margin {
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 0.4rem;
-    }
-
-    .grounds-margin img {
-      width: clamp(10rem, 17vw, 14rem);
     }
 
     .grounds-spread-paired {

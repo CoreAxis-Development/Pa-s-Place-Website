@@ -198,6 +198,16 @@ const grounds = amenities.map((amenity) => ({
     background: var(--color-page);
   }
 
+  .home-masthead[data-coast-art] {
+    --coast-art-opacity: 0.125;
+  }
+
+  @media (max-width: 899px) {
+    .home-masthead[data-coast-art] {
+      --coast-art-opacity: 0.10;
+    }
+  }
+
   .hero-spread {
     display: grid;
     align-items: center;

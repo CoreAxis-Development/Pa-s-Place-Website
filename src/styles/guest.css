@@ -217,6 +217,56 @@
   }
 }
 
+[data-coast-art="canopy"] {
+  --coast-art-opacity: 0.13;
+}
+
+[data-coast-art="canopy"]::before {
+  position: absolute;
+  inset-block-start: -3rem;
+  inset-inline-end: -1.15rem;
+  z-index: -1;
+  width: clamp(34rem, 102%, 110rem);
+  aspect-ratio: 3 / 1;
+  background: url("../assets/images/garden-canopy-ink.webp") right top / contain no-repeat;
+
+  pointer-events: none;
+  transform-origin: right 15%;
+  content: "";
+}
+
+@media (max-width: 640px) {
+  [data-coast-art="canopy"]::before {
+    inset-block-start: -1rem;
+    width: clamp(29rem, 133%, 54rem);
+    opacity: 0.12;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) and (view-timeline-name: --grounds-canopy) {
+    [data-coast-art="canopy"] {
+      view-timeline-name: --grounds-canopy;
+    }
+
+    [data-coast-art="canopy"]::before {
+      animation: garden-breeze 1ms ease-in-out both;
+    }
+
+    /* Keep the timeline separate so the production minifier preserves it. */
+    .public-site [data-coast-art="canopy"]::before {
+      animation-timeline: --grounds-canopy;
+      animation-range: entry 0% cover 48%;
+    }
+
+    @keyframes garden-breeze {
+      0% { transform: rotate(-0.65deg); }
+      55% { transform: rotate(0.45deg); }
+      100% { transform: rotate(0); }
+    }
+  }
+}
+
 /* Quiet, opt-in shifts on selected sections as they come into view. */
 [data-coast-wash] {
   background-color: var(--coast-wash);
