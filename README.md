@@ -51,7 +51,7 @@ Security: passwords are hashed with scrypt; sessions are server-side with httpOn
 
 `railway.json` builds with `npm run build` and starts `node ./dist/server/entry.mjs`.
 
-1. **Add a volume** to the service and set `DATA_DIR` to its mount path (for example `/data`). The database and uploaded photos live there. Without a volume they are lost on every deploy.
+1. **Add a volume** to the service (for example at `/data`). The app uses Railway’s mount path for the database and uploaded photos by default. If `DATA_DIR` or `MEDIA_DIR` is already set, point it to an absolute path on that volume. Without a volume, local files are lost on redeploy.
 2. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` (10 characters or more) for the first owner account.
 3. Optional: add Railway's Postgres and set `DATABASE_URL` to use it instead of the embedded database. Photos still need the volume.
 4. Optional: set the `SMTP_*` variables and `SITE_URL` to email staff and guests about new enquiries and bookings.

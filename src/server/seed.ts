@@ -212,9 +212,9 @@ async function seedContent() {
   await saveDocument(
     'venuePage',
     {
-      title: 'Your party, under the big trees',
+      title: 'Gather under the big trees',
       intro:
-        'A covered lapa with a braai, a pool with waterslides, mini-golf and wide lawns. Hire the venue for the day and bring your people.',
+        'Hire the lapa and gardens for the day. There’s a covered space with a braai, a pool, mini-golf and plenty of lawn for your group.',
       imageId: img('lapa'),
       secondaryImageId: img('birthdayTable'),
       included: [

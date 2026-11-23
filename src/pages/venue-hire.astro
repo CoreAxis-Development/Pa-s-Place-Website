@@ -28,10 +28,10 @@ const steps = [
 
 <Layout
   title="Venue hire"
-  description={`Hire the lapa, pool, waterslides and gardens at Pa's Place in Pennington, KZN for birthdays and gatherings. ${settings.pricing.venue}.`}
+  description={`Day venue hire at Pa's Place in Pennington, KZN, with a covered lapa, braai, pool and gardens for groups and gatherings. ${settings.pricing.venue}.`}
   image={venuePage.image?.src}
 >
-  <section class="coast-masthead venue-masthead" data-coast-art="party" aria-labelledby="venue-title">
+  <section class="coast-masthead venue-masthead" data-coast-art="canopy" aria-labelledby="venue-title">
     <div class:list={['container-page venue-opening', venuePage.image && 'venue-opening-photo']}>
       <div>
         <p class="eyebrow">Day hire in Kelso, Pennington</p>
@@ -133,19 +133,22 @@ const steps = [
 </Layout>
 
 <style>
-  .venue-masthead[data-coast-art] {
-    --coast-art-size: clamp(31rem, 56vw, 56rem);
-    --coast-art-position: right -1rem top -0.8rem;
-    --coast-art-opacity: 0.14;
+  .venue-masthead[data-coast-art="canopy"] {
+    --coast-art-opacity: 0.24;
   }
 
-  .venue-masthead[data-coast-art]::before {
-    mask-image: linear-gradient(to left, #000 35%, transparent 82%);
+  .venue-masthead[data-coast-art="canopy"]::before {
+    inset-block-start: -1.4rem;
+    width: clamp(44rem, 94vw, 106rem);
+    mask-image: linear-gradient(to bottom, #000 42%, transparent 100%);
+    animation: none;
   }
 
   @media (max-width: 899px) {
-    .venue-masthead[data-coast-art] {
-      --coast-art-opacity: 0.10;
+    .venue-masthead[data-coast-art="canopy"]::before {
+      inset-block-start: 0;
+      width: clamp(38rem, 155vw, 58rem);
+      opacity: 0.18;
     }
   }
 

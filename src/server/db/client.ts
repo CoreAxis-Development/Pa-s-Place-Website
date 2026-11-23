@@ -9,8 +9,23 @@ import * as schema from './schema';
 export type Db = PgliteDatabase<typeof schema>;
 export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
 
-export const dataDir = () => path.resolve(process.env.DATA_DIR || './data');
-export const mediaDir = () => path.resolve(process.env.MEDIA_DIR || path.join(dataDir(), 'media'));
+function storagePath(value: string, variable: string): string {
+  const directory = path.resolve(value);
+  const volume = process.env.RAILWAY_VOLUME_MOUNT_PATH;
+  if (volume) {
+    const relative = path.relative(volume, directory);
+    if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+      throw new Error(`${variable} must point inside the mounted Railway volume at ${volume}.`);
+    }
+  }
+  return directory;
+}
+
+export const dataDir = () => storagePath(
+  process.env.DATA_DIR || process.env.RAILWAY_VOLUME_MOUNT_PATH || './data',
+  'DATA_DIR'
+);
+export const mediaDir = () => storagePath(process.env.MEDIA_DIR || path.join(dataDir(), 'media'), 'MEDIA_DIR');
 
 const migrationsFolder = () => path.resolve('./drizzle');
 
