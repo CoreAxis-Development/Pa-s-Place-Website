@@ -5,14 +5,14 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 import { eq } from 'drizzle-orm';
-import { initialOwnerPasswordProblem } from './auth/password';
+import { developmentOwnerEmail, initialOwnerPasswordProblem } from './auth/password';
 import { getDb, schema } from './db/client';
 import { newId } from './lib/ids';
 import { logActivity } from './services/activity';
 import { bumpContentVersion } from './services/cache';
 import { saveDocument } from './services/documents';
 import { importImage } from './services/media';
-import { createInitialOwner, createUser, userCount, userInput } from './services/users';
+import { createInitialOwner, userCount, userInput } from './services/users';
 
 interface SeedPhoto {
   key: string;
@@ -381,16 +381,14 @@ async function bootstrapOwner() {
   }
   // Only under `astro dev`. A built server never gets a default account, even
   // if NODE_ENV was left unset on the host.
-  if (import.meta.env.DEV) {
-    // the account must change this password at first sign-in
-    await createUser({ name: 'Site owner', email: DEV_OWNER.email, role: 'owner', password: DEV_OWNER.password }, null);
-    console.info(`[seed] development owner account: ${DEV_OWNER.email} / ${DEV_OWNER.password}`);
+  const localOwnerEmail = import.meta.env.DEV ? developmentOwnerEmail() : undefined;
+  if (localOwnerEmail) {
+    await createInitialOwner({ name: 'Admin', email: localOwnerEmail, password: 'rootpass' });
+    console.info('[seed] local development owner account created.');
     return;
   }
   console.warn('[seed] no staff accounts exist. Verify ADMIN_EMAIL and ADMIN_PASSWORD are set on this service and redeploy.');
 }
-
-export const DEV_OWNER = { email: 'admin@pasplace.co.za', password: 'garden-by-the-sea' };
 
 const store = globalThis as typeof globalThis & { __pasPlaceReady?: Promise<void> };
 

@@ -46,9 +46,22 @@ export function passwordProblem(password: string): string | null {
   return null;
 }
 
-/** The first owner on the Railway beta may use a short temporary password. */
+export function usesDevelopmentOwner(): boolean {
+  const environmentId = process.env.RAILWAY_ENVIRONMENT_ID;
+  return environmentId === '80d2e529-f064-4c5b-8fc7-9f27d82245c7' || (!environmentId && import.meta.env.DEV);
+}
+
+export function developmentOwnerEmail(): string | undefined {
+  if (!usesDevelopmentOwner()) return undefined;
+  return process.env.ADMIN_EMAIL?.trim().toLowerCase() || (import.meta.env.DEV ? 'admin@test.co' : undefined);
+}
+
+export function isDevelopmentOwner(user: { email: string; role: string }): boolean {
+  return user.role === 'owner' && user.email.toLowerCase() === developmentOwnerEmail();
+}
+
+/** Development owner credentials come from the operator and are changed on demand. */
 export function initialOwnerPasswordProblem(value: string): string | null {
-  const isBeta = process.env.RAILWAY_ENVIRONMENT_ID === '80d2e529-f064-4c5b-8fc7-9f27d82245c7';
-  if (!isBeta) return passwordProblem(value);
+  if (!usesDevelopmentOwner()) return passwordProblem(value);
   return value.length > 0 && value.length <= 200 ? null : 'Use between 1 and 200 characters.';
 }

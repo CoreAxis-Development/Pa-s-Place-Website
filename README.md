@@ -19,7 +19,7 @@ npm run dev
 - Website: http://localhost:4321
 - Admin portal: http://localhost:4321/admin
 
-On the first request the server creates the database, loads the photos in `seed/photos/` and the starter content, and creates a development owner account: `admin@pasplace.co.za` / `garden-by-the-sea`. You are asked to choose a new password at first sign-in. To start again from scratch, stop the server and run `npm run db:reset`.
+On the first request the server creates the database, loads the photos in `seed/photos/` and the starter content, and creates a local development owner. Use `admin` and the development password, or set `ADMIN_EMAIL` and `ADMIN_PASSWORD` before the first run. To start again from scratch, stop the server and run `npm run db:reset`.
 
 | Command | What it does |
 |---|---|

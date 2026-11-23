@@ -5,7 +5,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { and, eq, gt, lt, ne, sql } from 'drizzle-orm';
 import { getDb, schema } from '../db/client';
 import type { Role, User } from '../db/schema';
-import { hashPassword, verifyPassword } from './password';
+import { developmentOwnerEmail, hashPassword, isDevelopmentOwner, verifyPassword } from './password';
 
 export const SESSION_COOKIE = 'pp_session';
 const SESSION_DAYS = 7;
@@ -68,7 +68,7 @@ export async function getSessionUser(token: string | undefined): Promise<Session
       .set({ expiresAt: new Date(Date.now() + SESSION_MS) })
       .where(eq(schema.sessions.id, id));
   }
-  return { id: row.id, email: row.email, name: row.name, role: row.role, mustChangePassword: row.mustChangePassword };
+  return { id: row.id, email: row.email, name: row.name, role: row.role, mustChangePassword: row.mustChangePassword && !isDevelopmentOwner(row) };
 }
 
 export async function destroySession(token: string | undefined) {
@@ -97,12 +97,15 @@ export type LoginResult =
   | { ok: true; user: User }
   | { ok: false; reason: 'invalid' | 'locked' | 'inactive'; retryMinutes?: number };
 
-export async function authenticate(email: string, password: string): Promise<LoginResult> {
+export async function authenticate(identifier: string, password: string): Promise<LoginResult> {
+  const login = identifier.trim().toLowerCase();
+  const ownerAlias = login === 'admin' ? developmentOwnerEmail() : undefined;
+  const email = ownerAlias ?? login;
   const db = await getDb();
   const [user] = await db
     .select()
     .from(schema.users)
-    .where(eq(sql`lower(${schema.users.email})`, email.trim().toLowerCase()))
+    .where(and(eq(sql`lower(${schema.users.email})`, email), ownerAlias ? eq(schema.users.role, 'owner') : undefined))
     .limit(1);
 
   if (!user) {

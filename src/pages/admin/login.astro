@@ -4,12 +4,14 @@ import '../../styles/global.css';
 import '../../styles/admin.css';
 import { Image } from 'astro:assets';
 import logo from '../../assets/brand/pas-place-logo.png';
+import { developmentOwnerEmail } from '../../server/auth/password';
 import { SESSION_COOKIE, authenticate, cookieOptions, createSession } from '../../server/auth/session';
 import { clientIp, safeNext, str } from '../../server/http/request';
 import { rateLimit } from '../../server/lib/rate-limit';
 import { logActivity } from '../../server/services/activity';
 import { userCount } from '../../server/services/users';
 
+const acceptsUsername = Boolean(developmentOwnerEmail());
 const next = safeNext(Astro.url.searchParams.get('next'));
 if (Astro.locals.user) return Astro.redirect(next);
 
@@ -38,7 +40,7 @@ if (Astro.request.method === 'POST') {
         ? `This account is locked after too many wrong passwords. Try again in ${result.retryMinutes} minutes.`
         : result.reason === 'inactive'
           ? 'This account has been deactivated. Ask an administrator for access.'
-          : 'That email and password do not match an account.';
+          : 'Those sign-in details do not match an account.';
   }
 }
 
@@ -79,8 +81,8 @@ const noAccounts = (await userCount()) === 0;
         <form method="post" class="mt-6 grid gap-4">
           <input type="hidden" name="next" value={next} />
           <div>
-            <label class="label" for="email">Email</label>
-            <input class="input" id="email" name="email" type="email" autocomplete="username" value={email} required autofocus />
+            <label class="label" for="email">{acceptsUsername ? 'Username or email' : 'Email'}</label>
+            <input class="input" id="email" name="email" type={acceptsUsername ? 'text' : 'email'} autocomplete="username" autocapitalize="none" value={email} required autofocus />
           </div>
           <div>
             <label class="label" for="password">Password</label>

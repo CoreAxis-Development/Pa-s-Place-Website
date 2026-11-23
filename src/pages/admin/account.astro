@@ -1,11 +1,12 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
-import { MIN_PASSWORD_LENGTH } from '../../server/auth/password';
+import { isDevelopmentOwner, MIN_PASSWORD_LENGTH } from '../../server/auth/password';
 import { ROLE_LABELS, SESSION_COOKIE } from '../../server/auth/session';
 import { currentUser, setFlash, str } from '../../server/http/request';
 import { UserError, changeOwnPassword } from '../../server/services/users';
 
 const user = currentUser(Astro);
+const developmentOwner = isDevelopmentOwner(user);
 let problem = '';
 
 if (Astro.request.method === 'POST') {
@@ -38,12 +39,12 @@ if (Astro.request.method === 'POST') {
     </div>
     <div>
       <label class="label" for="next">New password</label>
-      <input class="input" id="next" name="next" type="password" autocomplete="new-password" minlength={MIN_PASSWORD_LENGTH} required />
-      <p class="help">At least {MIN_PASSWORD_LENGTH} characters. A few unrelated words work well.</p>
+      <input class="input" id="next" name="next" type="password" autocomplete="new-password" minlength={developmentOwner ? undefined : MIN_PASSWORD_LENGTH} maxlength="200" required />
+      {!developmentOwner && <p class="help">At least {MIN_PASSWORD_LENGTH} characters. A few unrelated words work well.</p>}
     </div>
     <div>
       <label class="label" for="confirm">New password again</label>
-      <input class="input" id="confirm" name="confirm" type="password" autocomplete="new-password" minlength={MIN_PASSWORD_LENGTH} required />
+      <input class="input" id="confirm" name="confirm" type="password" autocomplete="new-password" minlength={developmentOwner ? undefined : MIN_PASSWORD_LENGTH} maxlength="200" required />
     </div>
     <button class="btn btn-primary justify-self-start" type="submit">Change password</button>
   </form>

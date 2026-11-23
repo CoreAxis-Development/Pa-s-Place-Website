@@ -1,7 +1,7 @@
 // Staff accounts.
 import { asc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { hashPassword, initialOwnerPasswordProblem, passwordProblem, verifyPassword } from '../auth/password';
+import { hashPassword, initialOwnerPasswordProblem, isDevelopmentOwner, passwordProblem, verifyPassword } from '../auth/password';
 import { canManageRole, destroyUserSessions } from '../auth/session';
 import { getDb, schema } from '../db/client';
 import type { Role, User } from '../db/schema';
@@ -61,7 +61,7 @@ export async function createInitialOwner(input: Pick<NewUser, 'email' | 'name'> 
   const data = userInput.parse({ ...input, role: 'owner' });
   const problem = initialOwnerPasswordProblem(input.password);
   if (problem) throw new UserError(problem);
-  return insertUser(data, input.password, null);
+  return insertUser(data, input.password, null, !isDevelopmentOwner(data));
 }
 
 /** Create an account with a temporary password the person must change at first sign-in. */
@@ -69,7 +69,7 @@ export async function createUser(input: NewUser & { password: string }, actor: A
   return insertUser(userInput.parse(input), password.parse(input.password), actor);
 }
 
-async function insertUser(data: NewUser, pw: string, actor: Actor | null) {
+async function insertUser(data: NewUser, pw: string, actor: Actor | null, mustChangePassword = true) {
   if (actor && !canManageRole(actor, data.role)) throw new UserError('You cannot create an account with that role.');
   if (await emailTaken(data.email)) throw new UserError('Someone already has an account with that email address.');
 
@@ -80,7 +80,7 @@ async function insertUser(data: NewUser, pw: string, actor: Actor | null) {
       id: newId(),
       ...data,
       passwordHash: await hashPassword(pw),
-      mustChangePassword: true,
+      mustChangePassword,
     })
     .returning();
   await logActivity({
@@ -150,7 +150,7 @@ export async function changeOwnPassword(userId: string, current: string, next: s
   const user = await getUser(userId);
   if (!user) throw new UserError('That account no longer exists.');
   if (!(await verifyPassword(current, user.passwordHash))) throw new UserError('Your current password is not correct.');
-  const problem = passwordProblem(next);
+  const problem = isDevelopmentOwner(user) ? initialOwnerPasswordProblem(next) : passwordProblem(next);
   if (problem) throw new UserError(problem);
   if (current === next) throw new UserError('Choose a password you have not used here before.');
   const db = await getDb();
