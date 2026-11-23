@@ -45,3 +45,10 @@ export function passwordProblem(password: string): string | null {
     return 'That password is too easy to guess.';
   return null;
 }
+
+/** The first owner on the Railway beta may use a short temporary password. */
+export function initialOwnerPasswordProblem(value: string): string | null {
+  const isBeta = process.env.RAILWAY_ENVIRONMENT_ID === '80d2e529-f064-4c5b-8fc7-9f27d82245c7';
+  if (!isBeta) return passwordProblem(value);
+  return value.length > 0 && value.length <= 200 ? null : 'Use between 1 and 200 characters.';
+}

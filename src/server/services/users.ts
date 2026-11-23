@@ -1,7 +1,7 @@
 // Staff accounts.
 import { asc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { hashPassword, passwordProblem, verifyPassword } from '../auth/password';
+import { hashPassword, initialOwnerPasswordProblem, passwordProblem, verifyPassword } from '../auth/password';
 import { canManageRole, destroyUserSessions } from '../auth/session';
 import { getDb, schema } from '../db/client';
 import type { Role, User } from '../db/schema';
@@ -22,6 +22,8 @@ export const userInput = z.object({
   email: z.string().trim().toLowerCase().max(200).pipe(z.email('That email address does not look right.')),
   role: z.enum(['owner', 'admin', 'editor', 'viewer']),
 });
+
+type NewUser = z.infer<typeof userInput>;
 
 export async function listUsers() {
   const db = await getDb();
@@ -53,10 +55,21 @@ async function activeOwnerCount() {
   return count;
 }
 
+/** Bootstrap the first owner from deployment settings. */
+export async function createInitialOwner(input: Pick<NewUser, 'email' | 'name'> & { password: string }) {
+  if ((await userCount()) > 0) throw new UserError('Staff accounts already exist.');
+  const data = userInput.parse({ ...input, role: 'owner' });
+  const problem = initialOwnerPasswordProblem(input.password);
+  if (problem) throw new UserError(problem);
+  return insertUser(data, input.password, null);
+}
+
 /** Create an account with a temporary password the person must change at first sign-in. */
-export async function createUser(input: z.infer<typeof userInput> & { password: string }, actor: Actor | null) {
-  const data = userInput.parse(input);
-  const pw = password.parse(input.password);
+export async function createUser(input: NewUser & { password: string }, actor: Actor | null) {
+  return insertUser(userInput.parse(input), password.parse(input.password), actor);
+}
+
+async function insertUser(data: NewUser, pw: string, actor: Actor | null) {
   if (actor && !canManageRole(actor, data.role)) throw new UserError('You cannot create an account with that role.');
   if (await emailTaken(data.email)) throw new UserError('Someone already has an account with that email address.');
 
