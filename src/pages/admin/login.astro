@@ -71,7 +71,7 @@ const noAccounts = (await userCount()) === 0;
         {
           noAccounts && (
             <p class="alert alert-warning mt-5">
-              No staff accounts exist yet. Set the ADMIN_EMAIL and ADMIN_PASSWORD environment variables and restart the server to create the owner account.
+              No staff accounts exist yet. If you manage this site, check the owner setup message in the service logs. After correcting the settings, redeploy and open this page again.
             </p>
           )
         }

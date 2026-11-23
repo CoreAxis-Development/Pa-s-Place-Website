@@ -1,4 +1,5 @@
 ---
+import miniGolfInk from '../../assets/images/mini-golf-ink.webp';
 import type { PublicAmenity } from '../../server/services/content';
 import Icon from '../ui/Icon.astro';
 import Picture from '../ui/Picture.astro';
@@ -10,180 +11,184 @@ interface Props {
 }
 
 const { amenities, title, intro } = Astro.props;
-const featuredAmenity = amenities.find((amenity) => amenity.image) ?? amenities[0];
+const featured = amenities.find((amenity) => amenity.image);
+const others = amenities.filter((amenity) => amenity.id !== featured?.id);
 ---
 
-<section id="grounds" class="section" data-coast-art="mini-golf" data-coast-wash="leaf" aria-labelledby="grounds-title">
-  <div class="container-page activity-layout">
-    <div>
-      <h2 id="grounds-title" class="t-h2">{title}</h2>
-      <p class="t-lead mt-4 max-w-[42ch]">{intro}</p>
-      <div class="activity-links">
+<section id="grounds" class="grounds-guide" data-coast-wash="leaf" aria-labelledby="grounds-title">
+  <div class="container-page">
+    <div class="grounds-intro">
+      <div>
+        <h2 id="grounds-title" class="t-h2">{title}</h2>
+        <p class="t-lead mt-3 max-w-[52ch]">{intro}</p>
+      </div>
+      <div class="grounds-margin">
+        <img src={miniGolfInk.src} width={miniGolfInk.width} height={miniGolfInk.height} alt="" loading="lazy" decoding="async" />
         <a class="link inline-flex items-center gap-2" href="/gallery">
           See the gallery <Icon name="arrow" class="h-4 w-4 shrink-0" />
         </a>
-        <span aria-hidden="true" class="activity-ink"></span>
       </div>
     </div>
 
-    <div class="activity-board">
-      <h3 class="activity-question">See what&rsquo;s around the garden</h3>
+    <div class:list={['grounds-spread', featured?.image && others.length > 0 && 'grounds-spread-paired']}>
       {
-        amenities.map((amenity) => (
-          <details name="grounds-activities" open={amenity.id === featuredAmenity?.id}>
-            <summary>
-              <span class="activity-icon"><Icon name={amenity.icon} /></span>
-              <span>{amenity.title}</span>
-              <span class="activity-toggle" aria-hidden="true"></span>
-            </summary>
-            <div class="activity-content">
-              {amenity.image && (
-                <Picture image={amenity.image} sizes="(min-width: 900px) 600px, 90vw" class="activity-photo" />
-              )}
-              <p>{amenity.description}</p>
+        featured?.image && (
+          <article class="grounds-feature">
+            <Picture image={featured.image} sizes="(min-width: 900px) 620px, 92vw" class="grounds-feature-photo" />
+            <div class="grounds-feature-note">
+              <span class="grounds-icon"><Icon name={featured.icon} /></span>
+              <div>
+                <h3 class="t-h3">{featured.title}</h3>
+                <p>{featured.description}</p>
+              </div>
             </div>
-          </details>
-        ))
+          </article>
+        )
+      }
+
+      {
+        others.length > 0 && (
+          <div class="grounds-stops">
+            {others.map((amenity) => (
+              <article class:list={['grounds-stop', amenity.image && 'grounds-stop-with-photo']}>
+                {
+                  amenity.image
+                    ? <Picture image={amenity.image} sizes="104px" class="grounds-stop-photo" />
+                    : <span class="grounds-icon"><Icon name={amenity.icon} /></span>
+                }
+                <div>
+                  <h3 class="t-h4">{amenity.title}</h3>
+                  <p>{amenity.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        )
       }
     </div>
   </div>
 </section>
 
 <style>
-  .activity-layout {
+  .grounds-guide {
+    padding-block: clamp(2.65rem, 6vw, 5.25rem);
+  }
+
+  .grounds-intro {
     display: grid;
-    gap: clamp(1.5rem, 5vw, 4.5rem);
+    align-items: end;
+    gap: 0.85rem 2rem;
+    margin-bottom: clamp(1.2rem, 3vw, 2rem);
+  }
+
+  .grounds-margin {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+  }
+
+  .grounds-margin img {
+    width: min(49%, 9.5rem);
+    height: auto;
+    opacity: 0.46;
+  }
+
+  .grounds-spread {
+    display: grid;
+    gap: 1.25rem 2rem;
     align-items: start;
   }
 
-  .activity-links {
-    margin-top: 1rem;
-  }
-
-  .activity-ink {
-    display: none;
-  }
-
-  @media (max-width: 899px) {
-    .activity-layout {
-      gap: 1rem;
-    }
-
-    .activity-links {
-      display: flex;
-      min-height: 52px;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.55rem;
-    }
-
-    .activity-ink {
-      display: block;
-      width: min(52%, 12rem);
-      aspect-ratio: 2;
-      flex: none;
-      background: var(--coast-art) center / contain no-repeat;
-      opacity: 0.28;
-    }
-  }
-
-  .activity-board {
-    min-width: 0;
-    padding: clamp(0.85rem, 3vw, 1.6rem);
+  .grounds-feature {
+    display: grid;
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    border-radius: 2rem 0.7rem 0.7rem;
     background: var(--color-raised);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 16px 16px 16px 5px;
-    box-shadow: 0 4px 0 -1px var(--color-sunken), 0 5px 0 -1px var(--color-line-strong);
   }
 
-  .activity-question {
-    padding-inline-start: 0.75rem;
-    border-inline-start: 2px dotted var(--color-canopy-600);
-    margin-bottom: 0.75rem;
-    font-size: clamp(1.35rem, 3vw, 1.7rem);
-    font-weight: 650;
-    line-height: 1.15;
-  }
-
-  details {
-    border-top: 1px solid var(--color-line);
-  }
-
-  summary {
-    display: grid;
-    min-height: 56px;
-    grid-template-columns: 34px minmax(0, 1fr) 1rem;
-    align-items: center;
-    gap: 0.65rem;
-    cursor: pointer;
-    list-style: none;
-    font-weight: 750;
-    color: var(--color-ink);
-  }
-
-  summary::-webkit-details-marker {
-    display: none;
-  }
-
-  summary:hover {
-    color: var(--color-pool-700);
-  }
-
-  .activity-icon {
-    display: grid;
-    width: 34px;
-    height: 34px;
-    place-items: center;
-    border-radius: 50%;
-    border: 1px solid var(--color-line-strong);
-  }
-
-  .activity-toggle {
-    position: relative;
-    width: 0.875rem;
-    height: 0.875rem;
-  }
-
-  .activity-toggle::before,
-  .activity-toggle::after {
-    position: absolute;
-    top: calc(50% - 1px);
-    left: 0;
-    width: 100%;
-    height: 2px;
-    content: "";
-    background: currentColor;
-  }
-
-  .activity-toggle::after {
-    transform: rotate(90deg);
-  }
-
-  details[open] .activity-toggle::after {
-    display: none;
-  }
-
-  .activity-content {
-    padding-bottom: 0.9rem;
-  }
-
-  .activity-content :global(.activity-photo) {
+  .grounds-feature :global(.grounds-feature-photo) {
     display: block;
     width: 100%;
-    aspect-ratio: 2 / 1;
+    aspect-ratio: 1.65;
     object-fit: cover;
-    object-position: center 45%;
-    border-radius: var(--radius-lg);
+    object-position: center 69%;
   }
 
-  .activity-content p {
-    margin-top: 0.6rem;
+  .grounds-feature-note {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.9rem clamp(0.8rem, 2vw, 1.25rem);
+  }
+
+  .grounds-feature-note p,
+  .grounds-stop p {
+    margin-top: 0.18rem;
     font-size: 0.9375rem;
   }
 
+  .grounds-stops {
+    border-block: 1px solid var(--color-line-strong);
+  }
+
+  .grounds-stop {
+    display: grid;
+    grid-template-columns: 2.3rem minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+    padding-block: 0.85rem;
+  }
+
+  .grounds-stop + .grounds-stop {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .grounds-stop-with-photo {
+    grid-template-columns: clamp(4.3rem, 16vw, 6rem) minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .grounds-stop :global(.grounds-stop-photo) {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1.2;
+    border-radius: 7px;
+    object-fit: cover;
+  }
+
+  .grounds-icon {
+    display: grid;
+    width: 2.3rem;
+    height: 2.3rem;
+    place-items: center;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 50%;
+    color: var(--color-canopy-600);
+    background: var(--color-raised);
+  }
+
   @media (min-width: 900px) {
-    .activity-layout {
-      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    .grounds-intro {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .grounds-margin {
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.4rem;
+    }
+
+    .grounds-margin img {
+      width: clamp(10rem, 17vw, 14rem);
+    }
+
+    .grounds-spread-paired {
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
     }
   }
 </style>

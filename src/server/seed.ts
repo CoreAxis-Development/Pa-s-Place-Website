@@ -364,9 +364,15 @@ async function bootstrapOwner() {
   const email = process.env.ADMIN_EMAIL;
   const password = process.env.ADMIN_PASSWORD;
   if (email && password) {
-    const owner = userInput.safeParse({ name: process.env.ADMIN_NAME || 'Site owner', email, role: 'owner' });
-    if (!owner.success || passwordProblem(password)) {
-      console.warn('[seed] owner account setup skipped because ADMIN_EMAIL, ADMIN_NAME or ADMIN_PASSWORD is invalid.');
+    const owner = userInput.safeParse({ name: process.env.ADMIN_NAME?.trim() || 'Site owner', email, role: 'owner' });
+    if (!owner.success) {
+      const invalidFields = owner.error.issues.map((issue) => issue.path[0] === 'email' ? 'ADMIN_EMAIL' : 'ADMIN_NAME');
+      console.warn(`[seed] owner account setup skipped: check ${[...new Set(invalidFields)].join(' and ')}.`);
+      return;
+    }
+    const invalidPassword = passwordProblem(password);
+    if (invalidPassword) {
+      console.warn(`[seed] owner account setup skipped: ADMIN_PASSWORD does not meet the password policy. ${invalidPassword}`);
       return;
     }
     await createUser({ ...owner.data, password }, null);
@@ -381,7 +387,7 @@ async function bootstrapOwner() {
     console.info(`[seed] development owner account: ${DEV_OWNER.email} / ${DEV_OWNER.password}`);
     return;
   }
-  console.warn('[seed] no staff accounts exist. Set ADMIN_EMAIL and ADMIN_PASSWORD and restart to create the owner.');
+  console.warn('[seed] no staff accounts exist. Verify ADMIN_EMAIL and ADMIN_PASSWORD are set on this service and redeploy.');
 }
 
 export const DEV_OWNER = { email: 'admin@pasplace.co.za', password: 'garden-by-the-sea' };
