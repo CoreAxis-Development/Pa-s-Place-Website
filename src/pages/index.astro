@@ -202,6 +202,11 @@ const grounds = amenities.map((amenity) => ({
     --coast-art-opacity: 0.125;
   }
 
+  .home-masthead[data-coast-art="garden"]::before {
+    inset-inline: -1.1rem auto;
+    transform: none;
+  }
+
   @media (max-width: 899px) {
     .home-masthead[data-coast-art] {
       --coast-art-opacity: 0.10;

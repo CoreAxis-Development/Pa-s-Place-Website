@@ -230,16 +230,12 @@
 }
 
 [data-coast-art="canopy"]::before {
-  position: absolute;
-  inset-block-start: -3rem;
-  right: -1.15rem;
-  z-index: -1;
+  inset: -3rem -1.15rem auto auto;
   width: clamp(34rem, 102%, 110rem);
   aspect-ratio: 3 / 1;
   background: url("../assets/images/garden-canopy-ink.webp") right top / contain no-repeat;
-  pointer-events: none;
+  mask-image: linear-gradient(to bottom, #000 60%, transparent);
   transform-origin: right 15%;
-  content: "";
 }
 
 @media (max-width: 640px) {

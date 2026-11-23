@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import logo from '../assets/brand/pas-place-logo.png';
+import coastInk from '../assets/images/footer-coast-ink.webp';
 import Dove from './story/Dove.astro';
 import { getSite } from '../server/services/content';
 
@@ -29,6 +30,12 @@ const columns = [
 ---
 
 <footer class="site-footer on-dark bg-canopy-900 text-on-dark">
+  <div class="footer-horizon" aria-hidden="true">
+    <div class="footer-scene">
+      <img src={coastInk.src} width={coastInk.width} height={coastInk.height} alt="" loading="lazy" decoding="async" />
+      <Dove class="footer-dove" />
+    </div>
+  </div>
   <div class="container-page">
     <div class="footer-main">
       <div class="footer-brand">
@@ -80,10 +87,6 @@ const columns = [
       </div>
     </div>
 
-    <div class="footer-horizon" aria-hidden="true">
-      <Dove class="footer-dove" />
-    </div>
-
     <div class="footer-bottom text-on-dark-muted">
       <p>
         &copy; {`${year} ${organisation.legalName}`}
@@ -101,8 +104,37 @@ const columns = [
 
 <style>
   .site-footer {
-    padding-block: clamp(1.75rem, 3.5vw, 3rem) 1.15rem;
+    --footer-tide-height: clamp(1.25rem, 2.75vw, 3.25rem);
+    position: relative;
+    isolation: isolate;
+    padding-block: clamp(2rem, 3.8vw, 3.75rem) 1.15rem;
     font-size: 0.9375rem;
+  }
+
+  .site-footer::before,
+  .site-footer::after {
+    position: absolute;
+    z-index: -1;
+    inset: auto 0 calc(100% - 1px);
+    height: var(--footer-tide-height);
+    border-radius: 68% 44% 0 0 / 100% 78% 0 0;
+    background: var(--color-canopy-900);
+    pointer-events: none;
+    content: "";
+  }
+
+  .site-footer::before {
+    height: calc(var(--footer-tide-height) + 0.55rem);
+    opacity: 0.14;
+  }
+
+  @supports (clip-path: shape(from 0 0, line to 100% 100%, close)) {
+    .site-footer::before,
+    .site-footer::after {
+      border-radius: 0;
+      clip-path: shape(from 0 66%, curve to 58% 62% with 24% -40% / 42% 112%,
+        curve to 100% 14% with 73% 22% / 88% -8%, line to 100% 100%, line to 0 100%, close);
+    }
   }
 
   .footer-main,
@@ -182,18 +214,32 @@ const columns = [
   }
 
   .footer-horizon {
-    position: relative;
-    min-height: clamp(5.5rem, 11vw, 9.5rem);
-    margin-top: 0.75rem;
-    background: url("../assets/images/footer-coast-ink.webp") right bottom / clamp(540px, 100%, 1200px) auto no-repeat;
-    opacity: 0.63;
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
   }
 
-  .footer-horizon :global(.footer-dove) {
+  .footer-scene {
     position: absolute;
-    bottom: 48%;
-    right: clamp(7rem, 21%, 13rem);
-    width: clamp(1.5rem, 3vw, 2.35rem);
+    inset: auto 0 0 auto;
+    width: clamp(34rem, 88vw, 92rem);
+    opacity: 0.48;
+    mask-image: linear-gradient(145deg, transparent 16%, rgb(0 0 0 / 0.26) 52%, #000 86%);
+  }
+
+  .footer-scene img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .footer-scene :global(.footer-dove) {
+    position: absolute;
+    bottom: 45%;
+    right: 20%;
+    width: clamp(1.5rem, 2.75vw, 2.35rem);
     height: auto;
   }
 
@@ -202,10 +248,16 @@ const columns = [
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 0.6rem 1.75rem;
-    margin-top: 0;
-    padding-top: 0.85rem;
-    border-top: 1px solid rgb(255 255 255 / 0.17);
+    margin-top: clamp(2rem, 5vw, 4.5rem);
+    padding-top: 0.75rem;
+    background: linear-gradient(to right, rgb(255 255 255 / 0.18), transparent 78%) top / 100% 1px no-repeat;
     font-size: 0.8125rem;
+  }
+
+  @media (max-width: 639px) {
+    .footer-scene {
+      opacity: 0.28;
+    }
   }
 
   @media (min-width: 640px) {
