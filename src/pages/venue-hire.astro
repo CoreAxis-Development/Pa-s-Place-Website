@@ -31,7 +31,7 @@ const steps = [
   description={`Hire the lapa, pool, waterslides and gardens at Pa's Place in Pennington, KZN for birthdays and gatherings. ${settings.pricing.venue}.`}
   image={venuePage.image?.src}
 >
-  <section class="coast-masthead" aria-labelledby="venue-title">
+  <section class="coast-masthead" data-coast-art="garden" aria-labelledby="venue-title">
     <div class:list={['container-page venue-opening', venuePage.image && 'venue-opening-photo']}>
       <div>
         <p class="eyebrow">Day hire in Kelso, Pennington</p>
@@ -62,7 +62,7 @@ const steps = [
     </div>
   </div>
 
-  <section class="section" id="venue-included" data-coast-art="canopy" data-coast-wash="leaf" aria-labelledby="venue-included-title">
+  <section class="section" id="venue-included" data-coast-wash="leaf" aria-labelledby="venue-included-title">
     <div class:list={['container-page venue-grounds', groundPhotos.length > 0 && 'venue-grounds-photo']}>
       <div>
         <h2 class="t-h2" id="venue-included-title">What comes with the venue</h2>

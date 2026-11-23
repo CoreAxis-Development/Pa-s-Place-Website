@@ -312,6 +312,13 @@
   }
 }
 
+[data-coast-art="party"] {
+  --coast-art: url("../assets/images/party-bunting-ink.webp");
+  --coast-art-size: clamp(540px, 66vw, 1000px);
+  --coast-art-position: right -2rem top;
+  --coast-art-opacity: 0.11;
+}
+
 /* One illustrated sheet, cropped to the three individual scenes. */
 .party-doodle {
   display: block;

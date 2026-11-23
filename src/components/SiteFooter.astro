@@ -1,6 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import logo from '../assets/brand/pas-place-logo.png';
+import Dove from './story/Dove.astro';
 import { getSite } from '../server/services/content';
 
 const { settings, whatsappUrl } = await getSite();
@@ -79,6 +80,10 @@ const columns = [
       </div>
     </div>
 
+    <div class="footer-horizon" aria-hidden="true">
+      <Dove class="footer-dove" />
+    </div>
+
     <div class="footer-bottom text-on-dark-muted">
       <p>
         &copy; {`${year} ${organisation.legalName}`}
@@ -121,7 +126,7 @@ const columns = [
     gap: 0.65rem;
     color: var(--color-on-dark);
     font-family: var(--font-display);
-    font-size: 1.5rem;
+    font-size: clamp(1.65rem, 3vw, 2.25rem);
     font-weight: 600;
     line-height: 1.16;
   }
@@ -176,12 +181,28 @@ const columns = [
     text-decoration: underline;
   }
 
+  .footer-horizon {
+    position: relative;
+    min-height: clamp(5.5rem, 11vw, 9.5rem);
+    margin-top: 0.75rem;
+    background: url("../assets/images/footer-coast-ink.webp") right bottom / clamp(540px, 100%, 1200px) auto no-repeat;
+    opacity: 0.63;
+  }
+
+  .footer-horizon :global(.footer-dove) {
+    position: absolute;
+    bottom: 48%;
+    right: clamp(7rem, 21%, 13rem);
+    width: clamp(1.5rem, 3vw, 2.35rem);
+    height: auto;
+  }
+
   .footer-bottom {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 0.6rem 1.75rem;
-    margin-top: 1.5rem;
+    margin-top: 0;
     padding-top: 0.85rem;
     border-top: 1px solid rgb(255 255 255 / 0.17);
     font-size: 0.8125rem;
@@ -205,10 +226,6 @@ const columns = [
 
     .footer-brand {
       grid-column: auto;
-    }
-
-    .footer-bottom {
-      margin-top: 2rem;
     }
   }
 </style>

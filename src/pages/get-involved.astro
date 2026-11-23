@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Sunrise from '../components/ui/Sunrise.astro';
 import EnquiryForm from '../components/sections/EnquiryForm.astro';
 import MissionBand from '../components/sections/MissionBand.astro';
 import Icon from '../components/ui/Icon.astro';
@@ -39,8 +40,9 @@ const roles = [
 ---
 
 <Layout title="Get involved" description="Sponsor a child's seaside holiday, volunteer, or support Pa's Place by booking a stay or hiring the venue.">
-  <section class="coast-masthead" data-coast-art="shore" aria-label="Get involved">
-    <div class="container-page py-10 lg:py-14">
+  <section class="coast-masthead relative overflow-hidden" aria-label="Get involved">
+    <Sunrise class="pointer-events-none absolute -right-20 -top-32 h-64 w-64 opacity-20" />
+    <div class="container-page relative py-10 lg:py-14">
       <p class="eyebrow">Get involved</p>
       <h1 class="t-h1 mt-2 max-w-3xl">Help send a child to the sea</h1>
       <p class="t-lead mt-4 max-w-[60ch]">There are three ways to help, and two of them are a holiday for you as well.</p>

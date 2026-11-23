@@ -12,7 +12,7 @@ const photos = active ? site.gallery.filter((g) => g.category === active.value) 
 ---
 
 <Layout title="Gallery" description="Photos of Pa's Place in Pennington, KZN: the pool and waterslides, mini-golf, the lapa and the gardens.">
-  <section class="bg-page" aria-label="Gallery">
+  <section class="bg-page" data-coast-art={active?.value === 'celebrations' ? 'party' : 'canopy'} aria-label="Gallery">
     <div class="container-page pb-20 pt-10 lg:pt-14">
       <p class="eyebrow">Gallery</p>
       <h1 class="t-h1 mt-2">The garden, the pool and the lapa</h1>
