@@ -183,9 +183,16 @@
 
 [data-coast-art="garden"] {
   --coast-art: url("../assets/images/grounds-field-guide.webp");
-  --coast-art-size: clamp(340px, 64vw, 1000px);
-  --coast-art-position: left max(-100px, calc((100vw - 84rem) / 2)) bottom -2rem;
+  --coast-art-size: 100% auto;
+  --coast-art-position: left bottom;
   --coast-art-opacity: 0.16;
+}
+
+/* The source tree grows from the left. Reflect it inside a right-anchored layer. */
+[data-coast-art="garden"]::before {
+  inset: 0 -1.1rem 0 auto;
+  width: clamp(340px, 63vw, 1000px);
+  transform: scaleX(-1);
 }
 
 [data-coast-art="shore"] {
@@ -197,13 +204,14 @@
 
 @media (max-width: 899px) {
   [data-coast-art="garden"] {
-    --coast-art-size: clamp(300px, 55vw, 480px);
-    --coast-art-position: right -5rem top -1rem;
+    --coast-art-position: left top;
     --coast-art-opacity: 0.13;
   }
 
   [data-coast-art="garden"]::before {
-    mask-image: radial-gradient(ellipse 78% 15rem at right top, #000 15%, transparent 100%);
+    inset-block-start: -0.6rem;
+    width: clamp(270px, 60vw, 440px);
+    mask-image: radial-gradient(ellipse 78% 15rem at left top, #000 15%, transparent 100%);
   }
 
   [data-coast-art="shore"] {
@@ -224,12 +232,11 @@
 [data-coast-art="canopy"]::before {
   position: absolute;
   inset-block-start: -3rem;
-  inset-inline-end: -1.15rem;
+  right: -1.15rem;
   z-index: -1;
   width: clamp(34rem, 102%, 110rem);
   aspect-ratio: 3 / 1;
   background: url("../assets/images/garden-canopy-ink.webp") right top / contain no-repeat;
-
   pointer-events: none;
   transform-origin: right 15%;
   content: "";
@@ -302,24 +309,6 @@
       from { background-color: var(--coast-wash-start); }
       to { background-color: var(--coast-wash); }
     }
-  }
-}
-
-[data-coast-art="party"] {
-  --coast-art: url("../assets/images/party-bunting-ink.webp");
-  --coast-art-size: clamp(570px, 68vw, 1050px);
-  --coast-art-position: right max(-95px, calc((100vw - 86rem) / 2)) top -0.25rem;
-  --coast-art-opacity: 0.15;
-}
-
-@media (max-width: 640px) {
-  [data-coast-art="party"] {
-    --coast-art-position: right -7rem top 0;
-    --coast-art-opacity: 0.12;
-  }
-
-  [data-coast-art="party"]::before {
-    mask-image: linear-gradient(to left, #000 25%, transparent 95%);
   }
 }
 

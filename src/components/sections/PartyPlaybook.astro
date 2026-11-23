@@ -17,7 +17,7 @@ const scenes = [
 ] as const;
 ---
 
-<section id="kids-parties" class="section party-playbook" data-coast-art="party" data-coast-wash="sand" aria-labelledby="kids-parties-title">
+<section id="kids-parties" class="section" data-coast-wash="sand" aria-labelledby="kids-parties-title">
   <div class="container-page">
     <p class="eyebrow">The birthday playbook</p>
     <h2 id="kids-parties-title" class="t-h2 mt-2">{copy.title}</h2>
@@ -61,10 +61,6 @@ const scenes = [
 </section>
 
 <style>
-  .party-playbook[data-coast-art] {
-    --coast-art-opacity: 0.075;
-  }
-
   .party-book {
     display: grid;
     margin-top: clamp(1.3rem, 3vw, 2.25rem);

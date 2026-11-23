@@ -1,7 +1,6 @@
 ---
 import { Image } from 'astro:assets';
 import logo from '../assets/brand/pas-place-logo.png';
-import Sunrise from './ui/Sunrise.astro';
 import { getSite } from '../server/services/content';
 
 const { settings, whatsappUrl } = await getSite();
@@ -10,7 +9,7 @@ const year = new Date().getFullYear();
 
 const columns = [
   {
-    title: 'Visit',
+    title: 'Plan a visit',
     links: [
       { label: 'Book a stay', href: '/book-a-stay' },
       { label: 'Venue hire', href: '/venue-hire' },
@@ -18,147 +17,198 @@ const columns = [
     ],
   },
   {
-    title: 'About',
+    title: 'About us',
     links: [
       { label: 'Our story', href: '/our-story' },
       { label: 'What we do', href: '/what-we-do' },
       { label: 'Get involved', href: '/get-involved' },
-      { label: 'Contact', href: '/contact' },
     ],
   },
 ];
 ---
 
-<footer class="on-dark relative overflow-hidden bg-canopy-900 text-on-dark">
-  <Sunrise class="pointer-events-none absolute -right-36 -top-36 h-[360px] w-[360px]" />
-  <div class="container-page relative pb-8 pt-16">
-    <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_0.8fr_0.8fr_1.3fr]">
-      <div>
-        <div class="flex items-center gap-3">
-          <Image src={logo} alt="" widths={[112, 168]} sizes="56px" class="h-14 w-14 object-contain" />
-          <span class="wordmark text-2xl">Pa&rsquo;s Place</span>
-        </div>
-        <p class="mt-5 max-w-xs text-[0.9375rem] text-on-dark-muted">
-          A family holiday garden and party venue in Pennington. Every stay helps give a child their first holiday by
-          the sea.
-        </p>
+<footer class="site-footer on-dark bg-canopy-900 text-on-dark">
+  <div class="container-page">
+    <div class="footer-main">
+      <div class="footer-brand">
+        <a href="/" class="footer-home" aria-label="Pa’s Place homepage">
+          <Image src={logo} alt="" widths={[96, 144]} sizes="48px" class="h-12 w-12 object-contain" />
+          <span>{settings.siteName}</span>
+        </a>
+        <p class="text-on-dark-muted">Family stays and venue hire in Kelso, Pennington.</p>
       </div>
 
-      {
-        columns.map((col) => (
-          <div>
-            <h2 class="foot-title">{col.title}</h2>
-            <ul class="mt-4 space-y-2.5">
-              {col.links.map((l) => (
-                <li>
-                  <a class="foot-link" href={l.href}>
-                    {l.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))
-      }
+      <nav class="footer-nav" aria-label="Footer">
+        {
+          columns.map((column) => (
+            <div>
+              <h2 class="footer-title">{column.title}</h2>
+              <ul class="footer-links">
+                {column.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+              </ul>
+            </div>
+          ))
+        }
+      </nav>
 
-      <div>
-        <h2 class="foot-title">Contact</h2>
-        <ul class="mt-4 space-y-2.5">
+      <div class="footer-contact">
+        <h2 class="footer-title">Get in touch</h2>
+        <ul class="footer-links">
           {
             contact.phone && (
               <li>
-                <a class="foot-link tnum" href={`tel:${contact.phoneLink || contact.phone}`}>
-                  {contact.phone}
-                </a>
-                {contact.person && <span class="text-on-dark-muted"> &middot; ask for {contact.person}</span>}
+                <a class="tnum" href={`tel:${contact.phoneLink || contact.phone}`}>{contact.phone}</a>
+                {contact.person && <span class="text-on-dark-muted"> · ask for {contact.person}</span>}
               </li>
             )
           }
-          {
-            whatsappUrl && (
-              <li>
-                <a class="foot-link" href={whatsappUrl} rel="noopener">
-                  WhatsApp us
-                </a>
-              </li>
-            )
-          }
-          {
-            contact.email && (
-              <li>
-                <a class="foot-link" href={`mailto:${contact.email}`}>
-                  {contact.email}
-                </a>
-              </li>
-            )
-          }
-          {contact.address && <li class="whitespace-pre-line text-on-dark-muted">{contact.address}</li>}
-          {
-            contact.mapUrl && (
-              <li>
-                <a class="foot-link" href={contact.mapUrl} target="_blank" rel="noopener">
-                  Open the map
-                </a>
-              </li>
-            )
-          }
-          {
-            social.facebook && (
-              <li>
-                <a class="foot-link" href={social.facebook} target="_blank" rel="noopener">
-                  Facebook
-                </a>
-              </li>
-            )
-          }
-          {
-            social.instagram && (
-              <li>
-                <a class="foot-link" href={social.instagram} target="_blank" rel="noopener">
-                  Instagram
-                </a>
-              </li>
-            )
-          }
+          {contact.email && <li><a href={`mailto:${contact.email}`}>{contact.email}</a></li>}
+          <li class="footer-contact-actions">
+            {whatsappUrl && <a href={whatsappUrl} rel="noopener">WhatsApp</a>}
+            <a href="/contact">Contact page</a>
+          </li>
         </ul>
+        {
+          (contact.address || contact.mapUrl) && (
+            <address class="footer-address text-on-dark-muted">
+              {contact.address && <span class="whitespace-pre-line">{contact.address}</span>}
+              {contact.mapUrl && <a href={contact.mapUrl} target="_blank" rel="noopener" class="footer-map">Get directions</a>}
+            </address>
+          )
+        }
       </div>
     </div>
 
-    <div
-      class="mt-12 flex flex-wrap items-center justify-between gap-x-8 gap-y-2 border-t border-on-dark/15 pt-6 text-[0.8125rem] text-on-dark-muted"
-    >
+    <div class="footer-bottom text-on-dark-muted">
       <p>
-        &copy; {year}
-        {organisation.legalName}
-        {organisation.registration && <span> &middot; Reg. no. {organisation.registration}</span>}
+        &copy; {`${year} ${organisation.legalName}`}
+        {organisation.registration && <span> · Reg. no. {organisation.registration}</span>}
       </p>
-      <p class="flex gap-5">
-        <a class="hover:text-on-dark hover:underline" href="/privacy">Privacy</a>
-        <a class="hover:text-on-dark hover:underline" href="/admin">Staff sign-in</a>
-      </p>
+      <nav aria-label="Footer utility" class="footer-utilities">
+        {social.facebook && <a href={social.facebook} target="_blank" rel="noopener">Facebook</a>}
+        {social.instagram && <a href={social.instagram} target="_blank" rel="noopener">Instagram</a>}
+        <a href="/privacy">Privacy</a>
+        <a href="/admin">Staff sign-in</a>
+      </nav>
     </div>
   </div>
 </footer>
 
 <style>
-  .wordmark {
-    font-family: var(--font-display);
-    font-variation-settings: 'SOFT' 50, 'WONK' 0;
-    font-weight: 600;
+  .site-footer {
+    padding-block: clamp(1.75rem, 3.5vw, 3rem) 1.15rem;
+    font-size: 0.9375rem;
   }
-  .foot-title {
-    font-family: var(--font-body);
-    font-size: 0.8125rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-on-dark-muted);
+
+  .footer-main,
+  .footer-nav {
+    display: grid;
+    gap: 1.4rem 1.25rem;
   }
-  .foot-link {
+
+  .footer-main > *,
+  .footer-nav > * {
+    min-width: 0;
+  }
+
+  .footer-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .footer-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
     color: var(--color-on-dark);
-    text-underline-offset: 3px;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.16;
   }
-  .foot-link:hover {
+
+  .footer-home :global(img) {
+    flex: none;
+  }
+
+  .footer-brand p {
+    margin-top: 0.55rem;
+    max-width: 24ch;
+  }
+
+  .footer-title {
+    color: var(--color-on-dark);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    font-weight: 750;
+  }
+
+  .footer-links {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+  }
+
+  .footer-contact-actions,
+  .footer-utilities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.85rem;
+  }
+
+  .footer-address {
+    display: grid;
+    gap: 0.15rem;
+    margin-top: 0.7rem;
+    font-style: normal;
+  }
+
+  .footer-contact,
+  .footer-bottom {
+    overflow-wrap: anywhere;
+  }
+
+  .site-footer a {
+    text-underline-offset: 0.22em;
+  }
+
+  .site-footer a:hover,
+  .footer-map {
     text-decoration: underline;
+  }
+
+  .footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.6rem 1.75rem;
+    margin-top: 1.5rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgb(255 255 255 / 0.17);
+    font-size: 0.8125rem;
+  }
+
+  @media (min-width: 640px) {
+    .footer-main {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .footer-brand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (min-width: 960px) {
+    .footer-main {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) minmax(0, 1fr);
+      gap: 2rem;
+    }
+
+    .footer-brand {
+      grid-column: auto;
+    }
+
+    .footer-bottom {
+      margin-top: 2rem;
+    }
   }
 </style>

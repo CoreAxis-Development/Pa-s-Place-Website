@@ -1,30 +1,51 @@
 ---
-// Shared mission panel with a link to the story or a related support page.
-import Dove from '../story/Dove.astro';
-import Sunrise from '../ui/Sunrise.astro';
-
 interface Props {
   title: string;
   text: string;
-  /** show the sponsor call to action (on /get-involved and /what-we-do) */
   sponsor?: boolean;
   moreHref?: string;
   moreLabel?: string;
 }
+
 const { title, text, sponsor = false, moreHref = '/our-story', moreLabel = 'Read our story' } = Astro.props;
 ---
 
-<section class="on-dark relative overflow-hidden bg-canopy-900 py-14 text-on-dark sm:py-18" aria-label="Our cause">
-  <Sunrise class="pointer-events-none absolute -right-24 -top-28 h-[280px] w-[280px] opacity-35" />
-  <div class="container-page relative grid items-center gap-6 lg:grid-cols-[1fr_auto] lg:gap-12">
+<section class="mission-band" aria-labelledby="mission-band-title">
+  <div class="container-page mission-layout">
     <div>
-      <Dove class="h-11 w-11" />
-      <h2 class="t-h2 mt-3 max-w-2xl !text-on-dark">{title}</h2>
-      <p class="t-lead mt-3 max-w-[55ch] text-on-dark-muted">{text}</p>
+      <h2 class="t-h2" id="mission-band-title">{title}</h2>
+      <p class="mt-3 max-w-[64ch]">{text}</p>
     </div>
-    <div class="flex flex-wrap gap-3 lg:flex-col lg:items-start">
+    <div class="mission-actions">
       {sponsor && <a href="/contact?about=sponsor#enquiry" class="btn btn-primary">Sponsor a child&rsquo;s holiday</a>}
-      <a href={moreHref} class="btn btn-on-dark">{moreLabel}</a>
+      <a href={moreHref} class={sponsor ? 'link' : 'btn btn-tertiary'}>{moreLabel}</a>
     </div>
   </div>
 </section>
+
+<style>
+  .mission-band {
+    border-top: 1px solid var(--color-line);
+    background: var(--coast-pool);
+    padding-block: clamp(1.8rem, 4vw, 3.4rem);
+  }
+
+  .mission-layout {
+    display: grid;
+    align-items: center;
+    gap: 1rem 2.2rem;
+  }
+
+  .mission-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem 1rem;
+  }
+
+  @media (min-width: 900px) {
+    .mission-layout {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+  }
+</style>

@@ -31,7 +31,7 @@ const steps = [
   description={`Hire the lapa, pool, waterslides and gardens at Pa's Place in Pennington, KZN for birthdays and gatherings. ${settings.pricing.venue}.`}
   image={venuePage.image?.src}
 >
-  <section class="coast-masthead" data-coast-art="garden" aria-labelledby="venue-title">
+  <section class="coast-masthead" aria-labelledby="venue-title">
     <div class:list={['container-page venue-opening', venuePage.image && 'venue-opening-photo']}>
       <div>
         <p class="eyebrow">Day hire in Kelso, Pennington</p>
@@ -57,7 +57,7 @@ const steps = [
       <ul class="venue-facts" aria-label="Venue at a glance">
         {settings.pricing.venue && <li><Icon name="wallet" /><span>{settings.pricing.venue}</span></li>}
         {venue?.capacityLabel && <li><Icon name="users" /><span>{venue.capacityLabel}</span></li>}
-        <li><span class="party-doodle venue-facts-doodle" data-doodle="cake" aria-hidden="true"></span><a class="link" href="#kids-parties">Kids&rsquo; birthday playbook</a></li>
+        <li><Icon name="lapa" /><a class="link" href="#kids-parties">Kids&rsquo; birthday playbook</a></li>
       </ul>
     </div>
   </div>
@@ -65,10 +65,7 @@ const steps = [
   <section class="section" id="venue-included" data-coast-art="canopy" data-coast-wash="leaf" aria-labelledby="venue-included-title">
     <div class:list={['container-page venue-grounds', groundPhotos.length > 0 && 'venue-grounds-photo']}>
       <div>
-        <div class="venue-illustrated-title">
-          <h2 class="t-h2" id="venue-included-title">What comes with the venue</h2>
-          <span class="party-doodle" data-doodle="golf" aria-hidden="true"></span>
-        </div>
+        <h2 class="t-h2" id="venue-included-title">What comes with the venue</h2>
         <p class="mt-3 max-w-[46ch]">Set up under the lapa and let people drift between the pool, the lawns and the braai.</p>
         <ul class="venue-inclusions">
           {venuePage.included.map((item) => <li><Icon name="check" class="h-5 w-5 shrink-0" />{item}</li>)}
@@ -98,10 +95,7 @@ const steps = [
 
   <section class="section" id="book" aria-labelledby="venue-book-title">
     <div class="container-page">
-      <div class="venue-illustrated-title">
-        <h2 class="t-h2" id="venue-book-title">Pick your date</h2>
-        <span class="party-doodle" data-doodle="cake" aria-hidden="true"></span>
-      </div>
+      <h2 class="t-h2" id="venue-book-title">Pick your date</h2>
       <p class="t-lead mt-3 mb-7 max-w-[55ch]">Start with a date and your guest count. Here&rsquo;s how we turn your request into a booking.</p>
       <ol class="venue-booking-steps">
         {
@@ -190,22 +184,6 @@ const steps = [
   .venue-inclusions li > :global(svg) {
     flex: none;
     color: var(--coast-blue);
-  }
-
-  .venue-facts-doodle {
-    width: 1.6rem;
-    opacity: 0.85;
-  }
-
-  .venue-illustrated-title {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .venue-illustrated-title .party-doodle {
-    width: clamp(2.4rem, 5vw, 3.7rem);
-    opacity: 0.75;
   }
 
   .venue-inclusions {
